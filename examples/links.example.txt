@@ -1,0 +1,3 @@
+# Put one YouTube URL per line.
+# Blank lines and comments are ignored.
+https://www.youtube.com/watch?v=example

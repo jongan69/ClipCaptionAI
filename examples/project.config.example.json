@@ -1,0 +1,22 @@
+{
+  "name": "client-edit-budapest",
+  "styleConfig": "./caption-style.json",
+  "outputsDir": "./outputs",
+  "youtubeClipper": {
+    "links": "./links.txt",
+    "maxClips": 6,
+    "paddingSeconds": 2,
+    "verticalContain": false
+  },
+  "captioning": {
+    "vertical": false,
+    "verticalContain": false,
+    "transcriptionPrompt": "Names, places, brands, and unusual words that should be spelled correctly."
+  },
+  "broll": {
+    "prompts": "./broll-prompts.txt",
+    "movieScenes": true,
+    "maxDownloads": 8,
+    "minScore": 7
+  }
+}

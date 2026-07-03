@@ -1,0 +1,16 @@
+{
+  "textOpacity": 0.86,
+  "textBlendMode": "normal",
+  "normalFontFamily": "Inter, Arial, sans-serif",
+  "normalFontWeight": 850,
+  "highlightFontFamily": "Playfair Display, Georgia, serif",
+  "highlightFontWeight": 750,
+  "normalTextShadow": "0 4px 18px rgba(0,0,0,0.55)",
+  "highlightTextShadow": "0 4px 18px rgba(0,0,0,0.5)",
+  "normalStrokeRatio": 0.01,
+  "highlightStrokeRatio": 0.006,
+  "letterSpacing": "0.02em",
+  "captionLayout": "inline-wrap",
+  "visibleTokensBefore": 1,
+  "visibleTokensAfter": 0
+}

@@ -1,0 +1,46 @@
+{
+  "name": "clipcaptionai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "menu": "node scripts/clipkit.mjs",
+    "clipkit": "node scripts/clipkit.mjs",
+    "doctor": "node scripts/clipkit.mjs doctor",
+    "studio": "remotion studio src/index.tsx",
+    "render:clip": "node scripts/render-clip.mjs",
+    "render:batch": "node scripts/render-batch.mjs",
+    "rerender:clip": "node scripts/rerender-clip.mjs",
+    "smart:clips": "node scripts/smart-clips.mjs",
+    "clip:auto": "node scripts/process-links.mjs",
+    "caption:auto": "node scripts/caption-video.mjs",
+    "video:enhance": "node scripts/enhance-video-with-broll.mjs",
+    "output:open": "node scripts/clipkit.mjs open-latest",
+    "scene:mix": "node scripts/assemble-context-scenes.mjs",
+    "scene:ingest:youtube-cc": "node scripts/ingest-youtube-cc-scenes.mjs",
+    "broll:find": "node scripts/find-broll-from-text.mjs",
+    "scene:research-pop-culture": "node scripts/research-pop-culture-scenes.mjs",
+    "sfx:standardize": "node scripts/standardize-sfx-library.mjs",
+    "sfx:mix": "node scripts/mix-sfx.mjs",
+    "broll:enhance": "node scripts/enhance-video-with-broll.mjs",
+    "process": "node scripts/process-links.mjs",
+    "transcribe": "node scripts/transcribe-openai.mjs",
+    "sample:props": "node scripts/make-sample-props.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/captions": "4.0.481",
+    "@remotion/cli": "4.0.481",
+    "@remotion/openai-whisper": "4.0.481",
+    "dotenv": "16.4.7",
+    "openai": "5.7.0",
+    "remotion": "4.0.481",
+    "tsx": "4.20.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.3",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "typescript": "5.8.3"
+  }
+}
