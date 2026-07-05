@@ -8,7 +8,26 @@ Double-click `RUN.command`, or run:
 npm run menu
 ```
 
-The menu is the safest front door for everyday editing. It can run YouTube clipping, caption an existing edit, enhance a video with B-roll, find standalone B-roll, rerender a generated clip, open Studio, open the latest output, and run diagnostics.
+The menu is the safest front door for everyday editing. It can download YouTube videos, run YouTube clipping, caption an existing edit, enhance a video with B-roll, find standalone B-roll, rerender a generated clip, open Studio, open the latest output, and run diagnostics.
+
+## Download YouTube Videos And Stop
+
+Use this when you only want the source videos downloaded from a text file.
+
+1. Put one YouTube URL per line in `links.txt`.
+2. Run:
+
+```bash
+npm run download:youtube -- --links links.txt
+```
+
+Output:
+
+```text
+outputs/download-run-YYYY-MM-DD-HHMMSS/downloads/
+```
+
+This does not transcribe, clip, caption, add B-roll, or render.
 
 ## Auto AI Clip YouTube Videos
 

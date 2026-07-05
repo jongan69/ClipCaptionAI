@@ -12,6 +12,7 @@
     "render:batch": "node scripts/render-batch.mjs",
     "rerender:clip": "node scripts/rerender-clip.mjs",
     "smart:clips": "node scripts/smart-clips.mjs",
+    "download:youtube": "node scripts/download-youtube.mjs",
     "clip:auto": "node scripts/process-links.mjs",
     "caption:auto": "node scripts/caption-video.mjs",
     "video:enhance": "node scripts/enhance-video-with-broll.mjs",

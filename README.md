@@ -15,10 +15,9 @@ cp .env.example .env
 
 ## Quick Start
 
-1. Make sure `.env` contains `OPENAI_API_KEY=...`.
-2. Add `YOUTUBE_API_KEY=...` too if you want stronger YouTube B-roll discovery.
-3. Double-click `RUN.command`.
-4. Pick a workflow from the menu.
+1. Run `npm install`.
+2. Make sure `.env` contains `OPENAI_API_KEY=...` for anything that transcribes or uses AI.
+3. Double-click `RUN.command`, or use the commands below.
 
 From Terminal:
 
@@ -32,11 +31,91 @@ Run a quick local health check:
 npm run doctor
 ```
 
+## Basic Commands
+
+### 1. Download YouTube Videos And Stop
+
+Create a `links.txt` file with one YouTube URL per line:
+
+```text
+https://www.youtube.com/watch?v=FIRST_VIDEO_ID
+https://www.youtube.com/watch?v=SECOND_VIDEO_ID
+```
+
+Run:
+
+```bash
+npm run download:youtube -- --links links.txt
+```
+
+That only downloads the videos. It does not transcribe, clip, caption, add B-roll, or render anything.
+
+The files go here:
+
+```text
+outputs/download-run-YYYY-MM-DD-HHMMSS/downloads/
+```
+
+### 2. Caption One Video
+
+Run:
+
+```bash
+npm run caption:auto -- --video "/path/to/video.mp4"
+```
+
+That transcribes the video, renders captions, and saves the result here:
+
+```text
+outputs/caption-run-YYYY-MM-DD-HHMMSS/final/
+```
+
+### 3. Caption One Video With A Fixed Transcript
+
+Use this after manually fixing a `.captions.json` file:
+
+```bash
+npm run caption:auto -- \
+  --video "/path/to/video.mp4" \
+  --captions "/path/to/fixed.captions.json"
+```
+
+### 4. Auto-Clip YouTube Videos Into Captioned Shorts
+
+Use this when you want the full AI pipeline:
+
+```bash
+npm run clip:auto -- --links links.txt --max-clips 6 --padding-seconds 2
+```
+
+That downloads each YouTube video, transcribes it, picks interesting clips, adds captions, and renders shorts.
+
+### 5. Add B-Roll And Captions To An Existing Edit
+
+Run:
+
+```bash
+npm run video:enhance -- --video "/path/to/already-edited-video.mp4"
+```
+
+Use this when the video is already mostly edited and you want extra B-roll plus captions on top.
+
+### 6. Use The Menu Instead
+
+Run:
+
+```bash
+npm run menu
+```
+
+Then pick the workflow you want.
+
 ## Toolkit Workflows
 
 The everyday command surface is `clipkit`:
 
 ```bash
+npm run clipkit -- download --links links.txt
 npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2
 npm run clipkit -- caption --video "/path/to/video.mp4"
 npm run clipkit -- enhance --video "/path/to/already-edited.mp4"
@@ -50,6 +129,7 @@ Shortcut aliases:
 | --- | --- |
 | `npm run menu` | Open the interactive workflow menu. |
 | `npm run doctor` | Check Node, npm, ffmpeg, ffprobe, yt-dlp, `.env`, and keys. |
+| `npm run download:youtube` | Download YouTube videos from a links file and stop. |
 | `npm run clip:auto` | Auto-clip YouTube videos from a links file. |
 | `npm run caption:auto` | Caption any existing video without picking new clips. |
 | `npm run video:enhance` | Add contextual B-roll and captions to an existing edit. |
@@ -73,6 +153,12 @@ outputs/run-YYYY-MM-DD-HHMMSS/
 The current `outputs` folder is kept clean by separating every run into its own dated folder. Temporary Remotion media staging is cleaned after each full run finishes.
 
 ## Main Commands
+
+Download YouTube videos from `links.txt` and stop:
+
+```bash
+npm run download:youtube -- --links links.txt
+```
 
 Run the complete YouTube auto-clipping workflow from `links.txt`:
 

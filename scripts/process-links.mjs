@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import {execFileSync} from 'node:child_process';
 import {
   defaultCaptionStylePath,
   ensureDir,
@@ -9,6 +8,7 @@ import {
   projectRoot,
   run,
 } from './lib.mjs';
+import {downloadYoutubeVideo, readUrlsFromLinksFile} from './lib-youtube-download.mjs';
 
 const desktopLinks = '/Users/jonathangan/Desktop/Full-Vids/links.txt';
 const localLinks = path.join(projectRoot, 'links.txt');
@@ -86,19 +86,7 @@ const finalRoot = path.join(runDir, 'captioned-clips');
 const mediaStagingDir = path.join(projectRoot, 'public', 'media');
 const styleConfigPath = path.resolve(args['style-config'] ?? defaultCaptionStylePath);
 
-if (!fs.existsSync(linksPath)) {
-  throw new Error(`Links file not found: ${linksPath}`);
-}
-
-const urls = fs
-  .readFileSync(linksPath, 'utf8')
-  .split(/\r?\n/)
-  .map((line) => line.trim())
-  .filter((line) => line && !line.startsWith('#'));
-
-if (urls.length === 0) {
-  throw new Error(`No URLs found in ${linksPath}`);
-}
+const urls = readUrlsFromLinksFile(linksPath);
 
 ensureDir(outRoot);
 ensureDir(runDir);
@@ -118,50 +106,6 @@ const slugify = (value) =>
     .replace(/^-|-$/g, '')
     .slice(0, 72) || 'video';
 
-const downloadVideo = (url) => {
-  const outputTemplate = path.join(downloadRoot, '%(title).180B [%(id)s].%(ext)s');
-  const baseArgs = [
-    '--no-playlist',
-    '--extractor-args',
-    'youtube:player_client=android,web',
-    '--merge-output-format',
-    'mp4',
-    '--remux-video',
-    'mp4',
-    '--output',
-    outputTemplate,
-    '--print',
-    'after_move:filepath',
-    url,
-  ];
-
-  let stdout = '';
-  try {
-    stdout = execFileSync('yt-dlp', baseArgs, {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'inherit'],
-    });
-  } catch (error) {
-    console.warn('Download failed without browser cookies. Retrying with Chrome cookies...');
-    stdout = execFileSync('yt-dlp', ['--cookies-from-browser', 'chrome', ...baseArgs], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'inherit'],
-    });
-  }
-
-  const downloaded = stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .at(-1);
-
-  if (!downloaded) {
-    throw new Error(`yt-dlp did not report a downloaded file for ${url}`);
-  }
-
-  return path.resolve(downloaded);
-};
-
 const passThroughOptions = [
   'max-clips',
   'min-seconds',
@@ -177,7 +121,7 @@ const passThroughOptions = [
 
 for (const [index, url] of urls.entries()) {
   console.log(`\n[${index + 1}/${urls.length}] Downloading ${url}`);
-  const videoPath = downloadVideo(url);
+  const videoPath = downloadYoutubeVideo(url, downloadRoot);
   const baseSlug = slugify(path.basename(videoPath, path.extname(videoPath)));
   const outputDir = path.join(finalRoot, baseSlug);
   const workDir = path.join(generatedRoot, baseSlug);

@@ -14,6 +14,7 @@ Usage:
   npm run clipkit -- <command> [options]
 
 Commands:
+  download          Download YouTube links from a text file and stop.
   auto-clips        Download YouTube links, pick viral clips, caption, and render.
   caption           Caption any existing video with the current caption style.
   enhance           Add contextual B-roll and captions to an existing edit.
@@ -24,6 +25,7 @@ Commands:
   doctor            Check local dependencies and config.
 
 Examples:
+  npm run clipkit -- download --links links.txt
   npm run clipkit -- auto-clips --links links.txt --max-clips 6
   npm run clipkit -- caption --video "/path/to/video.mp4"
   npm run clipkit -- enhance --video "/path/to/edit.mp4" --run-name client-edit-v1
@@ -170,6 +172,27 @@ const runAutoClips = (args = []) => {
   ]);
 };
 
+const runDownloadOnly = (args = []) => {
+  const linksPath = path.join(projectRoot, 'links.txt');
+  ensurePromptFile(
+    linksPath,
+    '# Put one YouTube URL per line.\n# Blank lines and lines starting with # are ignored.\n',
+  );
+
+  if (args.length === 0 && !textFileHasContent(linksPath, /^https?:\/\//)) {
+    console.log('No YouTube links found in links.txt. Opening it now.');
+    openPath(linksPath);
+    return;
+  }
+
+  npmRun('download:youtube', args.length > 0 ? args : [
+    '--links',
+    linksPath,
+    '--out-dir',
+    path.join(projectRoot, 'outputs'),
+  ]);
+};
+
 const runBroll = (args = []) => {
   const promptsPath = path.join(projectRoot, 'broll-prompts.txt');
   ensurePromptFile(
@@ -206,49 +229,54 @@ const interactiveMenu = async () => {
   try {
     console.log('ClipCaptionAI');
     console.log('=============');
-    console.log('1. Auto clip YouTube videos from links.txt');
-    console.log('2. Caption an existing video');
-    console.log('3. Enhance an existing edit with B-roll + captions');
-    console.log('4. Find B-roll from broll-prompts.txt');
-    console.log('5. Rerender/list a generated clip');
-    console.log('6. Open Remotion Studio');
-    console.log('7. Open newest output folder');
-    console.log('8. Doctor');
+    console.log('1. Download YouTube videos from links.txt and stop');
+    console.log('2. Auto clip YouTube videos from links.txt');
+    console.log('3. Caption an existing video');
+    console.log('4. Enhance an existing edit with B-roll + captions');
+    console.log('5. Find B-roll from broll-prompts.txt');
+    console.log('6. Rerender/list a generated clip');
+    console.log('7. Open Remotion Studio');
+    console.log('8. Open newest output folder');
+    console.log('9. Doctor');
     console.log('');
 
-    const choice = (await rl.question('Choose 1-8: ')).trim();
+    const choice = (await rl.question('Choose 1-9: ')).trim();
 
     if (choice === '1') {
-      runAutoClips();
+      runDownloadOnly();
       return;
     }
     if (choice === '2') {
+      runAutoClips();
+      return;
+    }
+    if (choice === '3') {
       const video = await askForVideo(rl, 'Existing');
       if (video) {
         npmRun('caption:auto', ['--video', video]);
       }
       return;
     }
-    if (choice === '3') {
+    if (choice === '4') {
       const video = await askForVideo(rl, 'Edited');
       if (video) {
         npmRun('broll:enhance', ['--video', video]);
       }
       return;
     }
-    if (choice === '4') {
+    if (choice === '5') {
       runBroll();
       return;
     }
-    if (choice === '5') {
+    if (choice === '6') {
       npmRun('rerender:clip', ['--list']);
       return;
     }
-    if (choice === '6') {
+    if (choice === '7') {
       npmRun('studio');
       return;
     }
-    if (choice === '7') {
+    if (choice === '8') {
       const latest = latestOutputDir();
       if (!latest) {
         console.log('No output folders found yet.');
@@ -258,7 +286,7 @@ const interactiveMenu = async () => {
       console.log(`Opened ${latest}`);
       return;
     }
-    if (choice === '8') {
+    if (choice === '9') {
       printDoctor();
       return;
     }
@@ -283,6 +311,10 @@ const main = async () => {
     return;
   }
 
+  if (command === 'download') {
+    runDownloadOnly(args);
+    return;
+  }
   if (command === 'auto-clips') {
     runAutoClips(args);
     return;
