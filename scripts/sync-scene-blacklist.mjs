@@ -18,6 +18,7 @@ Options:
   --scene-library DIR   Scene cache folder. Default: ./scene-library
   --prune-index         Remove blacklisted and missing-file scenes from index.json. Default: true.
   --keep-index          Do not edit index.json.
+  --keep-sidecars       Keep orphaned *.scene.json files after writing blacklist.json.
   --dry-run             Show what would be blacklisted without writing files.
 
 Workflow:
@@ -25,6 +26,7 @@ Workflow:
   2. Leave their matching *.scene.json files in place.
   3. Run this command.
   4. Those YouTube video IDs/URLs are written to scene-library/blacklist.json.
+  5. The orphaned *.scene.json files are deleted unless --keep-sidecars is passed.
 `;
 
 const args = parseArgs(process.argv.slice(2));
@@ -38,6 +40,7 @@ const sceneLibraryDir = path.resolve(
 );
 const dryRun = Boolean(args['dry-run']);
 const pruneIndex = args['keep-index'] ? false : args['prune-index'] === undefined || Boolean(args['prune-index']);
+const deleteSidecars = !args['keep-sidecars'];
 
 const readJson = (filePath) => JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
@@ -158,10 +161,13 @@ ensureDir(sceneLibraryDir);
 
 const orphanEntries = sidecarFiles()
   .filter((sidecarPath) => !fs.existsSync(sidecarVideoPath(sidecarPath)))
-  .map(toBlacklistEntry);
+  .map((sidecarPath) => ({
+    sidecarPath,
+    entry: toBlacklistEntry(sidecarPath),
+  }));
 
 const currentBlacklist = loadSceneBlacklist(sceneLibraryDir);
-const mergedEntries = mergeEntries(currentBlacklist.entries, orphanEntries);
+const mergedEntries = mergeEntries(currentBlacklist.entries, orphanEntries.map((item) => item.entry));
 const nextBlacklist = {
   version: 1,
   updatedAt: new Date().toISOString(),
@@ -172,6 +178,12 @@ const indexResult = pruneIndex ? pruneIndexFile(nextBlacklist) : null;
 
 if (!dryRun) {
   saveSceneBlacklist(sceneLibraryDir, nextBlacklist);
+
+  if (deleteSidecars) {
+    for (const item of orphanEntries) {
+      fs.rmSync(item.sidecarPath, {force: true});
+    }
+  }
 }
 
 console.log(`Scene library: ${sceneLibraryDir}`);
@@ -179,6 +191,11 @@ console.log(`Blacklist file: ${readSceneBlacklistPath(sceneLibraryDir)}`);
 console.log(`Orphaned sidecars found: ${orphanEntries.length}`);
 console.log(`Blacklist entries before: ${currentBlacklist.entries.length}`);
 console.log(`Blacklist entries after: ${mergedEntries.length}`);
+if (deleteSidecars) {
+  console.log(`Orphaned sidecars deleted: ${dryRun ? 0 : orphanEntries.length}`);
+} else {
+  console.log('Orphaned sidecars kept because --keep-sidecars was passed.');
+}
 if (indexResult) {
   console.log(`Index scenes pruned: ${indexResult.removed} (${indexResult.before} -> ${indexResult.after})`);
 }

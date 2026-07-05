@@ -22,15 +22,17 @@ npm run scene:ingest:youtube -- \
 
 That ingest path writes the downloaded MP4, a matching `*.scene.json` sidecar, and a merged `index.json` entry with tags and attribution.
 
-If you manually review the library and delete bad MP4s, keep the matching
-`*.scene.json` files and run:
+If you manually review the library and delete bad MP4s, leave the matching
+`*.scene.json` files temporarily and run:
 
 ```bash
 npm run scene:blacklist
 ```
 
-That writes `blacklist.json` from the orphaned sidecars and prunes `index.json`
-so the same YouTube clips are not used or downloaded again.
+That writes `blacklist.json` from the orphaned sidecars, prunes `index.json`,
+then deletes those orphaned sidecars. The blacklist keeps the source ID, URL,
+title, source, and query, so the same YouTube clips are not used or downloaded
+again.
 
 Example sidecar:
 

@@ -154,7 +154,7 @@ Shortcut aliases:
 | `npm run broll:find` | Find standalone B-roll from text prompts. |
 | `npm run rerender:clip` | Rerender a generated clip after text/style fixes. |
 | `npm run cleanup` | Clean temporary files or old output folders. |
-| `npm run scene:blacklist` | Blacklist scene-library clips after you delete bad MP4s. |
+| `npm run scene:blacklist` | Blacklist scene-library clips after you delete bad MP4s, then remove orphaned sidecars. |
 
 More detailed walkthroughs live in [docs/WORKFLOWS.md](docs/WORKFLOWS.md). GitHub-safe publishing notes live in [docs/GITHUB.md](docs/GITHUB.md).
 
