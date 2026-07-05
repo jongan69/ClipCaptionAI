@@ -8,7 +8,11 @@ import {
   projectRoot,
   readCaptionStyleConfig,
 } from './lib.mjs';
-import {ingestYouTubeScenes} from './lib-youtube-scenes.mjs';
+import {
+  ingestYouTubeScenes,
+  loadSceneBlacklist,
+  sceneIsBlacklisted,
+} from './lib-youtube-scenes.mjs';
 
 const usage = `
 Usage:
@@ -166,9 +170,12 @@ const loadSceneIndex = (sceneLibraryDir) => {
     return {scenes: []};
   }
 
+  const blacklist = loadSceneBlacklist(sceneLibraryDir);
   const parsed = JSON.parse(fs.readFileSync(indexPath, 'utf8'));
   return {
-    scenes: Array.isArray(parsed?.scenes) ? parsed.scenes : [],
+    scenes: Array.isArray(parsed?.scenes)
+      ? parsed.scenes.filter((scene) => !sceneIsBlacklisted(scene, blacklist))
+      : [],
   };
 };
 

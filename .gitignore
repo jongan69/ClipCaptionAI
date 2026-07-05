@@ -20,6 +20,7 @@ scene-library/*.m4v
 scene-library/*.webm
 scene-library/*.scene.json
 scene-library/index.json
+scene-library/blacklist.json
 
 sfx-library/**/*.mp3
 sfx-library/**/*.wav

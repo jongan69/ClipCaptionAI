@@ -14,7 +14,11 @@ import {
   readCaptions,
   requireArg,
 } from './lib.mjs';
-import {ingestYouTubeScenes} from './lib-youtube-scenes.mjs';
+import {
+  ingestYouTubeScenes,
+  loadSceneBlacklist,
+  sceneIsBlacklisted,
+} from './lib-youtube-scenes.mjs';
 import {
   enrichInsertionsWithPopCultureQueries,
   researchPopCultureScenes,
@@ -312,6 +316,7 @@ const loadSceneLibrary = (libraryDir) => {
     return [];
   }
 
+  const blacklist = loadSceneBlacklist(libraryDir);
   const manifestScenes = loadSceneManifest(libraryDir);
   const rawScenes =
     manifestScenes ??
@@ -322,6 +327,10 @@ const loadSceneLibrary = (libraryDir) => {
 
   return rawScenes
     .map((scene, index) => {
+      if (sceneIsBlacklisted(scene, blacklist)) {
+        return null;
+      }
+
       const filePath = resolveMaybePath(scene.file, libraryDir);
       if (!filePath || !fs.existsSync(filePath)) {
         return null;

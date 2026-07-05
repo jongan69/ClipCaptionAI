@@ -402,6 +402,71 @@ const ytDlpJson = (args) => {
 
 const readIndexPath = (sceneLibraryDir) => path.join(sceneLibraryDir, 'index.json');
 
+export const readSceneBlacklistPath = (sceneLibraryDir) =>
+  path.join(sceneLibraryDir, 'blacklist.json');
+
+export const loadSceneBlacklist = (sceneLibraryDir) => {
+  const blacklistPath = readSceneBlacklistPath(sceneLibraryDir);
+  if (!fs.existsSync(blacklistPath)) {
+    return {version: 1, updatedAt: null, entries: []};
+  }
+
+  const parsed = JSON.parse(fs.readFileSync(blacklistPath, 'utf8'));
+  return {
+    version: Number(parsed?.version ?? 1),
+    updatedAt: parsed?.updatedAt ?? null,
+    entries: Array.isArray(parsed?.entries) ? parsed.entries : [],
+  };
+};
+
+export const saveSceneBlacklist = (sceneLibraryDir, blacklist) => {
+  fs.writeFileSync(
+    readSceneBlacklistPath(sceneLibraryDir),
+    `${JSON.stringify(blacklist, null, 2)}\n`,
+  );
+};
+
+export const sceneBlacklistKeys = (blacklist) => {
+  const ids = new Set();
+  const videoIds = new Set();
+  const urls = new Set();
+  const files = new Set();
+
+  for (const entry of blacklist.entries ?? []) {
+    if (entry.id) {
+      ids.add(String(entry.id));
+    }
+    if (entry.videoId) {
+      videoIds.add(String(entry.videoId));
+      ids.add(`yt-${entry.videoId}`);
+    }
+    if (entry.url) {
+      urls.add(String(entry.url));
+    }
+    if (entry.file) {
+      files.add(String(entry.file));
+    }
+  }
+
+  return {ids, videoIds, urls, files};
+};
+
+export const sceneIsBlacklisted = (scene, blacklist) => {
+  const keys = sceneBlacklistKeys(blacklist);
+  const attribution = scene.attribution ?? {};
+  const id = String(scene.id ?? '');
+  const videoId = attribution.videoId ?? scene.videoId;
+  const url = attribution.url ?? scene.url;
+  const file = scene.file;
+
+  return (
+    (id && keys.ids.has(id)) ||
+    (videoId && keys.videoIds.has(String(videoId))) ||
+    (url && keys.urls.has(String(url))) ||
+    (file && keys.files.has(String(file)))
+  );
+};
+
 const loadIndex = (sceneLibraryDir) => {
   const indexPath = readIndexPath(sceneLibraryDir);
   if (!fs.existsSync(indexPath)) {
@@ -609,6 +674,7 @@ export const ingestYouTubeScenes = async ({
   }
 
   const existingIds = loadExistingSceneIds(sceneLibraryDir);
+  const blacklist = loadSceneBlacklist(sceneLibraryDir);
   const downloaded = [];
   const skipped = [];
 
@@ -666,6 +732,21 @@ export const ingestYouTubeScenes = async ({
 
     for (const result of results) {
       const sceneId = `yt-${result.videoId}`;
+
+      if (sceneIsBlacklisted({
+        id: sceneId,
+        videoId: result.videoId,
+        url: result.url,
+      }, blacklist)) {
+        skipped.push({
+          query,
+          searchQuery: result.searchQuery ?? query,
+          reason: 'blacklisted',
+          videoId: result.videoId,
+          url: result.url,
+        });
+        continue;
+      }
 
       if (existingIds.has(sceneId)) {
         skipped.push({query, reason: 'already_ingested', videoId: result.videoId});

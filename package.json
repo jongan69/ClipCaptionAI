@@ -20,6 +20,7 @@
     "output:open": "node scripts/clipkit.mjs open-latest",
     "scene:mix": "node scripts/assemble-context-scenes.mjs",
     "scene:ingest:youtube-cc": "node scripts/ingest-youtube-cc-scenes.mjs",
+    "scene:blacklist": "node scripts/sync-scene-blacklist.mjs",
     "broll:find": "node scripts/find-broll-from-text.mjs",
     "scene:research-pop-culture": "node scripts/research-pop-culture-scenes.mjs",
     "sfx:standardize": "node scripts/standardize-sfx-library.mjs",
