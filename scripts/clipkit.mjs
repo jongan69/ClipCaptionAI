@@ -20,6 +20,7 @@ Commands:
   enhance           Add contextual B-roll and captions to an existing edit.
   broll             Find reusable B-roll clips from a text prompt file.
   rerender          Rerender an existing generated clip after caption/style edits.
+  cleanup           Clean temp files or old output folders.
   studio            Open Remotion Studio.
   open-latest       Open the newest folder in outputs.
   doctor            Check local dependencies and config.
@@ -31,6 +32,7 @@ Examples:
   npm run clipkit -- enhance --video "/path/to/edit.mp4" --run-name client-edit-v1
   npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8
   npm run clipkit -- rerender --clip 03-your-website-is-leaking-money
+  npm run clipkit -- cleanup
 `;
 
 const run = (command, args, options = {}) => {
@@ -235,12 +237,13 @@ const interactiveMenu = async () => {
     console.log('4. Enhance an existing edit with B-roll + captions');
     console.log('5. Find B-roll from broll-prompts.txt');
     console.log('6. Rerender/list a generated clip');
-    console.log('7. Open Remotion Studio');
-    console.log('8. Open newest output folder');
-    console.log('9. Doctor');
+    console.log('7. Clean temp files / old outputs');
+    console.log('8. Open Remotion Studio');
+    console.log('9. Open newest output folder');
+    console.log('10. Doctor');
     console.log('');
 
-    const choice = (await rl.question('Choose 1-9: ')).trim();
+    const choice = (await rl.question('Choose 1-10: ')).trim();
 
     if (choice === '1') {
       runDownloadOnly();
@@ -273,10 +276,14 @@ const interactiveMenu = async () => {
       return;
     }
     if (choice === '7') {
-      npmRun('studio');
+      npmRun('cleanup');
       return;
     }
     if (choice === '8') {
+      npmRun('studio');
+      return;
+    }
+    if (choice === '9') {
       const latest = latestOutputDir();
       if (!latest) {
         console.log('No output folders found yet.');
@@ -286,7 +293,7 @@ const interactiveMenu = async () => {
       console.log(`Opened ${latest}`);
       return;
     }
-    if (choice === '9') {
+    if (choice === '10') {
       printDoctor();
       return;
     }
@@ -333,6 +340,10 @@ const main = async () => {
   }
   if (command === 'rerender') {
     npmRun('rerender:clip', args);
+    return;
+  }
+  if (command === 'cleanup') {
+    npmRun('cleanup', args);
     return;
   }
   if (command === 'studio') {

@@ -110,6 +110,23 @@ npm run menu
 
 Then pick the workflow you want.
 
+### 7. Clean Up Generated Files
+
+Run:
+
+```bash
+npm run cleanup
+```
+
+The cleanup menu can:
+
+- delete temporary render files from `work/` and `public/media/`
+- delete old output folders while keeping the newest 5
+- delete all generated output folders
+- run a dry run so you can see what would be deleted first
+
+Nothing is deleted unless you confirm it.
+
 ## Toolkit Workflows
 
 The everyday command surface is `clipkit`:
@@ -121,6 +138,7 @@ npm run clipkit -- caption --video "/path/to/video.mp4"
 npm run clipkit -- enhance --video "/path/to/already-edited.mp4"
 npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8
 npm run clipkit -- rerender --clip 03-your-website-is-leaking-money
+npm run clipkit -- cleanup
 ```
 
 Shortcut aliases:
@@ -135,6 +153,7 @@ Shortcut aliases:
 | `npm run video:enhance` | Add contextual B-roll and captions to an existing edit. |
 | `npm run broll:find` | Find standalone B-roll from text prompts. |
 | `npm run rerender:clip` | Rerender a generated clip after text/style fixes. |
+| `npm run cleanup` | Clean temporary files or old output folders. |
 
 More detailed walkthroughs live in [docs/WORKFLOWS.md](docs/WORKFLOWS.md). GitHub-safe publishing notes live in [docs/GITHUB.md](docs/GITHUB.md).
 
@@ -153,6 +172,12 @@ outputs/run-YYYY-MM-DD-HHMMSS/
 The current `outputs` folder is kept clean by separating every run into its own dated folder. Temporary Remotion media staging is cleaned after each full run finishes.
 
 ## Main Commands
+
+Clean temporary files or old output folders:
+
+```bash
+npm run cleanup
+```
 
 Download YouTube videos from `links.txt` and stop:
 

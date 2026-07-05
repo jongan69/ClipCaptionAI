@@ -10,6 +10,24 @@ npm run menu
 
 The menu is the safest front door for everyday editing. It can download YouTube videos, run YouTube clipping, caption an existing edit, enhance a video with B-roll, find standalone B-roll, rerender a generated clip, open Studio, open the latest output, and run diagnostics.
 
+## Clean Up Generated Files
+
+Use this when the project folder is getting too heavy.
+
+```bash
+npm run cleanup
+```
+
+Cleanup can remove temporary render staging from `work/` and `public/media/`, or prune old folders in `outputs/` while keeping the newest 5. It asks for confirmation before deleting.
+
+Useful direct commands:
+
+```bash
+npm run cleanup -- --temp --yes
+npm run cleanup -- --outputs --keep-latest 5 --yes
+npm run cleanup -- --outputs --keep-latest 5 --dry-run
+```
+
 ## Download YouTube Videos And Stop
 
 Use this when you only want the source videos downloaded from a text file.
