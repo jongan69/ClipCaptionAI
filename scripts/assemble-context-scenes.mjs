@@ -31,8 +31,10 @@ Usage:
 Options:
   --style-config FILE       Caption style JSON. Reads contextScenes from here by default.
   --scene-library DIR       Folder containing scene clips or an index.json manifest.
+  --library-config FILE     Optional scene-library metadata config for profile-aware matching.
   --selection-path FILE     Optional selection.json for clip hook/reason/highlight words.
   --clip-number N           1-based clip number inside selection.json.
+  --source-profile NAME     Prefer scenes tagged for this source/person and reject explicit mismatches.
   --context-scenes          Force-enable scene mixing for this run.
   --disable-context-scenes  Force-disable scene mixing for this run.
   --youtube-ingest       Force-enable YouTube scene ingest.
@@ -127,6 +129,9 @@ const normalizeStringList = (value, fallback = []) => {
     .filter(Boolean);
 };
 
+const uniqueList = (items) =>
+  [...new Set(items.map((item) => String(item ?? '').trim()).filter(Boolean))];
+
 const copyVideo = (input, output) => {
   ensureDir(path.dirname(output));
   if (path.resolve(input) === path.resolve(output)) {
@@ -182,6 +187,37 @@ const buildTranscriptChunks = (captions, targetWords) => {
 
   flush();
   return chunks;
+};
+
+const readEnhancedTranscriptChunks = (captionJsonPath) => {
+  if (!captionJsonPath || !fs.existsSync(captionJsonPath)) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(captionJsonPath, 'utf8'));
+    const chunks = parsed?.analysis?.textEnhancement?.chunks;
+    if (!Array.isArray(chunks) || chunks.length === 0) {
+      return null;
+    }
+
+    const normalized = chunks
+      .map((chunk) => ({
+        startSeconds: Number(chunk.startSeconds ?? 0),
+        endSeconds: Number(chunk.endSeconds ?? 0),
+        text: String(chunk.correctedText ?? chunk.rawText ?? '').trim(),
+      }))
+      .filter(
+        (chunk) =>
+          Number.isFinite(chunk.startSeconds) &&
+          Number.isFinite(chunk.endSeconds) &&
+          chunk.text,
+      );
+
+    return normalized.length > 0 ? normalized : null;
+  } catch {
+    return null;
+  }
 };
 
 const resolveMaybePath = (value, baseDir = projectRoot) => {
@@ -375,6 +411,71 @@ const loadSceneLibrary = (libraryDir) => {
     .filter(Boolean);
 };
 
+const builtinProfileRules = {
+  mani: {
+    kind: 'person',
+    match: ['mani'],
+    tags: ['mani', 'person', 'creator'],
+  },
+  josep: {
+    kind: 'person',
+    match: ['josep'],
+    tags: ['josep', 'person', 'creator'],
+  },
+};
+
+const normalizeProfileRule = (key, value) => {
+  const raw = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const match = uniqueList([key, ...(Array.isArray(raw.match) ? raw.match : [])])
+    .map(normalizeToken)
+    .filter(Boolean);
+
+  return {
+    key: normalizeToken(key),
+    kind: String(raw.kind ?? '').trim().toLowerCase() || null,
+    match,
+  };
+};
+
+const loadProfileRules = (libraryConfigPath) => {
+  const config = libraryConfigPath && fs.existsSync(libraryConfigPath)
+    ? JSON.parse(fs.readFileSync(libraryConfigPath, 'utf8'))
+    : {};
+  const merged = {...builtinProfileRules, ...(config.profiles ?? {})};
+
+  return Object.fromEntries(
+    Object.entries(merged)
+      .map(([key, value]) => {
+        const rule = normalizeProfileRule(key, value);
+        return rule.key ? [rule.key, rule] : null;
+      })
+      .filter(Boolean),
+  );
+};
+
+const matchedSceneProfileKeys = (scene, profiles) => {
+  if (!profiles || typeof profiles !== 'object') {
+    return new Set();
+  }
+
+  const sceneTokens = new Set(
+    tokenize(
+      [
+        scene.title,
+        scene.source,
+        scene.description,
+        ...(Array.isArray(scene.tags) ? scene.tags : []),
+      ].join(' '),
+    ),
+  );
+
+  return new Set(
+    Object.values(profiles)
+      .filter((profile) => profile.match.some((token) => sceneTokens.has(token)))
+      .map((profile) => profile.key),
+  );
+};
+
 const isStockLikeScene = (scene) => {
   const text = [
     scene.title,
@@ -462,7 +563,7 @@ const scoreScene = (
   avoidTokens,
   usedSceneIds,
   insertion = {},
-  {preferMovieScenes = false} = {},
+  {preferMovieScenes = false, sourceProfile = null, profileRules = null} = {},
 ) => {
   if (usedSceneIds.has(scene.id)) {
     return -Infinity;
@@ -493,12 +594,30 @@ const scoreScene = (
   const popScore = popCultureMatchScore(scene, insertion);
   const hasPopCultureQueries = normalizeStringList(insertion.popCultureSearchQueries).length > 0;
   const wantsMovieScene = preferMovieScenes || hasPopCultureQueries;
+  const sceneProfileKeys = matchedSceneProfileKeys(scene, profileRules);
+  const activeProfileKey = normalizeToken(sourceProfile);
+  const activeProfileMatched = activeProfileKey
+    ? sceneProfileKeys.has(activeProfileKey)
+    : false;
+  const otherMatchedPersonProfiles = [...sceneProfileKeys].filter((key) => {
+    if (key === activeProfileKey) {
+      return false;
+    }
+    return profileRules?.[key]?.kind === 'person';
+  });
   const attribution = scene.attribution ?? {};
   const wasIngestedFromSearch = Boolean(
     attribution.ingestedFromSearchQuery || attribution.ingestedFromQuery,
   );
 
+  if (activeProfileKey && !activeProfileMatched && otherMatchedPersonProfiles.length > 0) {
+    return -Infinity;
+  }
+
   score += popScore;
+  if (activeProfileMatched) {
+    score += 28;
+  }
   if (wantsMovieScene && isStockLikeScene(scene)) {
     return -Infinity;
   }
@@ -714,6 +833,138 @@ const insertionCoverageStats = (insertions, durationSeconds) => {
   };
 };
 
+const fallbackInsertionKeywordWeights = {
+  money: 4,
+  rich: 4,
+  broke: 4,
+  identity: 3.6,
+  discipline: 3.2,
+  abroad: 3.2,
+  europe: 3,
+  budapest: 3,
+  hungary: 3,
+  language: 3,
+  friend: 2.8,
+  friends: 2.8,
+  live: 2.4,
+  place: 2.4,
+  move: 2.4,
+  moved: 2.4,
+  online: 2.8,
+  business: 2.8,
+  watch: 2.4,
+  luxury: 2.4,
+  status: 2.4,
+  city: 2,
+  travel: 2,
+};
+
+const topFallbackKeywords = (text, maxItems = 6) => {
+  const counts = new Map();
+  for (const token of tokenize(text)) {
+    counts.set(token, (counts.get(token) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .sort(
+      (a, b) =>
+        (fallbackInsertionKeywordWeights[b[0]] ?? 0) + b[1] -
+        ((fallbackInsertionKeywordWeights[a[0]] ?? 0) + a[1]),
+    )
+    .map(([token]) => token)
+    .filter((token) => token.length >= 4)
+    .slice(0, maxItems);
+};
+
+const buildHeuristicInsertions = ({
+  transcriptChunks,
+  durationSeconds,
+  config,
+  targetInsertionCount,
+}) => {
+  const candidates = transcriptChunks
+    .map((chunk) => {
+      const keywords = topFallbackKeywords(chunk.text, 6);
+      const textTokens = tokenize(chunk.text);
+      if (textTokens.length < 3) {
+        return null;
+      }
+
+      let score = keywords.reduce(
+        (sum, token) => sum + (fallbackInsertionKeywordWeights[token] ?? 0.4),
+        0,
+      );
+      score += Math.min(3, textTokens.length * 0.05);
+      if (/[?!]/.test(chunk.text)) {
+        score += 1.4;
+      }
+      if (/\$\d|\d{2,}/.test(chunk.text)) {
+        score += 0.9;
+      }
+
+      const rawDuration = Math.max(
+        config.minInsertionSeconds,
+        Math.min(config.maxInsertionSeconds, chunk.endSeconds - chunk.startSeconds),
+      );
+      const midpoint = (chunk.startSeconds + chunk.endSeconds) / 2;
+      const startSeconds = clamp(
+        midpoint - rawDuration / 2,
+        config.edgeBufferSeconds,
+        Math.max(
+          config.edgeBufferSeconds,
+          durationSeconds - config.edgeBufferSeconds - rawDuration,
+        ),
+      );
+      const endSeconds = Math.min(
+        durationSeconds - config.edgeBufferSeconds,
+        startSeconds + rawDuration,
+      );
+      const query = keywords.join(' ') || chunk.text.split(/\s+/).slice(0, 6).join(' ');
+
+      return {
+        startSeconds,
+        endSeconds,
+        query,
+        reason: `Heuristic transcript match around ${query || 'strong line'}.`,
+        visualBrief: {
+          emotion: 'motivational',
+          visualMetaphor: query || 'lifestyle movement',
+          energy: 'high',
+          idealShot: 'short cinematic cutaway',
+          motion: 'movement and quick visual change',
+        },
+        searchQueries: [query, ...keywords.slice(0, 2)].filter(Boolean).slice(0, 3),
+        keywords: keywords.length > 0 ? keywords : textTokens.slice(0, 4),
+        avoidTerms: [],
+        heuristicScore: score,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.heuristicScore - a.heuristicScore);
+
+  if (candidates.length === 0) {
+    return [];
+  }
+
+  const selected = [];
+  for (const candidate of candidates) {
+    const overlaps = selected.some(
+      (entry) =>
+        candidate.startSeconds < entry.endSeconds + config.minGapSeconds &&
+        candidate.endSeconds > entry.startSeconds - config.minGapSeconds,
+    );
+    if (overlaps) {
+      continue;
+    }
+    selected.push(candidate);
+    if (selected.length >= targetInsertionCount) {
+      break;
+    }
+  }
+
+  return normalizeInsertions(selected, durationSeconds, config);
+};
+
 const buildVideoFilter = (width, height, fps) =>
   `fps=${fps},scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},setsar=1`;
 
@@ -907,6 +1158,13 @@ if (!enabled) {
 const sceneLibraryDir = resolveMaybePath(
   args['scene-library'] ?? contextScenes.libraryDir ?? './scene-library',
 );
+const libraryConfigPath = args['library-config']
+  ? path.resolve(String(args['library-config']))
+  : path.join(sceneLibraryDir ?? projectRoot, 'library.config.json');
+const sourceProfile = args['source-profile']
+  ? String(args['source-profile']).trim().toLowerCase()
+  : null;
+const profileRules = loadProfileRules(libraryConfigPath);
 
 if (!sceneLibraryDir) {
   console.warn('Scene library path could not be resolved. Using source clip only.');
@@ -939,6 +1197,10 @@ const config = {
   edgeBufferSeconds: Math.max(0, Number(contextScenes.edgeBufferSeconds ?? 1.0)),
   targetCoverageRatio: clamp(Number(contextScenes.targetCoverageRatio ?? 0.5), 0.05, 0.85),
   maxCoverageRatio: clamp(Number(contextScenes.maxCoverageRatio ?? 0.38), 0.05, 0.9),
+  targetInsertionLengthSeconds: Math.max(
+    0.6,
+    Number(contextScenes.targetInsertionLengthSeconds ?? contextScenes.maxInsertionSeconds ?? 3.2),
+  ),
   transcriptChunkWords: Math.max(
     5,
     Number(contextScenes.transcriptChunkWords ?? 10),
@@ -1060,7 +1322,9 @@ const blockedSceneIds = usedIdsFromSelection(
 
 const captions = readCaptions(captionsPath);
 const metadata = probeVideo(video);
-const transcriptChunks = buildTranscriptChunks(captions, config.transcriptChunkWords);
+const transcriptChunks =
+  readEnhancedTranscriptChunks(captionsPath) ??
+  buildTranscriptChunks(captions, config.transcriptChunkWords);
 const client = new OpenAI();
 const targetInsertionCount = Math.min(
   config.maxInsertionsPerClip,
@@ -1068,7 +1332,10 @@ const targetInsertionCount = Math.min(
     1,
     Math.ceil(
       (metadata.durationSeconds * config.targetCoverageRatio) /
-        Math.max(config.minInsertionSeconds, config.maxInsertionSeconds),
+        Math.max(
+          config.minInsertionSeconds,
+          Math.min(config.maxInsertionSeconds, config.targetInsertionLengthSeconds),
+        ),
     ),
   ),
 );
@@ -1259,6 +1526,8 @@ if (sceneLibrary.length === 0) {
         captionsPath,
         outputVideo: outPath,
         sceneLibraryDir,
+        libraryConfigPath: fs.existsSync(libraryConfigPath) ? libraryConfigPath : null,
+        sourceProfile,
         config,
         selectionClip,
         autoIngestQueries,
@@ -1280,7 +1549,11 @@ const chosenScenes = selectScenesForInsertions(
   config.allowSceneReuseWithinClip,
   config.youtubeIngest.queryStyle.avoidTerms,
   blockedSceneIds,
-  {preferMovieScenes: config.youtubeIngest.queryStyle.preferMovieScenes},
+  {
+    preferMovieScenes: config.youtubeIngest.queryStyle.preferMovieScenes,
+    sourceProfile,
+    profileRules,
+  },
 );
 const plannedSceneStats = insertionCoverageStats(insertions, metadata.durationSeconds);
 const chosenSceneStats = insertionCoverageStats(chosenScenes, metadata.durationSeconds);
@@ -1316,6 +1589,8 @@ if (chosenScenes.length === 0) {
         sourceVideo: video,
         outputVideo: outPath,
         sceneLibraryDir,
+        libraryConfigPath: fs.existsSync(libraryConfigPath) ? libraryConfigPath : null,
+        sourceProfile,
         autoIngestQueries,
         autoIngestResult,
         popCultureResearch: popCultureResearchResult,
@@ -1352,6 +1627,8 @@ fs.writeFileSync(
       captionsPath,
       outputVideo: outPath,
       sceneLibraryDir,
+      libraryConfigPath: fs.existsSync(libraryConfigPath) ? libraryConfigPath : null,
+      sourceProfile,
       config,
       selectionClip,
       autoIngestQueries,

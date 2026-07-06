@@ -16,20 +16,77 @@ cp .env.example .env
 ## Quick Start
 
 1. Run `npm install`.
-2. Make sure `.env` contains `OPENAI_API_KEY=...` for anything that transcribes or uses AI.
-3. Double-click `RUN.command`, or use the commands below.
+2. `cp .env.example .env`
+3. The default setup is now local-first transcription with `whisper-cli`.
+4. Add `OPENAI_API_KEY=...` if you want cheap transcript cleanup, AI clip picking, and stronger B-roll planning on top of the local transcript.
+5. Local transcription still works without OpenAI if `whisper-cli` is installed.
+6. Double-click `RUN.command`, or use the commands below.
 
 From Terminal:
 
 ```bash
 npm run menu
+npx clipcaptionai menu
 ```
 
 Run a quick local health check:
 
 ```bash
 npm run doctor
+npx clipcaptionai doctor
 ```
+
+Run the repo verification suite:
+
+```bash
+npm run check
+```
+
+Open the interactive front door:
+
+```bash
+npm run menu
+```
+
+## Menu Reference
+
+`RUN.command` and `npm run menu` open the same 13-option workflow menu.
+
+For render-producing workflows, the menu can now optionally open an advanced settings prompt before the run starts. That lets you override common choices on the fly without editing JSON first:
+
+- caption on or off
+- caption placement
+- caption opacity
+- style preset or custom style-config path
+- vertical crop vs vertical contain framing
+- B-roll/context-scenes on or off where that workflow supports it
+- sound effects on or off where that workflow supports it
+
+| Menu | What it does | Direct command | Main output |
+| --- | --- | --- | --- |
+| `1` | Download links from `links.txt` and stop. | `npm run clipkit -- download --links links.txt` | `outputs/download-run-*/downloads/` |
+| `2` | Download full videos and chop each whole source into fixed clips. | `npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15` | `outputs/fixed-clips-run-*/fixed-clips/` |
+| `3` | Find the strongest moments for manual editing only. | `npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.moment.mp4` |
+| `4` | Full auto-clips pipeline. | `npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| `5` | B-roll-heavy generator using labeled `links.txt`. | `npm run clipkit -- broll-captions --links links.txt --max-clips 3` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| `6` | Caption one existing video. | `npm run clipkit -- caption --video "/path/to/video.mp4"` | `outputs/caption-run-*/final/` |
+| `7` | Enhance an existing edit with B-roll plus captions. | `npm run clipkit -- enhance --video "/path/to/edit.mp4"` | `outputs/enhance-run-*/final/` |
+| `8` | Find standalone B-roll from prompt lines. | `npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8` | `outputs/broll-run-*/` |
+| `9` | List or rerender a generated clip after transcript/style fixes. | `npm run clipkit -- rerender --clip <id>` | `*.corrected.mp4` or replaced `*.captioned.mp4` |
+| `10` | Clean temp files or old output folders. | `npm run clipkit -- cleanup` | Deletes generated files after confirmation |
+| `11` | Open Remotion Studio. | `npm run studio` | Remotion preview UI |
+| `12` | Open the newest output folder in Finder. | `npm run output:open` | Latest `outputs/run-*` folder |
+| `13` | Check local dependencies and config. | `npm run doctor` | Terminal health report |
+
+Menu option `9` now supports both cases:
+
+- press Enter on clip input to list editable clips
+- enter a clip number, slug, title fragment, or full `.captions.json` path to rerender
+- optionally point it at an older run folder instead of the latest run
+- add `--no-captions` if you want a B-roll-only rerender for one specific export
+
+If you prefer the terminal directly, `npm run clipkit -- help` prints the same command hub summary.
+The local package bin works too: `npx clipcaptionai --help`.
 
 ## Basic Commands
 
@@ -56,7 +113,58 @@ The files go here:
 outputs/download-run-YYYY-MM-DD-HHMMSS/downloads/
 ```
 
-### 2. Caption One Video
+### 2. Find The Best Moments And Export Clean Source Clips
+
+Use this when you want the AI to download the source videos, find the most promising moments, and export those clips for your own manual edit. No captions, no B-roll, no final social render.
+
+Run:
+
+```bash
+npm run moments:auto -- --links links.txt --max-clips 6 --padding-seconds 2
+```
+
+That downloads each source video, transcribes it, picks the strongest moments, and exports clean source clips here:
+
+```text
+outputs/run-YYYY-MM-DD-HHMMSS/captioned-clips/<video-slug>/*.moment.mp4
+```
+
+You also get `selection.json` in the same folder so you can review the chosen hooks, timestamps, and reasoning.
+
+### 2A. Download Full Videos And Chop Everything Into Fixed 15-Second Clips
+
+Use this when you want the original full-video clipping workflow: download each source and split the whole thing into back-to-back 15-second chunks for manual review.
+
+Run:
+
+```bash
+npm run clips:fixed -- --links links.txt --segment-seconds 15
+```
+
+This does not transcribe, pick moments, caption, add B-roll, or render anything.
+
+The files go here:
+
+```text
+outputs/fixed-clips-run-YYYY-MM-DD-HHMMSS/
+  links.txt
+  manifest.json
+  downloads/
+  fixed-clips/
+    <video-slug>/
+      000.mp4
+      001.mp4
+      002.mp4
+      segments.json
+```
+
+Direct low-level command:
+
+```bash
+npm run download:split -- --links links.txt --segment-seconds 15
+```
+
+### 3. Caption One Video
 
 Run:
 
@@ -70,7 +178,7 @@ That transcribes the video, renders captions, and saves the result here:
 outputs/caption-run-YYYY-MM-DD-HHMMSS/final/
 ```
 
-### 3. Caption One Video With A Fixed Transcript
+### 4. Caption One Video With A Fixed Transcript
 
 Use this after manually fixing a `.captions.json` file:
 
@@ -80,7 +188,7 @@ npm run caption:auto -- \
   --captions "/path/to/fixed.captions.json"
 ```
 
-### 4. Auto-Clip YouTube Videos Into Captioned Shorts
+### 5. Auto-Clip YouTube Videos Into Captioned Shorts
 
 Use this when you want the full AI pipeline:
 
@@ -90,7 +198,7 @@ npm run clip:auto -- --links links.txt --max-clips 6 --padding-seconds 2
 
 That downloads each YouTube video, transcribes it, picks interesting clips, adds captions, and renders shorts.
 
-### 5. Add B-Roll And Captions To An Existing Edit
+### 6. Add B-Roll And Captions To An Existing Edit
 
 Run:
 
@@ -100,7 +208,7 @@ npm run video:enhance -- --video "/path/to/already-edited-video.mp4"
 
 Use this when the video is already mostly edited and you want extra B-roll plus captions on top.
 
-### 6. Use The Menu Instead
+### 7. Use The Menu Instead
 
 Run:
 
@@ -110,7 +218,7 @@ npm run menu
 
 Then pick the workflow you want.
 
-### 7. Clean Up Generated Files
+### 8. Clean Up Generated Files
 
 Run:
 
@@ -127,12 +235,27 @@ The cleanup menu can:
 
 Nothing is deleted unless you confirm it.
 
+### 9. Rerender One Clip Without Captions
+
+Use this when you like the B-roll-heavy cut, but want one export with no caption layer at all:
+
+```bash
+npm run clipkit -- rerender --run outputs/run-YYYY-MM-DD-HHMMSS --clip 03-your-website-is-leaking-money --no-captions
+```
+
+That disables both caption layers for that one rerender only:
+
+- the visible text layer
+- the inverted/masked caption effect layer
+
 ## Toolkit Workflows
 
 The everyday command surface is `clipkit`:
 
 ```bash
 npm run clipkit -- download --links links.txt
+npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15
+npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2
 npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2
 npm run clipkit -- caption --video "/path/to/video.mp4"
 npm run clipkit -- enhance --video "/path/to/already-edited.mp4"
@@ -148,15 +271,42 @@ Shortcut aliases:
 | `npm run menu` | Open the interactive workflow menu. |
 | `npm run doctor` | Check Node, npm, ffmpeg, ffprobe, yt-dlp, `.env`, and keys. |
 | `npm run download:youtube` | Download YouTube videos from a links file and stop. |
+| `npm run download:split` | Download YouTube videos, then slice each full source into fixed clips. |
+| `npm run clips:fixed` | Run the full-video fixed-clip workflow from `links.txt`. |
+| `npm run moments:auto` | Download YouTube videos, pick the strongest moments, and export clean source clips for manual editing. |
 | `npm run clip:auto` | Auto-clip YouTube videos from a links file. |
+| `npm run broll:captions` | Run the B-roll-heavy labeled-links workflow from `links.txt`. |
 | `npm run caption:auto` | Caption any existing video without picking new clips. |
 | `npm run video:enhance` | Add contextual B-roll and captions to an existing edit. |
 | `npm run broll:find` | Find standalone B-roll from text prompts. |
 | `npm run rerender:clip` | Rerender a generated clip after text/style fixes. |
 | `npm run cleanup` | Clean temporary files or old output folders. |
+| `npm run output:open` | Open the newest output folder in Finder. |
+| `npm run studio` | Open Remotion Studio for preview/debug work. |
+| `npm run transcribe` | Create one `.captions.json` from a local video without rendering. |
+| `npm run transcribe:benchmark` | Compare local vs OpenAI transcription quality on the same video. |
 | `npm run scene:blacklist` | Blacklist scene-library clips after you delete bad MP4s, then remove orphaned sidecars. |
+| `npm run scene:index` | Build or refresh `index.json` metadata for a raw local scene library. |
 
 More detailed walkthroughs live in [docs/WORKFLOWS.md](docs/WORKFLOWS.md). GitHub-safe publishing notes live in [docs/GITHUB.md](docs/GITHUB.md).
+
+## Workflow Chooser
+
+If you are not sure which command to run, use this:
+
+| Goal | Best command |
+| --- | --- |
+| Just download source videos | `npm run download:youtube -- --links links.txt` |
+| Download full source videos and chop the entire thing into fixed 15-second clips | `npm run clips:fixed -- --links links.txt --segment-seconds 15` |
+| Let AI find strong moments, but edit manually yourself | `npm run moments:auto -- --links links.txt --max-clips 6 --padding-seconds 2` |
+| Run the full shorts pipeline | `npm run clip:auto -- --links links.txt --max-clips 6 --padding-seconds 2` |
+| Use labeled creator videos plus lots of local B-roll | `npm run broll:captions -- --links links.txt --max-clips 3` |
+| Caption one existing edit only | `npm run caption:auto -- --video "/path/to/video.mp4"` |
+| Add B-roll plus captions onto an existing edit | `npm run video:enhance -- --video "/path/to/edit.mp4"` |
+| Build a reusable B-roll pack from text prompts | `npm run broll:find -- --prompts broll-prompts.txt --max-downloads 8` |
+| Fix one wrong caption word and rerender | `npm run rerender:clip -- --clip <id>` |
+| Open the newest run in Finder | `npm run output:open` |
+| Sanity-check the machine before a long run | `npm run doctor` |
 
 Each run creates a fresh folder:
 
@@ -174,6 +324,8 @@ The current `outputs` folder is kept clean by separating every run into its own 
 
 ## Main Commands
 
+These are the stable, everyday operator commands. Lower-level helper scripts exist too, but if you are using the toolkit normally, stay on this surface:
+
 Clean temporary files or old output folders:
 
 ```bash
@@ -184,6 +336,18 @@ Download YouTube videos from `links.txt` and stop:
 
 ```bash
 npm run download:youtube -- --links links.txt
+```
+
+Download YouTube videos from `links.txt`, then chop each whole source into fixed 15-second clips:
+
+```bash
+npm run clips:fixed -- --links links.txt --segment-seconds 15
+```
+
+Download YouTube videos from `links.txt`, pick the strongest moments, and export source clips only:
+
+```bash
+npm run moments:auto -- --links links.txt --max-clips 6 --padding-seconds 2
 ```
 
 Run the complete YouTube auto-clipping workflow from `links.txt`:
@@ -244,11 +408,28 @@ Useful `process` options:
 | `--selection-model ID` | OpenAI model used for selecting clips. |
 | `--style-config FILE` | Caption style JSON. Defaults to `caption-style.json`. |
 | `--scene-library DIR` | Folder of tagged scene clips used for context-matched cutaways. |
+| `--library-config FILE` | Optional `library.config.json` used when indexing a raw local scene library. |
 | `--context-scenes` | Force-enable transcript-matched scene inserts for this run. |
 | `--disable-context-scenes` | Force-disable scene inserts for this run. |
+| `--youtube-ingest` | Force-enable YouTube B-roll ingest while planning cutaways. |
+| `--disable-youtube-ingest` | Force-disable YouTube B-roll ingest for this run. |
+| `--local-scenes-only` | Use only clips already inside your local scene library. |
+| `--reindex-scene-library` | Rebuild `scene-library/index.json` before processing. |
 | `--reselect` | Ignore existing AI selections and choose again. |
 | `--vertical` | Render as 1080x1920 with video cropped to fill. |
 | `--vertical-contain` | Render as 1080x1920 with full video contained and black bars. |
+
+Local custom-scenes example:
+
+```bash
+npm run process -- \
+  --links links.txt \
+  --scene-library ./custom-scenes-library \
+  --library-config ./custom-scenes-library/library.config.json \
+  --local-scenes-only \
+  --disable-sound-effects \
+  --style-config styles/custom-scenes-reference.json
+```
 
 ## Manual Caption Fixes
 
@@ -767,6 +948,16 @@ Scene library options:
 
 When `youtubeIngest.enabled` is on and `YOUTUBE_API_KEY` is present, the pipeline can also add new YouTube clips into this library automatically from transcript-matched search queries.
 
+If your library is a folder of raw personal clips, build metadata first:
+
+```bash
+npm run scene:index -- \
+  --scene-library ./custom-scenes-library \
+  --library-config ./custom-scenes-library/library.config.json
+```
+
+That writes `index.json` by scanning filenames and merging any reusable profile rules or clip overrides from `library.config.json`. A starter file lives at `examples/custom-scenes.library.config.example.json`.
+
 Sidecar example:
 
 ```json
@@ -847,14 +1038,14 @@ You can force certain words globally:
 | `highlightScale` | `1.62` | Extra scale for highlighted keywords. |
 | `activePopStartScale` | `0.72` | Start scale for the pop-in animation. Lower means more pop. |
 
-`motionKeyframes` run from `at: 0` to `at: 1` during each caption beat. `xPercent` and `yPercent` are viewport percentages, so `-24` moves the caption left by about 24vw.
+`motionKeyframes` run from `at: 0` to `at: 1` during each caption beat. `xPercent` and `yPercent` are viewport percentages, so `-24` moves the caption left by about 24vw. If you want the invert-mask look to hit immediately, keep the first keyframe opacity at the same level as the rest of the beat instead of fading from `0`.
 
 ```json
 {
   "position": "center-impact",
   "captionLayout": "inline-wrap",
   "motionKeyframes": [
-    { "at": 0, "xPercent": 0, "yPercent": 0, "scale": 0.78, "opacity": 0 },
+    { "at": 0, "xPercent": 0, "yPercent": 0, "scale": 0.78, "opacity": 1 },
     { "at": 0.16, "xPercent": 0, "yPercent": 0, "scale": 1.16, "opacity": 1 },
     { "at": 0.58, "xPercent": -24, "yPercent": 0, "scale": 0.92, "opacity": 1 },
     { "at": 1, "xPercent": -24, "yPercent": 0, "scale": 0.9, "opacity": 0.98 }
@@ -960,17 +1151,54 @@ Useful `smart:clips` options:
 
 ## Transcription Notes
 
-`npm run transcribe` extracts mono 16kHz MP3 audio, splits long audio into chunks, retries transient OpenAI errors, and writes both caption tokens and the full transcription response.
+`npm run transcribe` extracts mono 16kHz audio, transcribes it, and writes both caption tokens and the full transcription response.
+
+Provider order in `auto` mode:
+
+1. `local-whispercpp` if `whisper-cli` is installed
+2. `openai` if `OPENAI_API_KEY` is available
+3. `youtube` subtitle fallback for YouTube-derived files
+
+The default `.env.example` now pins `TRANSCRIBE_PROVIDER=local-whispercpp`, so the pipeline stays local-first unless you override it.
+
+If an OpenAI key is present and the audio transcription did not come from OpenAI, the script also does a cheap text-only cleanup pass over the transcript. That cleanup is used for better clip selection and planning, while the rendered captions keep their original timings.
+
+The first local whisper.cpp run auto-downloads the configured model into `models/whisper.cpp/`.
 
 Useful options:
 
 | Option | Meaning |
 | --- | --- |
+| `--provider ID` | `auto`, `local-whispercpp`, `openai`, or `youtube`. |
 | `--model ID` | Transcription model. Default `whisper-1`. |
+| `--local-model ID` | whisper.cpp model alias or direct path. Default `small.en`. |
+| `--text-analysis-model ID` | Cheap OpenAI text model used only for transcript cleanup. Default `gpt-4.1-mini`. |
+| `--disable-text-enhance` | Skip the OpenAI text cleanup layer and keep only the raw transcript. |
+| `--force-text-enhance` | Require the OpenAI text cleanup layer for this run. |
 | `--prompt TEXT` | Context words to improve transcription. |
 | `--retries N` | Retry count for transient failures. Default `5`. |
 | `--audio-bitrate RATE` | Temporary audio bitrate. Default `48k`. |
 | `--chunk-seconds N` | Chunk length for longer audio. Default `180`. |
+
+Examples:
+
+```bash
+npm run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json
+npm run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json --provider local-whispercpp --local-model small.en
+npm run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json --provider local-whispercpp --disable-text-enhance
+npm run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json --provider openai
+```
+
+Benchmark local vs reference:
+
+```bash
+npm run transcribe:benchmark -- \
+  --video "/path/to/video.mp4" \
+  --sample-start 30 \
+  --sample-seconds 25 \
+  --candidate-provider local-whispercpp \
+  --local-model small.en
+```
 
 ## Caption JSON Shape
 

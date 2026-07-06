@@ -18,20 +18,26 @@ Usage:
 
 Options:
   --video FILE              Already-edited base video to enhance.
-  --captions FILE           Existing captions/transcript JSON. If omitted, transcribes with OpenAI.
+  --captions FILE           Existing captions/transcript JSON. If omitted, transcribes automatically.
   --out-dir DIR             Output root. Default: ./outputs
   --run-name NAME           Custom run folder name. Default: enhance-run-YYYY-MM-DD-HHMMSS
   --style-config FILE       Caption style JSON. Default: ./caption-style.json
   --scene-library DIR       Scene cache/library. Default: contextScenes.libraryDir or ./scene-library
+  --library-config FILE     Optional scene-library metadata config used by scene:index.
   --max-insertions N        Override B-roll insertion count. Default: style config.
   --fps N                   Final render FPS. Default: 24.
   --width N                 Working/output width. Default: 1080.
   --height N                Working/output height. Default: 1920.
+  --vertical                Render final output as 1080x1920 cropped fill.
+  --vertical-contain        Render final output as 1080x1920 with full video visible and black bars.
   --fit cover|contain       Normalize source into output frame. Default: contain.
   --transcription-prompt T  Prompt words for transcription accuracy.
   --no-normalize            Use the original video dimensions for mixing.
   --disable-context-scenes  Skip B-roll mixing; render captions only.
+  --youtube-ingest          Force-enable YouTube B-roll ingest during scene planning.
   --disable-youtube-ingest  Do not download new B-roll scenes during mix.
+  --local-scenes-only       Use only clips already in the local scene library.
+  --reindex-scene-library   Rebuild scene-library/index.json before enhancing.
   --movie-scenes            Prefer movie/TV scene B-roll. Default: on.
   --stock-broll             Use normal literal/stock-style B-roll search instead.
   --pop-culture-research    Force movie/TV scene query enrichment.
@@ -167,10 +173,6 @@ if (args['no-normalize']) {
 if (args.captions) {
   fs.copyFileSync(path.resolve(String(args.captions)), captionsPath);
 } else if (!fs.existsSync(captionsPath)) {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is required to transcribe when --captions is not supplied.');
-  }
-
   const transcriptionPrompt = String(
     args['transcription-prompt'] ??
       'Budapest, Hungary, Hungarian, szia, hogy van, jó napot, living abroad, making money online, Airbnb, Reddit, apartment hunting.',
@@ -199,6 +201,20 @@ if (contextScenesEnabled) {
         path.join(projectRoot, 'scene-library'),
     ),
   );
+  const libraryConfigPath = args['library-config']
+    ? path.resolve(String(args['library-config']))
+    : path.join(sceneLibraryPath, 'library.config.json');
+
+  if (args['local-scenes-only'] || args['reindex-scene-library'] || fs.existsSync(libraryConfigPath)) {
+    const indexArgs = ['run', 'scene:index', '--', '--scene-library', sceneLibraryPath];
+    if (fs.existsSync(libraryConfigPath)) {
+      indexArgs.push('--library-config', libraryConfigPath);
+    }
+    if (args['reindex-scene-library']) {
+      indexArgs.push('--reindex');
+    }
+    run('npm', indexArgs);
+  }
 
   const sceneArgs = [
     'run',
@@ -215,14 +231,22 @@ if (contextScenesEnabled) {
     '--scene-library',
     sceneLibraryPath,
     '--context-scenes',
-    '--youtube-ingest',
   ];
 
   if (!args['stock-broll']) {
     sceneArgs.push('--movie-scenes');
   }
+  if (args['youtube-ingest']) {
+    sceneArgs.push('--youtube-ingest');
+  }
   if (args['disable-youtube-ingest']) {
     sceneArgs.push('--disable-youtube-ingest');
+  }
+  if (args['local-scenes-only']) {
+    sceneArgs.push('--disable-youtube-ingest');
+  }
+  if (!args['disable-youtube-ingest'] && !args['local-scenes-only'] && !args['youtube-ingest']) {
+    sceneArgs.push('--youtube-ingest');
   }
   if (args['max-insertions']) {
     sceneArgs.push('--max-insertions', String(args['max-insertions']));
@@ -241,6 +265,11 @@ if (contextScenesEnabled) {
 }
 
 if (!args['no-render']) {
+  const verticalContain =
+    Boolean(args['vertical-contain']) ||
+    Boolean(styleConfig.verticalContain) ||
+    String(styleConfig.outputAspect ?? '') === '9:16';
+  const vertical = Boolean(args.vertical) || verticalContain;
   const renderArgs = [
     'run',
     'render:clip',
@@ -255,8 +284,13 @@ if (!args['no-render']) {
     String(fps),
     '--style-config',
     styleConfigPath,
-    '--vertical-contain',
   ];
+
+  if (verticalContain) {
+    renderArgs.push('--vertical-contain');
+  } else if (vertical) {
+    renderArgs.push('--vertical');
+  }
 
   run('npm', renderArgs);
 }

@@ -74,7 +74,7 @@ fi
 
 echo "Finding B-roll from broll-prompts.txt..."
 echo ""
-npm run broll:find -- \
+node bin/clipcaptionai.js broll -- \
   --prompts "$SCRIPT_DIR/broll-prompts.txt" \
   --out-dir "$SCRIPT_DIR/outputs" \
   --scene-library "$SCRIPT_DIR/scene-library" \

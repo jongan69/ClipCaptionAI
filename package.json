@@ -1,12 +1,42 @@
 {
   "name": "clipcaptionai",
   "version": "0.1.0",
-  "private": true,
+  "description": "Polished local-first AI video editing toolkit for clipping YouTube videos, rendering invert-mask captions, finding contextual B-roll, and rerendering creator edits.",
+  "license": "MIT",
   "type": "module",
+  "bin": {
+    "clipcaptionai": "./bin/clipcaptionai.js",
+    "cca": "./bin/clipcaptionai.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jongan69/ClipCaptionAI.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jongan69/ClipCaptionAI/issues"
+  },
+  "homepage": "https://github.com/jongan69/ClipCaptionAI#readme",
+  "keywords": [
+    "ai-video-editor",
+    "youtube-shorts",
+    "remotion",
+    "captions",
+    "broll",
+    "clipper",
+    "creator-tools",
+    "whisper",
+    "tiktok",
+    "reels"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "menu": "node scripts/clipkit.mjs",
     "clipkit": "node scripts/clipkit.mjs",
     "doctor": "node scripts/clipkit.mjs doctor",
+    "test": "node --test",
+    "check": "npm run typecheck && npm test",
     "cleanup": "node scripts/cleanup.mjs",
     "studio": "remotion studio src/index.tsx",
     "render:clip": "node scripts/render-clip.mjs",
@@ -14,11 +44,16 @@
     "rerender:clip": "node scripts/rerender-clip.mjs",
     "smart:clips": "node scripts/smart-clips.mjs",
     "download:youtube": "node scripts/download-youtube.mjs",
+    "download:split": "node scripts/download-and-split.mjs",
     "clip:auto": "node scripts/process-links.mjs",
+    "clips:fixed": "node scripts/clipkit.mjs fixed-clips",
+    "broll:captions": "node scripts/clipkit.mjs broll-captions",
+    "moments:auto": "node scripts/clipkit.mjs moments",
     "caption:auto": "node scripts/caption-video.mjs",
     "video:enhance": "node scripts/enhance-video-with-broll.mjs",
     "output:open": "node scripts/clipkit.mjs open-latest",
     "scene:mix": "node scripts/assemble-context-scenes.mjs",
+    "scene:index": "node scripts/index-scene-library.mjs",
     "scene:ingest:youtube-cc": "node scripts/ingest-youtube-cc-scenes.mjs",
     "scene:blacklist": "node scripts/sync-scene-blacklist.mjs",
     "broll:find": "node scripts/find-broll-from-text.mjs",
@@ -28,15 +63,19 @@
     "broll:enhance": "node scripts/enhance-video-with-broll.mjs",
     "process": "node scripts/process-links.mjs",
     "transcribe": "node scripts/transcribe-openai.mjs",
+    "transcribe:benchmark": "node scripts/benchmark-transcription.mjs",
     "sample:props": "node scripts/make-sample-props.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clack/prompts": "^1.7.0",
     "@remotion/captions": "4.0.481",
     "@remotion/cli": "4.0.481",
     "@remotion/openai-whisper": "4.0.481",
+    "commander": "^15.0.0",
     "dotenv": "16.4.7",
     "openai": "5.7.0",
+    "picocolors": "^1.1.1",
     "remotion": "4.0.481",
     "tsx": "4.20.3"
   },

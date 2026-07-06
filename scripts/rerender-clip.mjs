@@ -27,6 +27,7 @@ Options:
   --position NAME         left-hook, right-hook, lower-left, center-bottom, center-impact.
   --style-config FILE     Caption style JSON. Default: ./caption-style.json if present.
   --highlight-words CSV   Override AI-selected highlighted words.
+  --no-captions           Disable captions for this rerender only.
 `;
 
 const args = parseArgs(process.argv.slice(2));
@@ -232,6 +233,10 @@ if (args.position) {
 
 if (args['style-config']) {
   renderArgs.push('--style-config', String(args['style-config']));
+}
+
+if (args['no-captions']) {
+  renderArgs.push('--no-captions');
 }
 
 if (args['foreground-video']) {

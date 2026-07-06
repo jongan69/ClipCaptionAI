@@ -40,7 +40,7 @@ fi
 
 echo "Opening workflow menu..."
 echo ""
-npm run menu
+node bin/clipcaptionai.js menu
 
 echo ""
 echo "Done."

@@ -7,7 +7,7 @@ This project can be published as code, but generated media should stay local.
 Recommended commit scope:
 
 ```bash
-git add README.md package.json package-lock.json .gitignore RUN.command scripts docs examples styles projects/.gitkeep outputs/.gitkeep .env.example
+git add README.md package.json package-lock.json .gitignore RUN.command BROLL.command bin .github scripts docs examples styles tests projects/.gitkeep outputs/.gitkeep .env.example custom-scenes-library/README.md
 git commit -m "Organize ClipCaptionAI workflow toolkit"
 ```
 
@@ -16,6 +16,7 @@ Do not commit:
 - `.env`
 - `outputs/`
 - downloaded `scene-library` videos
+- personal `custom-scenes-library` footage
 - raw client/source videos
 - generated audio/video from `sfx-library`
 

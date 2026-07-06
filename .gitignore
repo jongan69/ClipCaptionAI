@@ -13,6 +13,7 @@ projects/*
 links.txt
 broll-prompts*.txt
 !examples/broll-prompts.example.txt
+models/whisper.cpp/
 
 scene-library/*.mp4
 scene-library/*.mov
@@ -21,6 +22,9 @@ scene-library/*.webm
 scene-library/*.scene.json
 scene-library/index.json
 scene-library/blacklist.json
+
+custom-scenes-library/*
+!custom-scenes-library/README.md
 
 sfx-library/**/*.mp3
 sfx-library/**/*.wav

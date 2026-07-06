@@ -1,0 +1,23 @@
+{
+  "defaultSource": "Custom Scenes Library",
+  "defaultTags": ["custom", "broll", "travel", "lifestyle"],
+  "profiles": {
+    "subject-name": {
+      "match": ["subject-name", "nickname"],
+      "description": "Personal creator footage, travel lifestyle, movement, confidence.",
+      "tags": ["subject-name", "person", "creator", "travel", "lifestyle", "confidence"]
+    },
+    "budapest": {
+      "match": ["budapest"],
+      "description": "Budapest city life, travel, architecture, Europe, lifestyle.",
+      "tags": ["budapest", "hungary", "europe", "travel", "city", "architecture", "lifestyle"]
+    }
+  },
+  "clipOverrides": {
+    "Rolex-Montage-1.MOV": {
+      "title": "Rolex luxury montage",
+      "description": "Luxury watch closeups, money, wealth, status, premium details.",
+      "tags": ["rolex", "watch", "luxury", "money", "status", "wealth"]
+    }
+  }
+}

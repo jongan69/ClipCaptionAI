@@ -8,7 +8,10 @@ import {
   projectRoot,
   run,
 } from './lib.mjs';
-import {downloadYoutubeVideo, readUrlsFromLinksFile} from './lib-youtube-download.mjs';
+import {
+  downloadYoutubeVideo,
+  readLinkEntriesFromLinksFile,
+} from './lib-youtube-download.mjs';
 
 const desktopLinks = '/Users/jonathangan/Desktop/Full-Vids/links.txt';
 const localLinks = path.join(projectRoot, 'links.txt');
@@ -28,12 +31,18 @@ Options:
   --padding-seconds N     Extra seconds before and after each selected clip. Default: 2
   --review-width N        Review render width. Default: smart selector default
   --review-fps N          Review render FPS. Default: smart selector default
+  --raw-clips-only        Export only AI-selected source moments for manual editing.
   --style-config FILE     Caption style JSON. Default: ./caption-style.json if present
   --selection-model ID    OpenAI model for editorial selection.
   --reselect              Ask AI to choose clips again even if selection.json exists.
   --scene-library DIR     Folder of tagged scene clips for context-matched cutaways.
+  --library-config FILE   Optional scene-library metadata config used by scene:index.
   --context-scenes        Force-enable context scene mixing.
   --disable-context-scenes Disable context scene mixing for this run.
+  --youtube-ingest        Force-enable YouTube B-roll ingest while planning cutaways.
+  --disable-youtube-ingest Disable YouTube B-roll ingest for this run.
+  --local-scenes-only     Use only clips already in the local scene library.
+  --reindex-scene-library Rebuild scene-library/index.json before generating clips.
   --sfx-library DIR       Folder of indexed sound effects.
   --sound-effects         Force-enable automatic low-volume sound effects.
   --disable-sound-effects Disable automatic sound effects for this run.
@@ -86,7 +95,8 @@ const finalRoot = path.join(runDir, 'captioned-clips');
 const mediaStagingDir = path.join(projectRoot, 'public', 'media');
 const styleConfigPath = path.resolve(args['style-config'] ?? defaultCaptionStylePath);
 
-const urls = readUrlsFromLinksFile(linksPath);
+const linkEntries = readLinkEntriesFromLinksFile(linksPath);
+const urls = linkEntries.map((entry) => entry.url);
 
 ensureDir(outRoot);
 ensureDir(runDir);
@@ -113,13 +123,16 @@ const passThroughOptions = [
   'padding-seconds',
   'review-width',
   'review-fps',
+  'raw-clips-only',
   'style-config',
   'selection-model',
   'scene-library',
+  'library-config',
   'sfx-library',
 ];
 
-for (const [index, url] of urls.entries()) {
+for (const [index, entry] of linkEntries.entries()) {
+  const {url, sourceProfile} = entry;
   console.log(`\n[${index + 1}/${urls.length}] Downloading ${url}`);
   const videoPath = downloadYoutubeVideo(url, downloadRoot);
   const baseSlug = slugify(path.basename(videoPath, path.extname(videoPath)));
@@ -142,8 +155,16 @@ for (const [index, url] of urls.entries()) {
 
   for (const option of passThroughOptions) {
     if (args[option] !== undefined) {
-      smartArgs.push(`--${option}`, String(args[option]));
+      if (args[option] === true) {
+        smartArgs.push(`--${option}`);
+      } else {
+        smartArgs.push(`--${option}`, String(args[option]));
+      }
     }
+  }
+
+  if (sourceProfile) {
+    smartArgs.push('--source-profile', sourceProfile);
   }
 
   if (args.reselect) {
@@ -154,6 +175,18 @@ for (const [index, url] of urls.entries()) {
   }
   if (args['disable-context-scenes']) {
     smartArgs.push('--disable-context-scenes');
+  }
+  if (args['youtube-ingest']) {
+    smartArgs.push('--youtube-ingest');
+  }
+  if (args['disable-youtube-ingest']) {
+    smartArgs.push('--disable-youtube-ingest');
+  }
+  if (args['local-scenes-only']) {
+    smartArgs.push('--local-scenes-only');
+  }
+  if (args['reindex-scene-library']) {
+    smartArgs.push('--reindex-scene-library');
   }
 
   if (args['sound-effects']) {
@@ -176,6 +209,7 @@ for (const [index, url] of urls.entries()) {
 const manifest = {
   createdAt: new Date().toISOString(),
   linksFile: linksPath,
+  linkEntries,
   urls,
   runDir,
   downloadsDir: downloadRoot,

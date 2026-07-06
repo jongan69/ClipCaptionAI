@@ -6,6 +6,14 @@ The context scene mixer can read:
 2. Per-file sidecars like `clip.mp4.scene.json`.
 3. A top-level `index.json` with a `scenes` array.
 
+If you mostly drop raw personal clips into a separate folder, you can generate that `index.json` automatically:
+
+```bash
+npm run scene:index -- \
+  --scene-library ./custom-scenes-library \
+  --library-config ./custom-scenes-library/library.config.json
+```
+
 Recommended workflow:
 
 - Keep clips short and emotionally specific.

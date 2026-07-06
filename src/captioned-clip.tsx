@@ -231,7 +231,7 @@ const motionPresetKeyframes = (
 ): CaptionMotionKeyframe[] => {
   if (preset === 'center-pop') {
     return [
-      {at: 0, scale: 0.78, opacity: 0},
+      {at: 0, scale: 0.78, opacity: 1},
       {at: 0.14, scale: 1.14, opacity: 1},
       {at: 1, scale: 1, opacity: 1},
     ];
@@ -239,7 +239,7 @@ const motionPresetKeyframes = (
 
   if (preset === 'center-to-left') {
     return [
-      {at: 0, xPercent: 0, yPercent: 0, scale: 1.12, opacity: 0},
+      {at: 0, xPercent: 0, yPercent: 0, scale: 1.12, opacity: 0.98},
       {at: 0.18, xPercent: 0, yPercent: 0, scale: 1.06, opacity: 1},
       {at: 0.58, xPercent: -24, yPercent: 0, scale: 0.9, opacity: 0.98},
       {at: 1, xPercent: -24, yPercent: 0, scale: 0.9, opacity: 0.98},
@@ -248,7 +248,7 @@ const motionPresetKeyframes = (
 
   if (preset === 'center-to-right') {
     return [
-      {at: 0, xPercent: 0, yPercent: 0, scale: 1.12, opacity: 0},
+      {at: 0, xPercent: 0, yPercent: 0, scale: 1.12, opacity: 0.98},
       {at: 0.18, xPercent: 0, yPercent: 0, scale: 1.06, opacity: 1},
       {at: 0.58, xPercent: 24, yPercent: 0, scale: 0.9, opacity: 0.98},
       {at: 1, xPercent: 24, yPercent: 0, scale: 0.9, opacity: 0.98},

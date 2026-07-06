@@ -18,7 +18,7 @@ Usage:
 
 Options:
   --video FILE              Video to caption.
-  --captions FILE           Existing captions JSON. If omitted, transcribes with OpenAI.
+  --captions FILE           Existing captions JSON. If omitted, transcribes automatically.
   --out-dir DIR             Output root. Default: ./outputs
   --run-name NAME           Custom run folder name. Default: caption-run-YYYY-MM-DD-HHMMSS
   --style-config FILE       Caption style JSON. Default: ./caption-style.json
@@ -90,10 +90,6 @@ const manifestPath = path.join(runDir, 'manifest.json');
 if (args.captions) {
   fs.copyFileSync(path.resolve(String(args.captions)), captionsPath);
 } else {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is required to transcribe when --captions is not supplied.');
-  }
-
   const transcriptionPrompt = String(args['transcription-prompt'] ?? '');
   const transcribeArgs = [
     'run',

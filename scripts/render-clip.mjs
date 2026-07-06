@@ -30,6 +30,7 @@ Options:
   --style-config FILE     Caption style JSON. Default: ./caption-style.json if present.
   --combine-ms N          Caption grouping window. Default: style config, then 420.
   --highlight-words CSV   Words that should render in the alternate emphasis font.
+  --no-captions           Disable both the visible caption layer and the inverted caption effect layer.
   --text-opacity N        Caption fill opacity. Default: 0.92.
   --frames START-END      Optional Remotion frame range for proof renders.
   --uppercase             Render caption text uppercase.
@@ -94,6 +95,10 @@ const props = {
     inactiveScale: Number(args['inactive-scale'] ?? styleConfig.inactiveScale ?? 0.62),
     uppercase: args.uppercase ? true : Boolean(styleConfig.uppercase),
     highlightedWords,
+    visibleTextLayerEnabled: args['no-captions']
+      ? false
+      : styleConfig.visibleTextLayerEnabled,
+    effectLayerEnabled: args['no-captions'] ? false : styleConfig.effectLayerEnabled,
   },
 };
 

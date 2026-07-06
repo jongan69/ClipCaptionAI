@@ -6,9 +6,46 @@ Double-click `RUN.command`, or run:
 
 ```bash
 npm run menu
+npx clipcaptionai menu
 ```
 
-The menu is the safest front door for everyday editing. It can download YouTube videos, run YouTube clipping, caption an existing edit, enhance a video with B-roll, find standalone B-roll, rerender a generated clip, open Studio, open the latest output, and run diagnostics.
+The menu is the safest front door for everyday editing. It can download YouTube videos, slice whole videos into fixed clips, find important moments for manual editing, run YouTube clipping, caption an existing edit, enhance a video with B-roll, find standalone B-roll, rerender a generated clip, open Studio, open the latest output, and run diagnostics.
+
+For workflows that render video, the menu can also open an optional advanced settings prompt before the run. That prompt can override the most common live decisions without making you hand-edit `caption-style.json` first:
+
+- style preset or custom style-config path
+- captions on or off
+- caption placement
+- caption opacity
+- vertical crop vs vertical contain
+- context-scenes / B-roll on or off for supported workflows
+- sound effects on or off for supported workflows
+
+### Menu Options
+
+| Menu | What it does | Direct command | Main output |
+| --- | --- | --- | --- |
+| `1` | Download links from `links.txt` and stop. | `npm run clipkit -- download --links links.txt` | `outputs/download-run-*/downloads/` |
+| `2` | Download whole videos and chop them into fixed clips. | `npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15` | `outputs/fixed-clips-run-*/fixed-clips/` |
+| `3` | Find important moments for manual editing only. | `npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.moment.mp4` |
+| `4` | Full YouTube auto-clipping workflow. | `npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| `5` | B-roll-heavy workflow using labeled `links.txt`. | `npm run clipkit -- broll-captions --links links.txt --max-clips 3` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| `6` | Caption one existing video. | `npm run clipkit -- caption --video "/path/to/video.mp4"` | `outputs/caption-run-*/final/` |
+| `7` | Enhance an existing edit with B-roll and captions. | `npm run clipkit -- enhance --video "/path/to/edit.mp4"` | `outputs/enhance-run-*/final/` |
+| `8` | Find standalone B-roll from a prompt file. | `npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8` | `outputs/broll-run-*/` |
+| `9` | List or rerender a generated clip. | `npm run clipkit -- rerender --clip <id>` | `*.corrected.mp4` or replaced `*.captioned.mp4` |
+| `10` | Clean temp files / old outputs. | `npm run clipkit -- cleanup` | Deletes generated files after confirmation |
+| `11` | Open Remotion Studio. | `npm run studio` | Preview UI |
+| `12` | Open the newest output folder. | `npm run output:open` | Latest `outputs/run-*` folder |
+| `13` | Run diagnostics. | `npm run doctor` | Terminal health report |
+
+Menu option `9` supports both cases: leave the clip blank to list editable clips, or enter a clip number, slug, title fragment, or full `.captions.json` path to rerender immediately.
+
+For one-off exports where you want the B-roll/video only, you can rerender without captions:
+
+```bash
+npm run clipkit -- rerender --run outputs/run-YYYY-MM-DD-HHMMSS --clip 03-your-website-is-leaking-money --no-captions
+```
 
 ## Clean Up Generated Files
 
@@ -47,6 +84,61 @@ outputs/download-run-YYYY-MM-DD-HHMMSS/downloads/
 
 This does not transcribe, clip, caption, add B-roll, or render.
 
+Shortcut alias:
+
+```bash
+npm run clipkit -- download --links links.txt
+```
+
+## Download Full Videos And Chop Them Into Fixed Clips
+
+Use this when you want the original full-video chopping workflow: download every source in `links.txt`, then split each whole video into back-to-back 15-second clips.
+
+```bash
+npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15
+```
+
+Shortcut alias:
+
+```bash
+npm run clips:fixed -- --links links.txt --segment-seconds 15
+```
+
+Output:
+
+```text
+outputs/fixed-clips-run-YYYY-MM-DD-HHMMSS/
+  links.txt
+  manifest.json
+  downloads/
+  fixed-clips/
+    <video-slug>/
+      000.mp4
+      001.mp4
+      002.mp4
+      segments.json
+```
+
+This does not transcribe, pick moments, caption, add B-roll, or render.
+
+## Find Important Moments Only
+
+Use this when you want the system to act like an assistant editor: download the videos, find the strongest or most viral-worthy moments, and export clean source clips for your own timeline.
+
+```bash
+npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2
+```
+
+Shortcut alias:
+
+```bash
+npm run moments:auto -- --links links.txt --max-clips 6 --padding-seconds 2
+```
+
+Output clips land inside the run folder as `*.moment.mp4`, alongside a `selection.json` file with the chosen timestamps, hooks, and reasons.
+
+This workflow does not add captions, B-roll, SFX, or final overlay renders.
+
 ## Auto AI Clip YouTube Videos
 
 Use this when you have long YouTube videos and want the system to download them, transcribe them, select the most interesting clips, add padding, mix B-roll/SFX when enabled, and render captioned shorts.
@@ -60,6 +152,32 @@ Shortcut alias:
 ```bash
 npm run clip:auto -- --links links.txt --max-clips 6 --padding-seconds 2
 ```
+
+## B-Roll-Heavy Caption Generator
+
+Use this when `links.txt` is labeled by creator/profile and you want the final edits to lean heavily on your local custom scenes library instead of mostly the original talking-head footage.
+
+```bash
+npm run clipkit -- broll-captions --links links.txt --max-clips 3
+```
+
+Shortcut alias:
+
+```bash
+npm run broll:captions -- --links links.txt --max-clips 3
+```
+
+Defaults for this workflow:
+
+- uses `custom-scenes-library/`
+- uses `custom-scenes-library/library.config.json`
+- uses `styles/broll-heavy-custom-scenes.json`
+- forces `--context-scenes`
+- forces `--local-scenes-only`
+- forces `--disable-sound-effects`
+- forces `--vertical-contain`
+
+This is the best fit for the labeled creator workflow where `# Mani Videos` and `# Josep Videos` in `links.txt` should route to matching scene profiles.
 
 ## Auto Caption Any Video
 
@@ -111,6 +229,12 @@ Rerender a specific clip:
 npm run clipkit -- rerender --clip 03-your-website-is-leaking-money
 ```
 
+Rerender a specific clip with captions disabled for that export only:
+
+```bash
+npm run clipkit -- rerender --clip 03-your-website-is-leaking-money --no-captions
+```
+
 ## Diagnostics
 
 ```bash
@@ -118,3 +242,29 @@ npm run doctor
 ```
 
 This checks Node, npm, ffmpeg, ffprobe, yt-dlp, `.env`, and API key presence.
+
+## Other Useful Everyday Commands
+
+Open the newest output folder:
+
+```bash
+npm run output:open
+```
+
+Open Remotion Studio:
+
+```bash
+npm run studio
+```
+
+Create one captions JSON without rendering:
+
+```bash
+npm run transcribe -- --video "/path/to/video.mp4" --out work/clip.captions.json
+```
+
+Benchmark local transcription against OpenAI on the same video:
+
+```bash
+npm run transcribe:benchmark -- --video "/path/to/video.mp4"
+```

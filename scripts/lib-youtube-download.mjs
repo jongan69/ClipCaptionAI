@@ -2,22 +2,101 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 
-export const readUrlsFromLinksFile = (linksPath) => {
+const normalizeSourceProfile = (value, {fromSectionHeading = false} = {}) => {
+  const cleaned = String(value ?? '')
+    .trim()
+    .replace(/^#+/, '')
+    .replace(/['’]s\b/gi, '')
+    .replace(/\b(videos?|video|links?|clips?|sources?)\b/gi, ' ')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .toLowerCase();
+
+  if (!cleaned) {
+    return null;
+  }
+
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) {
+    return null;
+  }
+
+  const [firstToken] = tokens;
+  if (
+    fromSectionHeading &&
+    tokens.length === 1 &&
+    firstToken.length > 4 &&
+    firstToken.endsWith('s')
+  ) {
+    return firstToken.slice(0, -1);
+  }
+
+  return firstToken;
+};
+
+const parseLinkLine = (line, currentSourceProfile) => {
+  const trimmed = String(line ?? '').trim();
+  if (!trimmed) {
+    return {entry: null, nextSourceProfile: currentSourceProfile};
+  }
+
+  if (trimmed.startsWith('#')) {
+    return {
+      entry: null,
+      nextSourceProfile:
+        normalizeSourceProfile(trimmed, {fromSectionHeading: true}) ?? currentSourceProfile,
+    };
+  }
+
+  const inlineMatch = trimmed.match(
+    /^(?<label>[^#|:]+?)\s*(?:\||:)\s*(?<url>https?:\/\/\S+)$/i,
+  );
+  if (inlineMatch?.groups?.url) {
+    return {
+      entry: {
+        url: inlineMatch.groups.url.trim(),
+        sourceProfile:
+          normalizeSourceProfile(inlineMatch.groups.label) ?? currentSourceProfile ?? null,
+      },
+      nextSourceProfile: currentSourceProfile,
+    };
+  }
+
+  return {
+    entry: {
+      url: trimmed,
+      sourceProfile: currentSourceProfile ?? null,
+    },
+    nextSourceProfile: currentSourceProfile,
+  };
+};
+
+export const readLinkEntriesFromLinksFile = (linksPath) => {
   if (!fs.existsSync(linksPath)) {
     throw new Error(`Links file not found: ${linksPath}`);
   }
 
-  const urls = fs
-    .readFileSync(linksPath, 'utf8')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'));
+  const entries = [];
+  let currentSourceProfile = null;
 
-  if (urls.length === 0) {
+  for (const line of fs.readFileSync(linksPath, 'utf8').split(/\r?\n/)) {
+    const {entry, nextSourceProfile} = parseLinkLine(line, currentSourceProfile);
+    currentSourceProfile = nextSourceProfile;
+    if (!entry?.url) {
+      continue;
+    }
+    entries.push(entry);
+  }
+
+  if (entries.length === 0) {
     throw new Error(`No URLs found in ${linksPath}`);
   }
 
-  return urls;
+  return entries;
+};
+
+export const readUrlsFromLinksFile = (linksPath) => {
+  return readLinkEntriesFromLinksFile(linksPath).map((entry) => entry.url);
 };
 
 export const downloadYoutubeVideo = (url, downloadRoot) => {
