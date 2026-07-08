@@ -14,6 +14,8 @@ test('clipkit top-level help renders the polished command hub', () => {
   assert.equal(result.status, 0);
   assert.match(result.stdout, /Polished command hub/);
   assert.match(result.stdout, /broll-captions\|heavy/);
+  assert.match(result.stdout, /split-video\|slice-video/);
+  assert.match(result.stdout, /review-moments\|review/);
   assert.match(result.stdout, /rerender --clip 03-your-website-is-leaking-money --no-captions/);
 });
 
@@ -26,4 +28,16 @@ test('bin entry works and exposes help output', () => {
   assert.equal(result.status, 0);
   assert.match(result.stdout, /Usage: clipcaptionai/);
   assert.match(result.stdout, /download\|dl/);
+  assert.match(result.stdout, /review-moments\|review/);
+});
+
+test('moments review helper exposes the standalone report command', () => {
+  const result = spawnSync('node', ['scripts/review-moments.mjs', '--help'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
+
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /npm run moments:review/);
+  assert.match(result.stdout, /--persist/);
 });

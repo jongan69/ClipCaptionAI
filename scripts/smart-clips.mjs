@@ -14,6 +14,11 @@ import {
   requireArg,
   run,
 } from './lib.mjs';
+import {
+  buildViralScorecard,
+  buildThoughtUnits,
+  snapSelectionToThoughtBoundaries,
+} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
@@ -26,6 +31,10 @@ Options:
   --min-seconds N         Minimum clip length. Default: 18
   --max-seconds N         Maximum clip length. Default: 55
   --padding-seconds N     Extra seconds before and after each selected clip. Default: 2
+  --boundary-lookaround-seconds N
+                          Max extra seconds to expand toward thought boundaries. Default: 6
+  --disable-thought-snapping
+                          Keep raw AI timestamps without sentence/thought snapping.
   --review-width N        Downscale selected clips before captioning. Default: 1280
   --review-fps N          Render review clips at this FPS. Default: 15
   --raw-clips-only        Stop after exporting the selected source clips for manual editing.
@@ -174,6 +183,11 @@ const maxClips = Number(args['max-clips'] ?? 3);
 const minSeconds = Number(args['min-seconds'] ?? 18);
 const maxSeconds = Number(args['max-seconds'] ?? 55);
 const paddingSeconds = Math.max(0, Number(args['padding-seconds'] ?? 2));
+const boundaryLookaroundSeconds = Math.max(
+  0,
+  Number(args['boundary-lookaround-seconds'] ?? 6),
+);
+const thoughtSnappingEnabled = !args['disable-thought-snapping'];
 const reviewWidth = Number(args['review-width'] ?? 1280);
 const reviewFps = Number(args['review-fps'] ?? 15);
 const rawClipsOnly = Boolean(args['raw-clips-only']);
@@ -269,6 +283,11 @@ const transcriptEnhancement =
   Array.isArray(transcriptBundle.analysis.textEnhancement.chunks)
     ? transcriptBundle.analysis.textEnhancement
     : null;
+const thoughtBoundaryPlan = buildThoughtUnits({
+  transcription,
+  transcriptEnhancement,
+  captions,
+});
 
 const wordRows = captions.map((caption) => ({
   start: Math.round(caption.startMs / 100) / 10,
@@ -554,6 +573,12 @@ if (fs.existsSync(selectionPath) && !args.reselect) {
   selection.transcriptSource = transcriptEnhancement?.enabled
     ? `analysis-text-enhancement:${transcriptEnhancement.model}`
     : transcriptBundle.metadata?.provider ?? 'raw-captions';
+  selection.thoughtBoundaryConfig = {
+    enabled: thoughtSnappingEnabled,
+    lookaroundSeconds: boundaryLookaroundSeconds,
+    source: thoughtBoundaryPlan.source,
+    unitCount: thoughtBoundaryPlan.units.length,
+  };
   writeSelection();
   console.log(`Wrote selection plan: ${selectionPath}`);
 }
@@ -612,17 +637,40 @@ const shiftTranscriptEnhancementChunks = (startSeconds, endSeconds) => {
 };
 
 selection.clips.forEach((clip, index) => {
-  const selectedStart = Math.max(0, Number(clip.startSeconds));
-  const selectedEnd = Math.min(videoMeta.durationSeconds, Number(clip.endSeconds));
+  const aiSelectedStart = Math.max(0, Number(clip.startSeconds));
+  const aiSelectedEnd = Math.min(videoMeta.durationSeconds, Number(clip.endSeconds));
+  const boundaryAdjusted = thoughtSnappingEnabled
+    ? snapSelectionToThoughtBoundaries({
+        startSeconds: aiSelectedStart,
+        endSeconds: aiSelectedEnd,
+        durationSeconds: videoMeta.durationSeconds,
+        thoughtUnits: thoughtBoundaryPlan.units,
+        lookaroundSeconds: boundaryLookaroundSeconds,
+      })
+    : {
+        startSeconds: aiSelectedStart,
+        endSeconds: aiSelectedEnd,
+        adjusted: false,
+        source: null,
+      };
+  const selectedStart = boundaryAdjusted.startSeconds;
+  const selectedEnd = boundaryAdjusted.endSeconds;
   const start = Math.max(0, selectedStart - paddingSeconds);
   const end = Math.min(videoMeta.durationSeconds, selectedEnd + paddingSeconds);
   const duration = Math.max(1, end - start);
+  clip.aiSelectedStartSeconds = aiSelectedStart;
+  clip.aiSelectedEndSeconds = aiSelectedEnd;
   clip.selectedStartSeconds = selectedStart;
   clip.selectedEndSeconds = selectedEnd;
   clip.paddedStartSeconds = start;
   clip.paddedEndSeconds = end;
   clip.paddingSeconds = paddingSeconds;
+  clip.thoughtBoundaryAdjusted = boundaryAdjusted.adjusted;
+  clip.thoughtBoundarySource = thoughtBoundaryPlan.source;
+  clip.thoughtBoundaryLookaroundSeconds = boundaryLookaroundSeconds;
+  clip.thoughtBoundaryAlignment = boundaryAdjusted.source;
   clip.sourceProfile = sourceProfile;
+  clip.viralScorecard = buildViralScorecard(clip);
   const clipSlug = `${String(index + 1).padStart(2, '0')}-${clip.title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
@@ -815,6 +863,13 @@ selection.clips.forEach((clip, index) => {
 
   run('npm', renderArgs);
 });
+
+selection.thoughtBoundaryConfig = {
+  enabled: thoughtSnappingEnabled,
+  lookaroundSeconds: boundaryLookaroundSeconds,
+  source: thoughtBoundaryPlan.source,
+  unitCount: thoughtBoundaryPlan.units.length,
+};
 
 writeSelection();
 

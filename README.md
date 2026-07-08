@@ -50,7 +50,7 @@ npm run menu
 
 ## Menu Reference
 
-`RUN.command` and `npm run menu` open the same 13-option workflow menu.
+`RUN.command` and `npm run menu` open the same 14-option workflow menu.
 
 For render-producing workflows, the menu can now optionally open an advanced settings prompt before the run starts. That lets you override common choices on the fly without editing JSON first:
 
@@ -66,19 +66,20 @@ For render-producing workflows, the menu can now optionally open an advanced set
 | --- | --- | --- | --- |
 | `1` | Download links from `links.txt` and stop. | `npm run clipkit -- download --links links.txt` | `outputs/download-run-*/downloads/` |
 | `2` | Download full videos and chop each whole source into fixed clips. | `npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15` | `outputs/fixed-clips-run-*/fixed-clips/` |
-| `3` | Find the strongest moments for manual editing only. | `npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.moment.mp4` |
-| `4` | Full auto-clips pipeline. | `npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
-| `5` | B-roll-heavy generator using labeled `links.txt`. | `npm run clipkit -- broll-captions --links links.txt --max-clips 3` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
-| `6` | Caption one existing video. | `npm run clipkit -- caption --video "/path/to/video.mp4"` | `outputs/caption-run-*/final/` |
-| `7` | Enhance an existing edit with B-roll plus captions. | `npm run clipkit -- enhance --video "/path/to/edit.mp4"` | `outputs/enhance-run-*/final/` |
-| `8` | Find standalone B-roll from prompt lines. | `npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8` | `outputs/broll-run-*/` |
-| `9` | List or rerender a generated clip after transcript/style fixes. | `npm run clipkit -- rerender --clip <id>` | `*.corrected.mp4` or replaced `*.captioned.mp4` |
-| `10` | Clean temp files or old output folders. | `npm run clipkit -- cleanup` | Deletes generated files after confirmation |
-| `11` | Open Remotion Studio. | `npm run studio` | Remotion preview UI |
-| `12` | Open the newest output folder in Finder. | `npm run output:open` | Latest `outputs/run-*` folder |
-| `13` | Check local dependencies and config. | `npm run doctor` | Terminal health report |
+| `3` | Cut one local video into fixed clips. | `npm run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15` | `outputs/local-fixed-clips-run-*/fixed-clips/` |
+| `4` | Find the strongest moments for manual editing only. | `npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.moment.mp4` |
+| `5` | Full auto-clips pipeline. | `npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| `6` | B-roll-heavy generator using labeled `links.txt`. | `npm run clipkit -- broll-captions --links links.txt --max-clips 3` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| `7` | Caption one existing video. | `npm run clipkit -- caption --video "/path/to/video.mp4"` | `outputs/caption-run-*/final/` |
+| `8` | Enhance an existing edit with B-roll plus captions. | `npm run clipkit -- enhance --video "/path/to/edit.mp4"` | `outputs/enhance-run-*/final/` |
+| `9` | Find standalone B-roll from prompt lines. | `npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8` | `outputs/broll-run-*/` |
+| `10` | List or rerender a generated clip after transcript/style fixes. | `npm run clipkit -- rerender --clip <id>` | `*.corrected.mp4` or replaced `*.captioned.mp4` |
+| `11` | Clean temp files or old output folders. | `npm run clipkit -- cleanup` | Deletes generated files after confirmation |
+| `12` | Open Remotion Studio. | `npm run studio` | Remotion preview UI |
+| `13` | Open the newest output folder in Finder. | `npm run output:open` | Latest `outputs/run-*` folder |
+| `14` | Check local dependencies and config. | `npm run doctor` | Terminal health report |
 
-Menu option `9` now supports both cases:
+Menu option `10` now supports both cases:
 
 - press Enter on clip input to list editable clips
 - enter a clip number, slug, title fragment, or full `.captions.json` path to rerender
@@ -131,6 +132,20 @@ outputs/run-YYYY-MM-DD-HHMMSS/captioned-clips/<video-slug>/*.moment.mp4
 
 You also get `selection.json` in the same folder so you can review the chosen hooks, timestamps, and reasoning.
 
+By default, the finder now snaps those chosen moments to nearby transcript thought boundaries so clips are less likely to cut off mid-sentence. Tune that with `--boundary-lookaround-seconds 8` or turn it off with `--disable-thought-snapping`.
+
+If you want a fast trust-but-verify pass after the export, generate a viral scorecard report:
+
+```bash
+npm run moments:review -- --write --format markdown
+```
+
+That reads the newest `outputs/run-*` folder, scores every chosen moment, explains the strongest signals, and writes `viral-scorecards.md` into the run folder. You can also persist the scorecards directly into each `selection.json`:
+
+```bash
+npm run moments:review -- --persist --write --format json
+```
+
 ### 2A. Download Full Videos And Chop Everything Into Fixed 15-Second Clips
 
 Use this when you want the original full-video clipping workflow: download each source and split the whole thing into back-to-back 15-second chunks for manual review.
@@ -162,6 +177,35 @@ Direct low-level command:
 
 ```bash
 npm run download:split -- --links links.txt --segment-seconds 15
+```
+
+### 2B. Cut One Local Video Into Fixed 15-Second Clips
+
+Use this when the source video is already on your machine and you just want it chopped into back-to-back 15-second sections.
+
+Run:
+
+```bash
+npm run video:split -- --video "/path/to/video.mp4" --segment-seconds 15
+```
+
+Or through the command hub:
+
+```bash
+npm run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15
+```
+
+The files go here:
+
+```text
+outputs/local-fixed-clips-run-YYYY-MM-DD-HH-MM-SS/
+  manifest.json
+  fixed-clips/
+    <video-slug>/
+      000.mp4
+      001.mp4
+      002.mp4
+      segments.json
 ```
 
 ### 3. Caption One Video
@@ -226,6 +270,41 @@ Run:
 npm run cleanup
 ```
 
+## Review Why A Clip Was Picked
+
+Use this when you want an editor-facing explanation layer for the moments finder instead of just raw timestamps.
+
+Run against the latest batch:
+
+```bash
+npm run moments:review -- --write --format markdown
+```
+
+Run against an older batch:
+
+```bash
+npm run clipkit -- review-moments \
+  --run outputs/run-YYYY-MM-DD-HHMMSS \
+  --top 10 \
+  --format text
+```
+
+Persist scorecards back into the selection files:
+
+```bash
+npm run moments:review -- \
+  --run outputs/run-YYYY-MM-DD-HHMMSS \
+  --persist \
+  --write \
+  --format json
+```
+
+What you get:
+
+- an overall 0-100 score for each picked clip
+- readable reasons like hook strength, emotional intensity, practical value, and thought completeness
+- optional `viralScorecard` blocks saved into each `selection.json`
+
 The cleanup menu can:
 
 - delete temporary render files from `work/` and `public/media/`
@@ -255,6 +334,7 @@ The everyday command surface is `clipkit`:
 ```bash
 npm run clipkit -- download --links links.txt
 npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15
+npm run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15
 npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2
 npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2
 npm run clipkit -- caption --video "/path/to/video.mp4"
@@ -272,6 +352,7 @@ Shortcut aliases:
 | `npm run doctor` | Check Node, npm, ffmpeg, ffprobe, yt-dlp, `.env`, and keys. |
 | `npm run download:youtube` | Download YouTube videos from a links file and stop. |
 | `npm run download:split` | Download YouTube videos, then slice each full source into fixed clips. |
+| `npm run video:split` | Slice one local video into fixed clips without using YouTube. |
 | `npm run clips:fixed` | Run the full-video fixed-clip workflow from `links.txt`. |
 | `npm run moments:auto` | Download YouTube videos, pick the strongest moments, and export clean source clips for manual editing. |
 | `npm run clip:auto` | Auto-clip YouTube videos from a links file. |
@@ -298,6 +379,7 @@ If you are not sure which command to run, use this:
 | --- | --- |
 | Just download source videos | `npm run download:youtube -- --links links.txt` |
 | Download full source videos and chop the entire thing into fixed 15-second clips | `npm run clips:fixed -- --links links.txt --segment-seconds 15` |
+| Chop one local source video into fixed 15-second clips | `npm run video:split -- --video "/path/to/video.mp4" --segment-seconds 15` |
 | Let AI find strong moments, but edit manually yourself | `npm run moments:auto -- --links links.txt --max-clips 6 --padding-seconds 2` |
 | Run the full shorts pipeline | `npm run clip:auto -- --links links.txt --max-clips 6 --padding-seconds 2` |
 | Use labeled creator videos plus lots of local B-roll | `npm run broll:captions -- --links links.txt --max-clips 3` |
@@ -403,6 +485,8 @@ Useful `process` options:
 | `--min-seconds N` | Minimum AI-selected core clip length. |
 | `--max-seconds N` | Maximum AI-selected core clip length. |
 | `--padding-seconds N` | Extra seconds before and after the selected moment. Default `2`. |
+| `--boundary-lookaround-seconds N` | Max extra seconds used to snap a chosen clip to nearby thought boundaries. Default `6`. |
+| `--disable-thought-snapping` | Keep raw AI-selected timestamps without boundary snapping. |
 | `--review-width N` | Width used when cutting intermediate clips. Default `1280`. |
 | `--review-fps N` | Render FPS for review clips. Default `15`. |
 | `--selection-model ID` | OpenAI model used for selecting clips. |
@@ -1144,6 +1228,8 @@ Useful `smart:clips` options:
 | `--min-seconds N` | Minimum selected core length. Default `18`. |
 | `--max-seconds N` | Maximum selected core length. Default `55`. |
 | `--padding-seconds N` | Extra seconds before/after. Default `2`. |
+| `--boundary-lookaround-seconds N` | Max extra seconds used to snap to thought boundaries. Default `6`. |
+| `--disable-thought-snapping` | Keep raw AI timestamps. |
 | `--reselect` | Ask AI to choose clips again. |
 | `--vertical` | 1080x1920 cropped fill. |
 | `--vertical-contain` | 1080x1920 contained with black bars. |

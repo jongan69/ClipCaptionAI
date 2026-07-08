@@ -480,6 +480,10 @@ const runMomentsOnly = (args = []) => {
   ], args));
 };
 
+const runReviewMoments = (args = []) => {
+  npmRun('moments:review', args);
+};
+
 const runBrollCaptions = (args = []) => {
   const linksPath = path.join(projectRoot, 'links.txt');
   ensurePromptFile(
@@ -548,6 +552,10 @@ const runFixedClips = (args = []) => {
   ], args));
 };
 
+const runLocalFixedClips = (args = []) => {
+  npmRun('video:split', args);
+};
+
 const runBroll = (args = []) => {
   const promptsPath = path.join(projectRoot, 'broll-prompts.txt');
   ensurePromptFile(
@@ -610,6 +618,7 @@ const interactiveMenu = async () => {
       options: [
         {value: 'download', label: 'Download YouTube videos and stop', hint: 'outputs/download-run-*/downloads/'},
         {value: 'fixed-clips', label: 'Download full videos and chop fixed 15s clips', hint: 'whole-source slicing'},
+        {value: 'split-video', label: 'Cut one local video into fixed 15s clips', hint: 'no YouTube needed'},
         {value: 'moments', label: 'Find important moments only', hint: 'clean source clips for manual edits'},
         {value: 'auto-clips', label: 'Full auto-clips pipeline', hint: 'download, transcribe, select, caption, render'},
         {value: 'broll-captions', label: 'B-roll-heavy labeled workflow', hint: 'local custom scenes + captions'},
@@ -633,6 +642,14 @@ const interactiveMenu = async () => {
   if (choice === 'fixed-clips') {
     runFixedClips();
     outro('Fixed-clip workflow finished.');
+    return;
+  }
+  if (choice === 'split-video') {
+    const video = await askForVideo('Local');
+    if (video) {
+      runLocalFixedClips(['--video', video]);
+      outro('Local fixed-clip workflow finished.');
+    }
     return;
   }
   if (choice === 'moments') {
@@ -780,7 +797,9 @@ Examples:
   clipcaptionai menu
   clipcaptionai download --links links.txt
   clipcaptionai fixed-clips --links links.txt --segment-seconds 15
+  clipcaptionai split-video --video "/path/to/video.mp4" --segment-seconds 15
   clipcaptionai moments --links links.txt --max-clips 6 --padding-seconds 2
+  clipcaptionai review-moments --write --format markdown
   clipcaptionai auto-clips --links links.txt --max-clips 6
   clipcaptionai broll-captions --links links.txt --max-clips 3
   clipcaptionai caption --video "/path/to/video.mp4"
@@ -791,7 +810,9 @@ Examples:
   program.command('menu').description('Open the interactive workflow menu.').action(interactiveMenu);
   configurePassthroughCommand(program, 'download', 'Download YouTube links from a text file and stop.', runDownloadOnly, ['dl']);
   configurePassthroughCommand(program, 'fixed-clips', 'Download YouTube links, then chop each full source into fixed clips.', runFixedClips, ['fixed']);
+  configurePassthroughCommand(program, 'split-video', 'Cut one local video into fixed clips without using YouTube.', runLocalFixedClips, ['slice-video']);
   configurePassthroughCommand(program, 'moments', 'Download YouTube links, pick the strongest moments, and export clean source clips.', runMomentsOnly);
+  configurePassthroughCommand(program, 'review-moments', 'Review why moments were flagged as viral and optionally persist scorecards.', runReviewMoments, ['review']);
   configurePassthroughCommand(program, 'auto-clips', 'Download YouTube links, pick viral clips, caption, and render.', runAutoClips, ['auto']);
   configurePassthroughCommand(program, 'broll-captions', 'Run the B-roll-heavy labeled workflow.', runBrollCaptions, ['heavy']);
   configurePassthroughCommand(program, 'caption', 'Caption any existing video with the current caption style.', (args) => npmRun('caption:auto', args));

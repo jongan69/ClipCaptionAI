@@ -29,6 +29,10 @@ Options:
   --min-seconds N         Minimum clip length. Default: smart selector default
   --max-seconds N         Maximum clip length. Default: smart selector default
   --padding-seconds N     Extra seconds before and after each selected clip. Default: 2
+  --boundary-lookaround-seconds N
+                          Max extra seconds to expand toward thought boundaries. Default: 6
+  --disable-thought-snapping
+                          Keep raw AI timestamps without sentence/thought snapping.
   --review-width N        Review render width. Default: smart selector default
   --review-fps N          Review render FPS. Default: smart selector default
   --raw-clips-only        Export only AI-selected source moments for manual editing.
@@ -121,6 +125,7 @@ const passThroughOptions = [
   'min-seconds',
   'max-seconds',
   'padding-seconds',
+  'boundary-lookaround-seconds',
   'review-width',
   'review-fps',
   'raw-clips-only',
@@ -169,6 +174,9 @@ for (const [index, entry] of linkEntries.entries()) {
 
   if (args.reselect) {
     smartArgs.push('--reselect');
+  }
+  if (args['disable-thought-snapping']) {
+    smartArgs.push('--disable-thought-snapping');
   }
   if (args['context-scenes']) {
     smartArgs.push('--context-scenes');
