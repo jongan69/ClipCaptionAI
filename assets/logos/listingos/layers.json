@@ -1,0 +1,218 @@
+{
+  "slug": "listingos",
+  "viewBox": "0 0 1080 720",
+  "width": 1080,
+  "height": 720,
+  "brand": {
+    "name": "ListingOS",
+    "slug": "listingos",
+    "wordmark": {
+      "text": "ListingOS",
+      "accentText": "OS",
+      "accentSplitIndex": 7
+    },
+    "palette": {
+      "background": "#05071c",
+      "backgroundGlow": "#141a4d",
+      "primary": "#2f5cff",
+      "primaryDark": "#1d4ed8",
+      "accent": "#7c3aed",
+      "accentLight": "#7c5cff",
+      "surface": "#ffffff",
+      "ink": "#0f1535"
+    },
+    "fonts": {
+      "wordmark": "Poppins, Montserrat, Inter, sans-serif",
+      "weight": 700
+    },
+    "notes": "Scan-frame brackets imply capture/scanning. The card is the 'listing'. Animations should read as 'capture -> listing -> published'."
+  },
+  "gradients": [
+    {
+      "id": "brandGradient",
+      "type": "linear",
+      "stops": [
+        {
+          "offset": "0%",
+          "color": "#1d4ed8"
+        },
+        {
+          "offset": "45%",
+          "color": "#2f5cff"
+        },
+        {
+          "offset": "100%",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "bracketGradient",
+      "type": "linear",
+      "stops": [
+        {
+          "offset": "0%",
+          "color": "#2563eb"
+        },
+        {
+          "offset": "100%",
+          "color": "#7c3aed"
+        }
+      ]
+    },
+    {
+      "id": "thumbGradient",
+      "type": "linear",
+      "stops": [
+        {
+          "offset": "0%",
+          "color": "#3b6bff"
+        },
+        {
+          "offset": "100%",
+          "color": "#6d3aed"
+        }
+      ]
+    },
+    {
+      "id": "bgGlow",
+      "type": "radial",
+      "stops": [
+        {
+          "offset": "0%",
+          "color": "#141a4d"
+        },
+        {
+          "offset": "100%",
+          "color": "#05071c"
+        }
+      ]
+    }
+  ],
+  "defs": "<defs>\n    <linearGradient id=\"brandGradient\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop offset=\"0%\" stop-color=\"#1d4ed8\"/>\n      <stop offset=\"45%\" stop-color=\"#2f5cff\"/>\n      <stop offset=\"100%\" stop-color=\"#7c3aed\"/>\n    </linearGradient>\n    <linearGradient id=\"bracketGradient\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop offset=\"0%\" stop-color=\"#2563eb\"/>\n      <stop offset=\"100%\" stop-color=\"#7c3aed\"/>\n    </linearGradient>\n    <linearGradient id=\"thumbGradient\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\">\n      <stop offset=\"0%\" stop-color=\"#3b6bff\"/>\n      <stop offset=\"100%\" stop-color=\"#6d3aed\"/>\n    </linearGradient>\n    <radialGradient id=\"bgGlow\" cx=\"0.5\" cy=\"0.42\" r=\"0.62\">\n      <stop offset=\"0%\" stop-color=\"#141a4d\"/>\n      <stop offset=\"100%\" stop-color=\"#05071c\"/>\n    </radialGradient>\n    <clipPath id=\"thumbClip\">\n      <rect x=\"536\" y=\"212\" width=\"90\" height=\"68\" rx=\"8\"/>\n    </clipPath>\n  </defs>",
+  "layers": [
+    {
+      "id": "background",
+      "role": "backdrop",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 1080,
+        "h": 720
+      },
+      "fill": null,
+      "stroke": null,
+      "strokeWidth": null,
+      "children": [],
+      "data": {
+        "layer": "background",
+        "role": "backdrop"
+      },
+      "markup": "<g id=\"background\" data-layer=\"background\" data-role=\"backdrop\">\n    <rect x=\"0\" y=\"0\" width=\"1080\" height=\"720\" fill=\"url(#bgGlow)\"/>\n  </g>"
+    },
+    {
+      "id": "brackets",
+      "role": "scan-frame",
+      "box": {
+        "x": 420,
+        "y": 157,
+        "w": 248,
+        "h": 276
+      },
+      "fill": "none",
+      "stroke": "url(#bracketGradient)",
+      "strokeWidth": 15,
+      "children": [
+        "bracket-tl",
+        "bracket-tr",
+        "bracket-bl",
+        "bracket-br"
+      ],
+      "data": {
+        "layer": "brackets",
+        "role": "scan-frame"
+      },
+      "markup": "<g id=\"brackets\" data-layer=\"brackets\" data-role=\"scan-frame\"\n     fill=\"none\" stroke=\"url(#bracketGradient)\" stroke-width=\"15\"\n     stroke-linecap=\"round\" stroke-linejoin=\"round\">\n    <path id=\"bracket-tl\" data-corner=\"top-left\"     d=\"M 420 205 L 420 176 Q 420 157 439 157 L 468 157\"/>\n    <path id=\"bracket-tr\" data-corner=\"top-right\"    d=\"M 620 157 L 649 157 Q 668 157 668 176 L 668 205\"/>\n    <path id=\"bracket-bl\" data-corner=\"bottom-left\"  d=\"M 420 385 L 420 414 Q 420 433 439 433 L 468 433\"/>\n    <path id=\"bracket-br\" data-corner=\"bottom-right\" d=\"M 620 433 L 649 433 Q 668 433 668 414 L 668 385\"/>\n  </g>"
+    },
+    {
+      "id": "l-mark",
+      "role": "letterform",
+      "box": {
+        "x": 452,
+        "y": 200,
+        "w": 196,
+        "h": 210
+      },
+      "fill": null,
+      "stroke": null,
+      "strokeWidth": null,
+      "children": [
+        "l-shape"
+      ],
+      "data": {
+        "layer": "l-mark",
+        "role": "letterform"
+      },
+      "markup": "<g id=\"l-mark\" data-layer=\"l-mark\" data-role=\"letterform\">\n    <path id=\"l-shape\"\n          fill=\"url(#brandGradient)\"\n          d=\"M 452 224 Q 452 200 476 200 L 486 200 Q 510 200 510 224 L 510 352 L 624 352 Q 648 352 648 376 L 648 386 Q 648 410 624 410 L 476 410 Q 452 410 452 386 Z\"/>\n  </g>"
+    },
+    {
+      "id": "card",
+      "role": "listing-card",
+      "box": {
+        "x": 522,
+        "y": 196,
+        "w": 118,
+        "h": 162
+      },
+      "fill": null,
+      "stroke": null,
+      "strokeWidth": null,
+      "children": [
+        "card-body",
+        "card-thumb",
+        "thumb-mountain",
+        "thumb-sun",
+        "card-lines",
+        "card-line-1",
+        "card-line-2"
+      ],
+      "data": {
+        "layer": "card",
+        "role": "listing-card"
+      },
+      "markup": "<g id=\"card\" data-layer=\"card\" data-role=\"listing-card\">\n    <rect id=\"card-body\" x=\"522\" y=\"196\" width=\"118\" height=\"162\" rx=\"14\" fill=\"#ffffff\"/>\n    <g id=\"card-thumb\" data-part=\"thumbnail\">\n      <rect x=\"536\" y=\"212\" width=\"90\" height=\"68\" rx=\"8\" fill=\"url(#thumbGradient)\"/>\n      <g clip-path=\"url(#thumbClip)\">\n        <path id=\"thumb-mountain\" fill=\"#ffffff\"\n              d=\"M 536 280 L 566 240 L 588 268 L 600 254 L 626 280 Z\"/>\n      </g>\n      <circle id=\"thumb-sun\" cx=\"602\" cy=\"232\" r=\"9\" fill=\"#ffffff\"/>\n    </g>\n    <g id=\"card-lines\" data-part=\"text-lines\" fill=\"#0f1535\">\n      <rect id=\"card-line-1\" x=\"536\" y=\"300\" width=\"90\" height=\"11\" rx=\"5.5\"/>\n      <rect id=\"card-line-2\" x=\"536\" y=\"322\" width=\"62\" height=\"11\" rx=\"5.5\"/>\n    </g>\n  </g>"
+    },
+    {
+      "id": "wordmark",
+      "role": "text",
+      "box": {
+        "x": 282.6,
+        "y": 479,
+        "w": 514.8,
+        "h": 99.8
+      },
+      "fill": "#ffffff",
+      "stroke": null,
+      "strokeWidth": null,
+      "children": [
+        "wordmark-primary",
+        "wordmark-accent"
+      ],
+      "data": {
+        "layer": "wordmark",
+        "role": "text",
+        "text": "ListingOS",
+        "accent-text": "OS",
+        "accent-split": "7",
+        "primary-fill": "#ffffff",
+        "accent-fill": "#7c5cff",
+        "font-family": "Poppins, Montserrat, Inter, sans-serif",
+        "font-size": "104",
+        "font-weight": "700",
+        "center-x": "540",
+        "baseline-y": "556"
+      },
+      "markup": "<g id=\"wordmark\" data-layer=\"wordmark\" data-role=\"text\"\n     data-text=\"ListingOS\" data-accent-text=\"OS\" data-accent-split=\"7\"\n     data-primary-fill=\"#ffffff\" data-accent-fill=\"#7c5cff\"\n     data-font-family=\"Poppins, Montserrat, Inter, sans-serif\"\n     data-font-size=\"104\" data-font-weight=\"700\"\n     data-center-x=\"540\" data-baseline-y=\"556\"\n     font-family=\"Poppins, Montserrat, Inter, 'Helvetica Neue', Arial, sans-serif\"\n     font-size=\"104\" font-weight=\"700\">\n    <text id=\"wordmark-primary\" x=\"540\" y=\"556\" text-anchor=\"end\"   fill=\"#ffffff\">Listing</text>\n    <text id=\"wordmark-accent\"  x=\"540\" y=\"556\" text-anchor=\"start\" fill=\"#7c5cff\">OS</text>\n  </g>"
+    }
+  ]
+}

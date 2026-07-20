@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClipCaptionAI Desktop</title>
+    <style>
+      :root {
+        --bg: linear-gradient(135deg, #0b1020 0%, #121936 45%, #18224a 100%);
+        --surface: rgba(255, 255, 255, 0.08);
+        --surface-strong: rgba(255, 255, 255, 0.14);
+        --line: rgba(255, 255, 255, 0.15);
+        --text-main: #f3f5ff;
+        --text-dim: #9eb0d4;
+        --accent: #6ce6d2;
+        --accent-2: #8fd3ff;
+        --danger: #ff8fa3;
+        --good: #70d99f;
+        --shadow: 0 16px 35px rgba(2, 4, 16, 0.45);
+        --radius: 16px;
+        --font-stack: "Avenir Next", "Avenir", "Segoe UI", "Trebuchet MS", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font-stack);
+        color: var(--text-main);
+        background: var(--bg);
+        min-height: 100vh;
+      }
+
+      .app-shell {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        height: 100vh;
+        gap: 20px;
+        padding: 18px;
+      }
+
+      .panel {
+        border-radius: var(--radius);
+        border: 1px solid var(--line);
+        background: var(--surface);
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: hidden;
+      }
+
+      .title {
+        margin: 0;
+        font-size: 18px;
+        letter-spacing: 0.01em;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: var(--text-dim);
+        font-size: 12px;
+      }
+
+      .list {
+        margin-top: 8px;
+        overflow: auto;
+      }
+
+      .workflow {
+        width: 100%;
+        text-align: left;
+        background: transparent;
+        color: var(--text-main);
+        border: 1px solid transparent;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        display: block;
+      }
+
+      .workflow:hover,
+      .workflow.active {
+        border-color: var(--accent-2);
+        background: rgba(143, 211, 255, 0.1);
+      }
+
+      .workflow small {
+        display: block;
+        color: var(--text-dim);
+      }
+
+      .main {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: hidden;
+      }
+
+      .section-title {
+        margin: 0;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        font-size: 18px;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+
+      .form {
+        display: grid;
+        gap: 10px;
+        overflow: auto;
+      }
+
+      .fields {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        color: var(--text-dim);
+        font-size: 12px;
+      }
+
+      input,
+      select,
+      textarea {
+        border: 1px solid var(--line);
+        background: var(--surface-strong);
+        color: var(--text-main);
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+
+      textarea {
+        min-height: 86px;
+        resize: vertical;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--text-main);
+        border-radius: 10px;
+        padding: 9px 12px;
+        cursor: pointer;
+        transition: transform 120ms ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      .primary {
+        background: linear-gradient(135deg, #6ce6d2, #8fd3ff);
+        color: #08131f;
+        border-color: transparent;
+        font-weight: 700;
+      }
+
+      .danger {
+        color: #ffe0e6;
+        border-color: rgba(255, 143, 163, 0.45);
+      }
+
+      .status {
+        color: var(--text-dim);
+        font-size: 13px;
+        min-height: 16px;
+      }
+
+      .status.running {
+        color: var(--accent);
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      .status.good {
+        color: var(--good);
+      }
+
+      .env-banner {
+        margin-top: 4px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(143, 211, 255, 0.05);
+        padding: 10px;
+        font-size: 12px;
+        color: var(--text-dim);
+      }
+
+      .log {
+        background: #050912;
+        color: #dce2ff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 10px;
+        flex: 1;
+        overflow: auto;
+        white-space: pre-wrap;
+        font-family: "SFMono-Regular", "SF Mono", Consolas, Menlo, monospace;
+        font-size: 12px;
+      }
+
+      .log[data-empty='true']::before {
+        content: "Run a workflow or command to see live output.";
+        color: var(--text-dim);
+      }
+
+      .raw {
+        display: grid;
+        gap: 10px;
+      }
+
+      .chip {
+        font-size: 11px;
+        color: var(--text-dim);
+      }
+
+      @media (max-width: 1100px) {
+        .app-shell {
+          grid-template-columns: 1fr;
+          height: auto;
+          min-height: 100vh;
+        }
+
+        .fields {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="panel sidebar">
+        <div>
+          <h1 class="title">ClipCaptionAI Desktop</h1>
+          <p class="subtitle">Desktop launcher with full CLI parity.</p>
+        </div>
+        <div class="subtitle chip">Workflows</div>
+        <div class="list" id="workflow-list"></div>
+      </aside>
+
+      <main class="panel main">
+        <section>
+          <h2 class="section-title">
+            <span id="selected-title">Select a workflow</span>
+            <span class="subtitle" id="selected-command"></span>
+          </h2>
+          <p class="subtitle" id="selected-description">No workflow selected yet.</p>
+          <div class="toolbar">
+            <button class="primary" id="run-workflow-btn" disabled>Run workflow</button>
+            <button id="stop-workflow-btn" disabled>Stop</button>
+            <button id="open-workdir-btn">Open project root</button>
+            <button id="open-log-btn">Open session log</button>
+          </div>
+          <p class="status" id="status"></p>
+          <p class="env-banner" id="environment-status">Checking environment…</p>
+        </section>
+
+        <form class="form" id="workflow-form">
+          <div id="workflow-fields" class="fields"></div>
+          <label for="extra-args">Extra args</label>
+          <textarea id="extra-args" placeholder="Additional CLI args: --flag value"></textarea>
+        </form>
+
+        <section class="raw">
+          <h2 class="section-title">
+            <span>Raw CLI</span>
+            <span class="subtitle">For AI agents and power users</span>
+          </h2>
+          <textarea id="raw-command" placeholder="download --links links.txt --max-clips 6"></textarea>
+          <div class="toolbar">
+            <button id="run-raw-btn">Run raw command</button>
+            <button id="open-outputs-btn">Open outputs</button>
+          </div>
+        </section>
+
+        <section class="panel log" id="run-log" data-empty="true"></section>
+      </main>
+    </div>
+
+    <script type="module" src="renderer.js"></script>
+  </body>
+</html>

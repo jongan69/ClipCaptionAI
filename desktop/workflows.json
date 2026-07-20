@@ -1,0 +1,364 @@
+[
+  {
+    "id": "menu",
+    "title": "Interactive Menu",
+    "command": "menu",
+    "description": "Open the built-in interactive menu for all ClipCaptionAI workflows."
+  },
+  {
+    "id": "download",
+    "title": "Download Links",
+    "command": "download",
+    "description": "Download YouTube links from a links file and stop.",
+    "args": [
+      {
+        "name": "links",
+        "label": "Links file",
+        "type": "text",
+        "placeholder": "links.txt"
+      }
+    ]
+  },
+  {
+    "id": "frame",
+    "title": "Download + Frame",
+    "command": "frame",
+    "description": "Download videos and render each one into a frame image.",
+    "args": [
+      {
+        "name": "links",
+        "label": "Links file",
+        "type": "text",
+        "placeholder": "links.txt"
+      },
+      {
+        "name": "frame",
+        "label": "Frame image",
+        "type": "text",
+        "placeholder": "Frame.png"
+      }
+    ]
+  },
+  {
+    "id": "ebay-ads",
+    "title": "Cinematic eBay Ads",
+    "command": "ebay-ads",
+    "description": "Generate cinematic ad packets and upload prep options.",
+    "args": [
+      {
+        "name": "item-ids",
+        "label": "Item IDs",
+        "type": "text",
+        "placeholder": "398160795273"
+      },
+      {
+        "name": "credit-budget",
+        "label": "Credit budget",
+        "type": "number",
+        "placeholder": "45"
+      },
+      {
+        "name": "max-listings",
+        "label": "Max listings",
+        "type": "number",
+        "placeholder": "1"
+      }
+    ]
+  },
+  {
+    "id": "ebay-intel",
+    "title": "eBay Creative Intel",
+    "command": "ebay-intel",
+    "description": "Turn competitors and references into original eBay video blueprints.",
+    "args": [
+      {
+        "name": "project-dir",
+        "label": "Project directory",
+        "type": "text",
+        "placeholder": "outputs/ebay-cinematic-ads/..."
+      },
+      {
+        "name": "competitors",
+        "label": "Competitors CSV",
+        "type": "text",
+        "placeholder": "competitors.csv"
+      }
+    ]
+  },
+  {
+    "id": "fixed-clips",
+    "title": "Fixed Clipping",
+    "command": "fixed-clips",
+    "description": "Download links and split full videos into fixed-duration clips.",
+    "args": [
+      {
+        "name": "links",
+        "label": "Links file",
+        "type": "text",
+        "placeholder": "links.txt"
+      },
+      {
+        "name": "segment-seconds",
+        "label": "Segment seconds",
+        "type": "number",
+        "placeholder": "15"
+      }
+    ]
+  },
+  {
+    "id": "split-video",
+    "title": "Split Local Video",
+    "command": "split-video",
+    "description": "Split one local video into fixed clips without downloading.",
+    "args": [
+      {
+        "name": "video",
+        "label": "Video file",
+        "type": "text",
+        "placeholder": "/path/to/video.mp4"
+      },
+      {
+        "name": "segment-seconds",
+        "label": "Segment seconds",
+        "type": "number",
+        "placeholder": "15"
+      }
+    ]
+  },
+  {
+    "id": "moments",
+    "title": "Find Moments",
+    "command": "moments",
+    "description": "Download links, find strongest moments, and export clean source clips.",
+    "args": [
+      {
+        "name": "links",
+        "label": "Links file",
+        "type": "text",
+        "placeholder": "links.txt"
+      },
+      {
+        "name": "max-clips",
+        "label": "Max clips",
+        "type": "number",
+        "placeholder": "6"
+      },
+      {
+        "name": "padding-seconds",
+        "label": "Padding seconds",
+        "type": "number",
+        "placeholder": "2"
+      }
+    ]
+  },
+  {
+    "id": "review-moments",
+    "title": "Review Moments",
+    "command": "review-moments",
+    "description": "Score and optionally persist viral reasons for generated moments.",
+    "args": [
+      {
+        "name": "format",
+        "label": "Output format",
+        "type": "select",
+        "options": [
+          {
+            "value": "markdown",
+            "label": "Markdown"
+          },
+          {
+            "value": "json",
+            "label": "JSON"
+          }
+        ]
+      },
+      {
+        "name": "write",
+        "label": "Write output file",
+        "type": "boolean",
+        "value": true
+      },
+      {
+        "name": "persist",
+        "label": "Persist into selection.json",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
+    "id": "auto-clips",
+    "title": "Auto Clips",
+    "command": "auto-clips",
+    "description": "Run full AI pipeline: find clips, caption, and render.",
+    "args": [
+      {
+        "name": "links",
+        "label": "Links file",
+        "type": "text",
+        "placeholder": "links.txt"
+      },
+      {
+        "name": "max-clips",
+        "label": "Max clips",
+        "type": "number",
+        "placeholder": "6"
+      },
+      {
+        "name": "padding-seconds",
+        "label": "Padding seconds",
+        "type": "number",
+        "placeholder": "2"
+      }
+    ]
+  },
+  {
+    "id": "broll-captions",
+    "title": "B-roll Heavy",
+    "command": "broll-captions",
+    "description": "Generate captioned clips with contextual B-roll and extra scene richness.",
+    "args": [
+      {
+        "name": "links",
+        "label": "Links file",
+        "type": "text",
+        "placeholder": "links.txt"
+      },
+      {
+        "name": "max-clips",
+        "label": "Max clips",
+        "type": "number",
+        "placeholder": "3"
+      }
+    ]
+  },
+  {
+    "id": "caption",
+    "title": "Caption One Video",
+    "command": "caption",
+    "description": "Add captions to an existing video with current style.",
+    "args": [
+      {
+        "name": "video",
+        "label": "Video file",
+        "type": "text",
+        "placeholder": "/path/to/video.mp4"
+      },
+      {
+        "name": "captions",
+        "label": "Optional fixed captions JSON",
+        "type": "text",
+        "placeholder": "/path/to/fixed.captions.json"
+      }
+    ]
+  },
+  {
+    "id": "enhance",
+    "title": "Enhance Existing Edit",
+    "command": "enhance",
+    "description": "Add contextual B-roll and captions to an existing edit.",
+    "args": [
+      {
+        "name": "video",
+        "label": "Video file",
+        "type": "text",
+        "placeholder": "/path/to/video.mp4"
+      }
+    ]
+  },
+  {
+    "id": "broll",
+    "title": "Find B-roll",
+    "command": "broll",
+    "description": "Find reusable B-roll clips from a prompt list.",
+    "args": [
+      {
+        "name": "prompts",
+        "label": "Prompts file",
+        "type": "text",
+        "placeholder": "broll-prompts.txt"
+      },
+      {
+        "name": "max-downloads",
+        "label": "Max downloads each prompt",
+        "type": "number",
+        "placeholder": "8"
+      },
+      {
+        "name": "max-duration-seconds",
+        "label": "Max duration seconds",
+        "type": "number",
+        "placeholder": "60"
+      }
+    ]
+  },
+  {
+    "id": "rotato",
+    "title": "Rotato",
+    "command": "rotato",
+    "description": "Inspect or render Rotato mockup projects through local Rotato CLI.",
+    "args": [
+      {
+        "name": "screen-media",
+        "label": "Screen media",
+        "type": "text",
+        "placeholder": "/path/to/app.mp4"
+      },
+      {
+        "name": "output",
+        "label": "Output path",
+        "type": "text",
+        "placeholder": "outputs/mockups/demo.mp4"
+      },
+      {
+        "name": "help",
+        "label": "Show help",
+        "type": "boolean",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": "rerender",
+    "title": "Rerender Clip",
+    "command": "rerender",
+    "description": "Rerender a generated clip after caption/style edits.",
+    "args": [
+      {
+        "name": "clip",
+        "label": "Clip ID / slug / title text",
+        "type": "text",
+        "placeholder": "your-clip-slug"
+      },
+      {
+        "name": "no-captions",
+        "label": "No captions",
+        "type": "boolean",
+        "value": false
+      }
+    ]
+  },
+  {
+    "id": "cleanup",
+    "title": "Cleanup",
+    "command": "cleanup",
+    "description": "Clean temp files and old output folders."
+  },
+  {
+    "id": "studio",
+    "title": "Open Remotion Studio",
+    "command": "studio",
+    "description": "Open Remotion Studio for timeline inspection."
+  },
+  {
+    "id": "open-latest",
+    "title": "Open Latest Outputs",
+    "command": "open-latest",
+    "description": "Open the newest output folder."
+  },
+  {
+    "id": "doctor",
+    "title": "Doctor",
+    "command": "doctor",
+    "description": "Run local dependency and config checks."
+  }
+]

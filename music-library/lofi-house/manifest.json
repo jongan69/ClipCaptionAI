@@ -1,0 +1,38 @@
+{
+  "created_at": "2026-07-12T00:00:00.000Z",
+  "purpose": "Quiet lofi/house background beds for high-energy eBay ad creatives.",
+  "default_volume": 0.035,
+  "commercial_use_note": "Review source license and channel terms before live commercial upload. Titles containing no-copyright/DMCA-free are not legal proof by themselves.",
+  "tracks": [
+    {
+      "file": "01-dmca-free-lofi-chilled-beats.mp3",
+      "title": "Lofi Chilled Beats - DMCA Free / Copyright Free excerpt",
+      "source_url": "https://www.youtube.com/watch?v=i-_1Os7hVDw",
+      "source_channel": "TheRelaxedMovement",
+      "source_section": "300-480",
+      "duration_seconds": 189.9735,
+      "license_status": "review_before_commercial_use",
+      "tags": ["lofi", "chill", "dmca-free-claim", "background"]
+    },
+    {
+      "file": "02-no-copyright-deep-house-lounge.mp3",
+      "title": "Deep House Lounge / Chill Music - No Copyright excerpt",
+      "source_url": "https://www.youtube.com/watch?v=fJ_0V0ZgTOI",
+      "source_channel": "Healthy Bali",
+      "source_section": "600-780",
+      "duration_seconds": 189.9735,
+      "license_status": "review_before_commercial_use",
+      "tags": ["deep-house", "lounge", "no-copyright-claim", "background"]
+    },
+    {
+      "file": "03-lofi-deep-house-mix.mp3",
+      "title": "HOUSE #19 Lofi Deep House excerpt",
+      "source_url": "https://www.youtube.com/watch?v=ggiqFeSn7HQ",
+      "source_channel": "Hollts",
+      "source_section": "420-600",
+      "duration_seconds": 189.9735,
+      "license_status": "review_before_commercial_use",
+      "tags": ["lofi-house", "deep-house", "background"]
+    }
+  ]
+}

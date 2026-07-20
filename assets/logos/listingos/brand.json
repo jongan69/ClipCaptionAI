@@ -1,0 +1,24 @@
+{
+  "name": "ListingOS",
+  "slug": "listingos",
+  "wordmark": {
+    "text": "ListingOS",
+    "accentText": "OS",
+    "accentSplitIndex": 7
+  },
+  "palette": {
+    "background": "#05071c",
+    "backgroundGlow": "#141a4d",
+    "primary": "#2f5cff",
+    "primaryDark": "#1d4ed8",
+    "accent": "#7c3aed",
+    "accentLight": "#7c5cff",
+    "surface": "#ffffff",
+    "ink": "#0f1535"
+  },
+  "fonts": {
+    "wordmark": "Poppins, Montserrat, Inter, sans-serif",
+    "weight": 700
+  },
+  "notes": "Scan-frame brackets imply capture/scanning. The card is the 'listing'. Animations should read as 'capture -> listing -> published'."
+}
