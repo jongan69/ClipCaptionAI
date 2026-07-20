@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {downloadYoutubeVideo, readLinkEntriesFromLinksFile} from './lib-youtube-download.mjs';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, outputsRoot, projectRoot} from './lib.mjs';
 
 const defaultLinks = path.join(projectRoot, 'links.txt');
 const defaultFrame = path.join(path.dirname(projectRoot), 'Frame.png');
@@ -157,7 +157,7 @@ const renderIntoFrame = ({videoPath, framePath, maskPath, outPath, slot, fit}) =
 
 const linksPath = path.resolve(String(args.links ?? defaultLinks));
 const framePath = path.resolve(String(args.frame ?? defaultFrame));
-const outRoot = path.resolve(String(args['out-dir'] ?? path.join(projectRoot, 'outputs')));
+const outRoot = path.resolve(String(args['out-dir'] ?? outputsRoot));
 const runName = String(args['run-name'] ?? `frame-run-${timestampSlug()}`);
 const runDir = uniqueDir(outRoot, runName);
 const downloadRoot = path.join(runDir, 'downloads');

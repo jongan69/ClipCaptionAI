@@ -6,6 +6,7 @@ import OpenAI from 'openai';
 import {
   ensureDir,
   loadEnv,
+  outputsRoot,
   parseArgs,
   probeVideo,
   projectRoot,
@@ -177,9 +178,9 @@ if (args.help || args.h) {
 loadEnv();
 
 const video = path.resolve(requireArg(args, 'video', usage));
-const outDir = path.resolve(args['out-dir'] ?? path.join(projectRoot, 'outputs', 'smart-clips'));
+const outDir = path.resolve(args['out-dir'] ?? path.join(outputsRoot, 'smart-clips'));
 const workDir = path.resolve(
-  args['work-dir'] ?? path.join(projectRoot, 'outputs', 'smart-clips', 'work'),
+  args['work-dir'] ?? path.join(outputsRoot, 'smart-clips', 'work'),
 );
 const maxClips = Number(args['max-clips'] ?? 3);
 const minSeconds = Number(args['min-seconds'] ?? 18);

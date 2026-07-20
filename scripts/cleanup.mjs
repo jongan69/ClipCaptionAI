@@ -3,7 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import {stdin as input, stdout as output} from 'node:process';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {
+  ensureDir,
+  ensureOutputDirs,
+  outputWorkRoot,
+  outputsRoot,
+  publicMediaRoot,
+  parseArgs,
+  projectRoot,
+} from './lib.mjs';
 
 const usage = `
 Usage:
@@ -72,16 +80,15 @@ const listChildren = (dir) => {
 };
 
 const listOutputDirs = () => {
-  const outputsDir = path.join(projectRoot, 'outputs');
-  if (!fs.existsSync(outputsDir)) {
+  if (!fs.existsSync(outputsRoot)) {
     return [];
   }
 
   return fs
-    .readdirSync(outputsDir, {withFileTypes: true})
+    .readdirSync(outputsRoot, {withFileTypes: true})
     .filter((entry) => entry.isDirectory())
     .map((entry) => {
-      const fullPath = path.join(outputsDir, entry.name);
+      const fullPath = path.join(outputsRoot, entry.name);
       return {
         path: fullPath,
         name: entry.name,
@@ -95,8 +102,8 @@ const buildPlan = ({cleanTemp, cleanOutputs, cleanAll, keepLatest}) => {
   const targets = [];
 
   if (cleanTemp || cleanAll) {
-    targets.push(...listChildren(path.join(projectRoot, 'outputs', 'work')));
-    targets.push(...listChildren(path.join(projectRoot, 'public', 'media')));
+    targets.push(...listChildren(outputWorkRoot));
+    targets.push(...listChildren(publicMediaRoot));
   }
 
   if (cleanOutputs || cleanAll) {
@@ -177,9 +184,7 @@ const confirmDelete = async (plan) => {
 };
 
 const main = async () => {
-  ensureDir(path.join(projectRoot, 'outputs'));
-  ensureDir(path.join(projectRoot, 'outputs', 'work'));
-  ensureDir(path.join(projectRoot, 'public', 'media'));
+  ensureOutputDirs();
 
   const explicitMode =
     Boolean(args.temp) || Boolean(args.outputs) || Boolean(args.all);
@@ -235,9 +240,7 @@ const main = async () => {
     fs.rmSync(item.path, {recursive: true, force: true});
   }
 
-  ensureDir(path.join(projectRoot, 'outputs'));
-  ensureDir(path.join(projectRoot, 'outputs', 'work'));
-  ensureDir(path.join(projectRoot, 'public', 'media'));
+  ensureOutputDirs();
 
   console.log('Cleanup complete.');
 };

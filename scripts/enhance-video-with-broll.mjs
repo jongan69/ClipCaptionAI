@@ -6,6 +6,7 @@ import {
   ensureDir,
   loadEnv,
   parseArgs,
+  outputsRoot,
   probeVideo,
   projectRoot,
   readCaptionStyleConfig,
@@ -134,7 +135,7 @@ const styleConfigPath = args['style-config']
 const styleConfig = readCaptionStyleConfig(styleConfigPath);
 const contextScenesConfig = styleConfig.contextScenes ?? {};
 
-const outRoot = path.resolve(String(args['out-dir'] ?? path.join(projectRoot, 'outputs')));
+const outRoot = path.resolve(String(args['out-dir'] ?? outputsRoot));
 const runName = String(args['run-name'] ?? `enhance-run-${timestampSlug()}`);
 const runDir = path.join(outRoot, runName);
 const assetsDir = path.join(runDir, 'assets');

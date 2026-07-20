@@ -4,6 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {ensureDir, parseArgs} from './lib.mjs';
+import {commandPath} from './command-utils.mjs';
 import {timestampSlug} from './clipkit-lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
@@ -43,8 +44,8 @@ const isImage = (name) => /\.(jpe?g|png|webp)$/i.test(name);
 
 const magick = (() => {
   for (const command of ['magick', 'convert']) {
-    const result = spawnSync('which', [command], {encoding: 'utf8'});
-    if (result.status === 0) return command;
+    const found = commandPath(command);
+    if (found) return found;
   }
   throw new Error('ImageMagick is required. Install `magick` or `convert`.');
 })();

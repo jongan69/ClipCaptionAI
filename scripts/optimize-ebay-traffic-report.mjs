@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, outputsRoot, parseArgs} from './lib.mjs';
 import {slugify, timestampSlug} from './clipkit-lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
@@ -202,7 +202,7 @@ const metricRow = (row) => {
 
 const trafficReport = path.resolve(requireArg('traffic-report'));
 if (!fs.existsSync(trafficReport)) throw new Error(`Traffic report not found: ${trafficReport}`);
-const outDir = path.resolve(String(args['out-dir'] ?? path.join(projectRoot, 'outputs', 'ebay-traffic-optimization', `run-${timestampSlug()}`)));
+const outDir = path.resolve(String(args['out-dir'] ?? path.join(outputsRoot, 'ebay-traffic-optimization', `run-${timestampSlug()}`)));
 const maxListings = Math.max(1, Math.floor(numberValue(args['max-listings'] ?? 15)));
 const minImpressions = Math.max(0, numberValue(args['min-impressions'] ?? 50));
 const dropshipOnly = args['dropship-only'] === true;

@@ -4,6 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ebayCinematicAdsOutputRoot} from './lib.mjs';
 import {slugify, timestampSlug} from './clipkit-lib.mjs';
 
 const defaultMcpUrl = 'https://shopping-deals-mcp.jonathang132298.workers.dev/mcp';
@@ -980,7 +981,7 @@ const prepare = async () => {
   }
 
   const outRoot = path.resolve(
-    String(args['out-dir'] ?? path.join(projectRoot, 'outputs', 'ebay-cinematic-ads', `run-${timestampSlug()}`)),
+    String(args['out-dir'] ?? path.join(ebayCinematicAdsOutputRoot, `run-${timestampSlug()}`)),
   );
 
     await prepareListingProjects({
@@ -1078,7 +1079,7 @@ const buildRoiQueue = async ({outRoot}) => {
 
 const roiPlan = async () => {
   const outRoot = path.resolve(
-    String(args['out-dir'] ?? path.join(projectRoot, 'outputs', 'ebay-cinematic-ads', `roi-plan-${timestampSlug()}`)),
+    String(args['out-dir'] ?? path.join(ebayCinematicAdsOutputRoot, `roi-plan-${timestampSlug()}`)),
   );
   const plan = await buildRoiQueue({outRoot});
 
@@ -1099,7 +1100,7 @@ const roiPlan = async () => {
 
 const competitivePlan = async () => {
   const outRoot = path.resolve(
-    String(args['out-dir'] ?? path.join(projectRoot, 'outputs', 'ebay-cinematic-ads', `competitive-plan-${timestampSlug()}`)),
+    String(args['out-dir'] ?? path.join(ebayCinematicAdsOutputRoot, `competitive-plan-${timestampSlug()}`)),
   );
   const plan = await buildRoiQueue({outRoot});
   const projectsDir = path.join(outRoot, 'projects');

@@ -4,6 +4,7 @@ import path from 'node:path';
 import {execFileSync, spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {ensureDir, parseArgs} from './lib.mjs';
+import {commandExists} from './command-utils.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
@@ -33,15 +34,6 @@ if (args.help || args.h) {
   console.log(usage);
   process.exit(0);
 }
-
-const commandExists = (command) => {
-  try {
-    execFileSync('zsh', ['-lc', `command -v ${command}`], {stdio: 'ignore'});
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 

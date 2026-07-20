@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {projectRoot, ensureDir} from './lib.mjs';
+import {commandExists, commandPath} from './command-utils.mjs';
 
 const args = process.argv.slice(2);
 
@@ -30,14 +31,6 @@ const textPairFlags = new Set(['--set-2d-text']);
 
 const printHelp = () => {
   console.log(helpText);
-};
-
-const commandExists = (command) => {
-  const result = spawnSync('zsh', ['-lc', `command -v ${command}`], {
-    cwd: projectRoot,
-    stdio: 'ignore',
-  });
-  return result.status === 0;
 };
 
 const resolveInputPath = (value) => path.resolve(value.replace(/^['"]|['"]$/g, ''));
@@ -89,12 +82,7 @@ const buildRotatoArgs = (mode, modeArgs) => {
 };
 
 const printDoctor = () => {
-  const rotatoCliPath = commandExists('rotato')
-    ? spawnSync('zsh', ['-lc', 'command -v rotato'], {
-        cwd: projectRoot,
-        encoding: 'utf8',
-      }).stdout.trim()
-    : null;
+  const rotatoCliPath = commandPath('rotato');
   const rotatoAppPath = '/Applications/Rotato.app';
   const appInstalled = fs.existsSync(rotatoAppPath);
 

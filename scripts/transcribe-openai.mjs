@@ -7,6 +7,7 @@ import {setTimeout as sleep} from 'node:timers/promises';
 import {OpenAI} from 'openai';
 import {openAiWhisperApiToCaptions} from '@remotion/openai-whisper';
 import {ensureDir, loadEnv, parseArgs, projectRoot, requireArg} from './lib.mjs';
+import {commandExists} from './command-utils.mjs';
 
 const usage = `
 Usage:
@@ -70,15 +71,6 @@ const textAnalysisModel = String(
     DEFAULT_TEXT_ANALYSIS_MODEL,
 );
 const chunkAudioPaths = [];
-
-const commandExists = (command) => {
-  try {
-    execFileSync('zsh', ['-lc', `command -v ${command}`], {stdio: 'ignore'});
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 const isRetryable = (error) => {
   const status = Number(error?.status ?? error?.response?.status ?? 0);

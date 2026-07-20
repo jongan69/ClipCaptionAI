@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
   ensureDir,
   parseArgs,
+  outputsRoot,
   probeVideo,
   projectRoot,
   run,
@@ -64,12 +65,11 @@ const findFiles = (dir, predicate) => {
 };
 
 const latestRunDir = () => {
-  const outputsDir = path.join(projectRoot, 'outputs');
-  const runs = fs.existsSync(outputsDir)
+  const runs = fs.existsSync(outputsRoot)
     ? fs
-        .readdirSync(outputsDir, {withFileTypes: true})
+        .readdirSync(outputsRoot, {withFileTypes: true})
         .filter((entry) => entry.isDirectory() && entry.name.startsWith('run-'))
-        .map((entry) => path.join(outputsDir, entry.name))
+        .map((entry) => path.join(outputsRoot, entry.name))
         .sort(
           (a, b) =>
             fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs ||

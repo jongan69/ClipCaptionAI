@@ -1,24 +1,12 @@
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {commandExists} from '../scripts/command-utils.mjs';
+import {outputsRoot, projectRoot} from '../scripts/lib.mjs';
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const checkJson = process.argv.includes('--json');
-const outputDir = path.join(projectRoot, 'outputs');
+const outputDir = outputsRoot;
 const checkFile = path.join(projectRoot, '.cca-desktop-check');
-
-const hasCommand = (command) => {
-  try {
-    const checkCommand = process.platform === 'win32' ? 'where' : 'which';
-    const result = spawnSync(checkCommand, [command], {
-      stdio: 'ignore',
-    });
-    return result.status === 0;
-  } catch {
-    return false;
-  }
-};
 
 const requiredFiles = [
   {path: path.join(projectRoot, 'bin', 'clipcaptionai.js'), label: 'CLI entrypoint'},
@@ -48,7 +36,7 @@ const run = () => {
   };
 
   for (const item of requiredCommands) {
-    if (!hasCommand(item.name)) {
+    if (!commandExists(item.name)) {
       report.ok = false;
       report.missingRequired.push(item.label);
     }
@@ -62,7 +50,7 @@ const run = () => {
   }
 
   for (const item of optionalCommands) {
-    if (!hasCommand(item.name)) {
+    if (!commandExists(item.name)) {
       report.missingOptional.push(item.label);
     }
   }

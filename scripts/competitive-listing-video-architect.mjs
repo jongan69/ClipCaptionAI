@@ -2,8 +2,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync, spawnSync} from 'node:child_process';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, outputsRoot, projectRoot} from './lib.mjs';
 import {slugify, timestampSlug} from './clipkit-lib.mjs';
+import {commandExists} from './command-utils.mjs';
 
 const usage = `
 Usage:
@@ -255,15 +256,6 @@ const normalizeReference = (row, source = 'import') => {
   reference.revenue_per_day = Number(velocityFor(reference.revenue, reference.posted_at).toFixed(2));
   reference.trend_score = trendScoreForReference(reference);
   return reference;
-};
-
-const commandExists = (command) => {
-  try {
-    execFileSync('zsh', ['-lc', `command -v ${command}`], {stdio: 'ignore'});
-    return true;
-  } catch {
-    return false;
-  }
 };
 
 const stopWords = new Set([
@@ -1413,7 +1405,7 @@ const run = () => {
     ? path.resolve(String(args['out-dir']))
     : dirs.length === 1
       ? path.join(dirs[0], 'competitive-creative')
-      : path.join(projectRoot, 'outputs', 'competitive-creative', `run-${timestampSlug()}`);
+      : path.join(outputsRoot, 'competitive-creative', `run-${timestampSlug()}`);
   ensureDir(runOutDir);
 
   const manifest = {

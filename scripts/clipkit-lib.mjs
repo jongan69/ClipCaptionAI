@@ -1,4 +1,5 @@
 import path from 'node:path';
+import {outputsRoot} from './lib.mjs';
 
 export const slugify = (value, fallback = 'run') => {
   const slug = String(value ?? '')
@@ -504,7 +505,7 @@ export const buildBrollCaptionArgs = ({
     '--links',
     path.join(projectRoot, 'links.txt'),
     '--out-dir',
-    path.join(projectRoot, 'outputs'),
+    outputsRoot,
     '--max-clips',
     maxClips,
     '--padding-seconds',

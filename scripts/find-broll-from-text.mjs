@@ -6,6 +6,7 @@ import {
   loadEnv,
   parseArgs,
   projectRoot,
+  outputsRoot,
   readCaptionStyleConfig,
 } from './lib.mjs';
 import {
@@ -268,7 +269,7 @@ const brollQuality = ['fast', 'standard', 'high'].includes(String(args.quality ?
   : 'high';
 const highQualityMode = brollQuality === 'high';
 
-const outRoot = path.resolve(String(args['out-dir'] ?? path.join(projectRoot, 'outputs')));
+const outRoot = path.resolve(String(args['out-dir'] ?? outputsRoot));
 const runName = String(args['run-name'] ?? `broll-run-${timestampSlug()}`);
 const runDir = path.join(outRoot, runName);
 const sceneLibraryDir = path.resolve(

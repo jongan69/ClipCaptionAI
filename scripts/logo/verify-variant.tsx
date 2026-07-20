@@ -14,9 +14,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import {fileURLToPath} from 'node:url';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
+import {outputsRoot} from '../lib.mjs';
 import {createLogoModel} from '../../src/logo/load-logo';
 import type {LogoVariantProps} from '../../src/logo/types';
 
@@ -28,9 +28,7 @@ const arg = (flag: string, fallback: string | null = null) => {
 
 const slug = arg('--slug', 'listingos') as string;
 const variantFile = arg('--variant', '01-scan-in') as string;
-const __filename = fileURLToPath(import.meta.url);
-const projectRoot = path.resolve(path.dirname(__filename), '..', '..');
-const outDir = arg('--out', path.join(projectRoot, 'outputs', 'logo-verify')) as string;
+const outDir = arg('--out', path.join(outputsRoot, 'logo-verify')) as string;
 
 const run = async () => {
   const layersPath = path.join('assets', 'logos', slug, 'layers.json');

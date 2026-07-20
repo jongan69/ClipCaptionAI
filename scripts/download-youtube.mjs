@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, outputsRoot, projectRoot} from './lib.mjs';
 import {downloadYoutubeVideo, readUrlsFromLinksFile} from './lib-youtube-download.mjs';
 
 const defaultLinks = path.join(projectRoot, 'links.txt');
@@ -53,7 +53,7 @@ const uniqueDir = (parent, preferredName) => {
 };
 
 const linksPath = path.resolve(String(args.links ?? defaultLinks));
-const outRoot = path.resolve(String(args['out-dir'] ?? path.join(projectRoot, 'outputs')));
+const outRoot = path.resolve(String(args['out-dir'] ?? outputsRoot));
 const runName = String(args['run-name'] ?? `download-run-${timestampSlug()}`);
 const runDir = uniqueDir(outRoot, runName);
 const downloadRoot = path.resolve(String(args['download-dir'] ?? path.join(runDir, 'downloads')));

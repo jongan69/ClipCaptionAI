@@ -18,8 +18,11 @@ import pc from 'picocolors';
 import {
   defaultCaptionStylePath,
   ensureDir,
+  ensureOutputDirs,
   loadEnv,
   projectRoot,
+  outputWorkRoot,
+  outputsRoot,
   readCaptionStyleConfig,
 } from './lib.mjs';
 import {
@@ -28,6 +31,7 @@ import {
   slugify,
   timestampSlug,
 } from './clipkit-lib.mjs';
+import {commandExists} from './command-utils.mjs';
 const require = createRequire(import.meta.url);
 const packageJson = require('../package.json');
 const defaultFramePath = path.join(path.dirname(projectRoot), 'Frame.png');
@@ -69,14 +73,6 @@ const npmRun = (script, args = []) => {
 
 const withDefaultArgs = (defaults, args = []) => [...defaults, ...args];
 
-const commandExists = (command) => {
-  const result = spawnSync('zsh', ['-lc', `command -v ${command}`], {
-    cwd: projectRoot,
-    stdio: 'ignore',
-  });
-  return result.status === 0;
-};
-
 const hasOpenAiKey = () => {
   loadEnv();
   return Boolean(process.env.OPENAI_API_KEY);
@@ -104,7 +100,7 @@ const openPath = (targetPath) => {
 };
 
 const ensureStyleOverrideDir = () => {
-  const dir = path.join(projectRoot, 'outputs', 'work', 'menu-style-overrides');
+  const dir = path.join(outputWorkRoot, 'menu-style-overrides');
   ensureDir(dir);
   return dir;
 };
@@ -358,7 +354,7 @@ const askRenderOverrideBundle = async (
 };
 
 const latestOutputDir = () => {
-  const outputsDir = path.join(projectRoot, 'outputs');
+  const outputsDir = outputsRoot;
   if (!fs.existsSync(outputsDir)) {
     return null;
   }
@@ -443,7 +439,7 @@ const runAutoClips = (args = []) => {
     '--links',
     linksPath,
     '--out-dir',
-    path.join(projectRoot, 'outputs'),
+    outputsRoot,
     '--max-clips',
     process.env.MAX_CLIPS ?? '6',
     '--padding-seconds',
@@ -468,7 +464,7 @@ const runMomentsOnly = (args = []) => {
     '--links',
     linksPath,
     '--out-dir',
-    path.join(projectRoot, 'outputs'),
+    outputsRoot,
     '--max-clips',
     process.env.MAX_CLIPS ?? '6',
     '--padding-seconds',
@@ -522,7 +518,7 @@ const runDownloadOnly = (args = []) => {
     '--links',
     linksPath,
     '--out-dir',
-    path.join(projectRoot, 'outputs'),
+    outputsRoot,
   ], args));
 };
 
@@ -543,7 +539,7 @@ const runFrameLinks = (args = []) => {
     '--links',
     linksPath,
     '--out-dir',
-    path.join(projectRoot, 'outputs'),
+    outputsRoot,
   ];
 
   if (fs.existsSync(defaultFramePath)) {
@@ -578,7 +574,7 @@ const runFixedClips = (args = []) => {
     '--links',
     linksPath,
     '--out-dir',
-    path.join(projectRoot, 'outputs'),
+    outputsRoot,
     '--segment-seconds',
     process.env.FIXED_SEGMENT_SECONDS ?? '15',
   ], args));
@@ -605,7 +601,7 @@ const runBroll = (args = []) => {
     '--prompts',
     promptsPath,
     '--out-dir',
-    path.join(projectRoot, 'outputs'),
+    outputsRoot,
   ], args));
 };
 
@@ -1071,7 +1067,7 @@ Examples:
 };
 
 const main = async () => {
-  ensureDir(path.join(projectRoot, 'outputs'));
+  ensureOutputDirs();
 
   if (process.argv.length <= 2) {
     await interactiveMenu();

@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
   defaultCaptionStylePath,
   ensureDir,
+  outputsRoot,
   parseArgs,
   projectRoot,
   run,
@@ -88,9 +89,7 @@ const linksPath = path.resolve(
   args.links ??
     (fs.existsSync(localLinks) ? localLinks : desktopLinks),
 );
-const outRoot = path.resolve(
-  args['out-dir'] ?? path.join(projectRoot, 'outputs'),
-);
+const outRoot = path.resolve(args['out-dir'] ?? outputsRoot);
 const runName = String(args['run-name'] ?? makeRunName());
 const runDir = uniqueDir(outRoot, runName);
 const downloadRoot = path.resolve(args['download-dir'] ?? path.join(runDir, 'downloads'));

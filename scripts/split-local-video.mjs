@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {ensureDir, parseArgs, probeVideo, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, outputsRoot, probeVideo, projectRoot} from './lib.mjs';
 import {slugify, timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
@@ -56,7 +56,7 @@ if (!fs.existsSync(sourceVideo)) {
   throw new Error(`Video not found: ${sourceVideo}`);
 }
 
-const outRoot = path.resolve(String(args['out-dir'] ?? path.join(projectRoot, 'outputs')));
+const outRoot = path.resolve(String(args['out-dir'] ?? outputsRoot));
 const runName = String(args['run-name'] ?? `local-fixed-clips-run-${timestampSlug()}`);
 const runDir = uniqueDir(outRoot, runName);
 const sourceSlug = slugify(path.basename(sourceVideo, path.extname(sourceVideo)));

@@ -2,7 +2,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {ensureDir, parseArgs, probeVideo, projectRoot} from './lib.mjs';
+import {
+  ensureDir,
+  parseArgs,
+  outputsRoot,
+  probeVideo,
+  projectRoot,
+} from './lib.mjs';
 import {
   downloadYoutubeVideo,
   readLinkEntriesFromLinksFile,
@@ -76,7 +82,7 @@ const listSegmentFiles = (dir) =>
     .sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
 
 const linksPath = path.resolve(String(args.links ?? defaultLinks));
-const outRoot = path.resolve(String(args['out-dir'] ?? path.join(projectRoot, 'outputs')));
+const outRoot = path.resolve(String(args['out-dir'] ?? outputsRoot));
 const runName = String(args['run-name'] ?? `fixed-clips-run-${timestampSlug()}`);
 const runDir = uniqueDir(outRoot, runName);
 const downloadRoot = path.resolve(String(args['download-dir'] ?? path.join(runDir, 'downloads')));

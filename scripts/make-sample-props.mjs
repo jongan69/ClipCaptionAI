@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   ensureDir,
+  outputsRoot,
   probeVideo,
-  projectRoot,
   videoToSrc,
 } from './lib.mjs';
 
@@ -48,7 +48,7 @@ const props = {
   },
 };
 
-const samplePropsDir = path.join(projectRoot, 'outputs', 'studio', 'sample-props');
+const samplePropsDir = path.join(outputsRoot, 'studio', 'sample-props');
 const outPath = path.join(samplePropsDir, 'sample-props.json');
 const captionsPath = path.join(samplePropsDir, 'sample-captions.json');
 ensureDir(samplePropsDir);

@@ -8,7 +8,7 @@ import {
 import {
   ensureDir,
   parseArgs,
-  projectRoot,
+  outputsRoot,
 } from './lib.mjs';
 
 const usage = `
@@ -40,17 +40,16 @@ const formatSeconds = (value) => {
 };
 
 const latestRunDir = () => {
-  const outputsDir = path.join(projectRoot, 'outputs');
-  if (!fs.existsSync(outputsDir)) {
+  if (!fs.existsSync(outputsRoot)) {
     return null;
   }
 
   const candidates = fs
-    .readdirSync(outputsDir, {withFileTypes: true})
+    .readdirSync(outputsRoot, {withFileTypes: true})
     .filter((entry) => entry.isDirectory() && /^run-\d{4}-\d{2}-\d{2}-\d{6}/.test(entry.name))
     .map((entry) => ({
       name: entry.name,
-      fullPath: path.join(outputsDir, entry.name),
+      fullPath: path.join(outputsRoot, entry.name),
     }))
     .sort((a, b) => b.name.localeCompare(a.name));
 

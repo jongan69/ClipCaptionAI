@@ -5,6 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import crypto from 'node:crypto';
+import {commandExists} from '../scripts/command-utils.mjs';
+import {outputsRoot as DESKTOP_OUTPUTS_ROOT} from '../scripts/lib.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..');
@@ -165,16 +167,6 @@ function buildArgvFromInput(command, argValues = {}, extraArgs = '') {
   }
 
   return argv.concat(args);
-}
-
-function commandExists(command) {
-  try {
-    const checkCommand = process.platform === 'win32' ? 'where' : 'which';
-    const result = spawnSync(checkCommand, [command], {stdio: 'ignore'});
-    return result.status === 0;
-  } catch {
-    return false;
-  }
 }
 
 function gatherEnvironment() {
@@ -472,7 +464,7 @@ function writeRunLog(session, text, channel = 'stdout') {
 
 function createSessionLogPath() {
   if (!app.isPackaged) {
-    return path.join(PROJECT_ROOT, 'outputs', 'desktop-session.log');
+    return path.join(DESKTOP_OUTPUTS_ROOT, 'desktop-session.log');
   }
 
   return path.join(app.getPath('userData'), 'desktop-session.log');

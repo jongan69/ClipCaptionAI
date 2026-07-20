@@ -5,6 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {
   ensureDir,
   parseArgs,
+  outputsRoot,
   projectRoot,
   requireArg,
 } from './lib.mjs';
@@ -31,7 +32,7 @@ if (args.help || args.h) {
 
 const video = path.resolve(requireArg(args, 'video', usage));
 const outRoot = path.resolve(
-  String(args['out-dir'] ?? path.join(projectRoot, 'outputs', 'transcription-benchmarks')),
+  String(args['out-dir'] ?? path.join(outputsRoot, 'transcription-benchmarks')),
 );
 const sampleStart = Math.max(0, Number(args['sample-start'] ?? 0));
 const sampleSeconds = Math.max(8, Number(args['sample-seconds'] ?? 30));

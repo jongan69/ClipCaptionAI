@@ -8,6 +8,11 @@ export const projectRoot = path.resolve(
   new URL('..', import.meta.url).pathname,
 );
 
+export const outputsRoot = path.join(projectRoot, 'outputs');
+export const outputWorkRoot = path.join(outputsRoot, 'work');
+export const publicMediaRoot = path.join(projectRoot, 'public', 'media');
+export const ebayCinematicAdsOutputRoot = path.join(outputsRoot, 'ebay-cinematic-ads');
+
 export const loadEnv = () => {
   dotenv.config({path: path.join(projectRoot, '.env')});
 };
@@ -64,6 +69,12 @@ export const ensureDir = (dir) => {
   fs.mkdirSync(dir, {recursive: true});
 };
 
+export const ensureOutputDirs = () => {
+  ensureDir(outputsRoot);
+  ensureDir(outputWorkRoot);
+  ensureDir(publicMediaRoot);
+};
+
 export const videoToSrc = (videoPath) => {
   if (/^https?:\/\//.test(videoPath)) {
     return videoPath;
@@ -72,7 +83,7 @@ export const videoToSrc = (videoPath) => {
   const absolute = path.resolve(videoPath);
   const parsed = path.parse(absolute);
   const hash = createHash('sha1').update(absolute).digest('hex').slice(0, 10);
-  const publicMediaDir = path.join(projectRoot, 'public', 'media');
+  const publicMediaDir = publicMediaRoot;
   const stagedName = `${parsed.name.replace(/[^a-z0-9._-]+/gi, '_').slice(0, 80)}-${hash}${parsed.ext}`;
   const stagedPath = path.join(publicMediaDir, stagedName);
 
