@@ -2,6 +2,7 @@
   "name": "clipcaptionai",
   "version": "0.1.0",
   "description": "Polished local-first AI video editing toolkit for clipping YouTube videos, rendering invert-mask captions, finding contextual B-roll, and rerendering creator edits.",
+  "main": "desktop/main.mjs",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -35,16 +36,45 @@
     "menu": "node scripts/clipkit.mjs",
     "clipkit": "node scripts/clipkit.mjs",
     "doctor": "node scripts/clipkit.mjs doctor",
+    "rotato": "node scripts/rotato-cli.mjs",
     "test": "node --test",
     "check": "npm run typecheck && npm test",
     "cleanup": "node scripts/cleanup.mjs",
     "studio": "remotion studio src/index.tsx",
+    "logo:vectorize": "node scripts/logo/vectorize.mjs",
+    "logo:spec": "node scripts/logo/build-spec.mjs",
+    "logo:verify": "tsx scripts/logo/verify-variant.tsx",
+    "logo:render": "node scripts/logo/render-all.mjs",
     "render:clip": "node scripts/render-clip.mjs",
     "render:batch": "node scripts/render-batch.mjs",
     "rerender:clip": "node scripts/rerender-clip.mjs",
     "smart:clips": "node scripts/smart-clips.mjs",
     "moments:review": "node scripts/review-moments.mjs",
     "download:youtube": "node scripts/download-youtube.mjs",
+    "frame:links": "node scripts/render-frame-from-links.mjs",
+    "ebay:cinematic-ads": "node scripts/ebay-cinematic-ads.mjs",
+    "ebay:traffic-optimize": "node scripts/optimize-ebay-traffic-report.mjs",
+    "ebay:creative-intel": "node scripts/competitive-listing-video-architect.mjs",
+    "ebay:render-blueprint-ad": "node scripts/render-competitive-blueprint-ad.mjs",
+    "ebay:render-blueprint-batch": "node scripts/render-competitive-blueprint-batch.mjs",
+    "ebay:prep-premium-renders": "node scripts/prepare-competitive-premium-renders.mjs",
+    "ebay:collect-premium-renders": "node scripts/collect-competitive-premium-renders.mjs",
+    "ebay:finalize-premium-ads": "node scripts/finalize-competitive-premium-ads.mjs",
+    "ebay:competitive-status": "node scripts/audit-competitive-video-pipeline.mjs",
+    "ebay:competitive-review": "node scripts/build-competitive-review-board.mjs",
+    "ebay:competitive-qa": "node scripts/qa-competitive-videos.mjs",
+    "ebay:competitive-loop": "node scripts/run-competitive-video-control-loop.mjs",
+    "ebay:competitive-handoff": "node scripts/export-competitive-render-handoff.mjs",
+    "ebay:competitive-higgsfield-render": "node scripts/run-competitive-higgsfield-renders.mjs",
+    "ebay:competitive-packets": "node scripts/export-competitive-creative-packets.mjs",
+    "ebay:voiceover-plan": "node scripts/export-competitive-voiceover-plan.mjs",
+    "ebay:main-photo-candidates": "node scripts/generate-ebay-main-photo-candidates.mjs",
+    "ebay:main-photo-apply-bundle": "node scripts/export-ebay-main-photo-apply-bundle.mjs",
+    "ebay:competitive-research-rerun": "node scripts/rerun-competitive-research-packet.mjs",
+    "ebay:competitive-research-queue": "node scripts/export-competitive-research-queue.mjs",
+    "ebay:competitive-research-import": "node scripts/import-competitive-research-results.mjs",
+    "ebay:competitive-research-loop": "node scripts/run-competitive-research-import-loop.mjs",
+    "ebay:competitive-research-process": "node scripts/process-competitive-research-queue.mjs",
     "download:split": "node scripts/download-and-split.mjs",
     "video:split": "node scripts/split-local-video.mjs",
     "clip:auto": "node scripts/process-links.mjs",
@@ -67,7 +97,16 @@
     "transcribe": "node scripts/transcribe-openai.mjs",
     "transcribe:benchmark": "node scripts/benchmark-transcription.mjs",
     "sample:props": "node scripts/make-sample-props.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "desktop:env-check": "node desktop/check-environment.mjs",
+    "desktop:env-check:json": "node desktop/check-environment.mjs --json",
+    "desktop": "node desktop/check-environment.mjs && electron ./desktop/main.mjs",
+    "desktop:dev": "CCA_DESKTOP_DEV=1 node desktop/check-environment.mjs && electron ./desktop/main.mjs",
+    "desktop:package": "node desktop/check-environment.mjs && electron-builder --publish never",
+    "desktop:package:mac": "node desktop/check-environment.mjs && electron-builder --mac --publish never",
+    "desktop:package:win": "node desktop/check-environment.mjs && electron-builder --win --publish never",
+    "desktop:package:linux": "node desktop/check-environment.mjs && electron-builder --linux --publish never",
+    "desktop:package:all": "npm run desktop:package:mac && npm run desktop:package:win && npm run desktop:package:linux"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
@@ -85,6 +124,53 @@
     "@types/node": "24.0.3",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.clipcaptionai.desktop",
+    "productName": "ClipCaptionAI",
+    "copyright": "Copyright © 2026",
+    "directories": {
+      "output": "dist-desktop"
+    },
+    "files": [
+      "desktop/**/*",
+      "scripts/**/*",
+      "bin/**/*",
+      "src/**/*",
+      "public/**/*",
+      "styles/**/*",
+      "scene-library/**/*",
+      "custom-scenes-library/**/*",
+      "sfx-library/**/*",
+      "models/**/*",
+      "music-library/**/*",
+      "caption-style.json",
+      "package.json"
+    ],
+    "extraFiles": [
+      {
+        "from": ".env.example",
+        "to": ".env.example"
+      },
+      {
+        "from": "README.md",
+        "to": "README.md"
+      }
+    ],
+    "asar": true,
+    "asarUnpack": ["**/node_modules/**/*"],
+    "mac": {
+      "category": "public.app-category.video",
+      "target": "dmg"
+    },
+    "win": {
+      "target": ["nsis"]
+    },
+    "linux": {
+      "target": ["AppImage", "deb"]
+    }
   }
 }

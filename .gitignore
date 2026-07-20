@@ -4,7 +4,6 @@ node_modules/
 .env.*
 !.env.example
 public/media/
-work/
 outputs/*
 !outputs/.gitkeep
 projects/*

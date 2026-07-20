@@ -1500,7 +1500,6 @@ let autoIngestResult = null;
 
 if (config.youtubeIngest.enabled && autoIngestQueries.length > 0) {
   autoIngestResult = await ingestYouTubeScenes({
-    apiKey: process.env.YOUTUBE_API_KEY ?? null,
     sceneLibraryDir,
     queries: autoIngestQueries,
     maxResultsPerQuery: config.youtubeIngest.maxResultsPerQuery,

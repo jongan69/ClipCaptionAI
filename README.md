@@ -29,6 +29,36 @@ npm run menu
 npx clipcaptionai menu
 ```
 
+From Desktop:
+
+```bash
+npm run desktop
+```
+
+Production checks run before booting the desktop shell:
+
+- Required: Node.js + `ffmpeg` + `ffprobe` + project CLI/runtime files
+- Optional: `yt-dlp`, `remotion`, `openai`
+
+```bash
+npm run desktop:env-check:json
+```
+
+For machine-readable checks (CI/automation), use `--json`.
+
+`npm run desktop` starts an Electron shell that runs the same `clipcaptionai` commands through IPC. It keeps the CLI as the source of truth while offering a cleaner user surface and a raw-command input for automation workflows. The workflow list is synchronized from `clipcaptionai --help` at startup, and any missing CLI commands are surfaced automatically as CLI-discovered entries so the app tracks tool growth.
+From the UI, use **Open session log** to inspect desktop process logs while jobs are running.
+
+Build a local desktop artifact with Electron Builder:
+
+```bash
+npm run desktop:package
+npm run desktop:package:mac
+npm run desktop:package:win
+npm run desktop:package:linux
+npm run desktop:package:all
+```
+
 Run a quick local health check:
 
 ```bash
@@ -50,7 +80,7 @@ npm run menu
 
 ## Menu Reference
 
-`RUN.command` and `npm run menu` open the same 14-option workflow menu.
+`RUN.command` and `npm run menu` open the same workflow menu.
 
 For render-producing workflows, the menu can now optionally open an advanced settings prompt before the run starts. That lets you override common choices on the fly without editing JSON first:
 
@@ -65,21 +95,23 @@ For render-producing workflows, the menu can now optionally open an advanced set
 | Menu | What it does | Direct command | Main output |
 | --- | --- | --- | --- |
 | `1` | Download links from `links.txt` and stop. | `npm run clipkit -- download --links links.txt` | `outputs/download-run-*/downloads/` |
-| `2` | Download full videos and chop each whole source into fixed clips. | `npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15` | `outputs/fixed-clips-run-*/fixed-clips/` |
-| `3` | Cut one local video into fixed clips. | `npm run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15` | `outputs/local-fixed-clips-run-*/fixed-clips/` |
-| `4` | Find the strongest moments for manual editing only. | `npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.moment.mp4` |
-| `5` | Full auto-clips pipeline. | `npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
-| `6` | B-roll-heavy generator using labeled `links.txt`. | `npm run clipkit -- broll-captions --links links.txt --max-clips 3` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
-| `7` | Caption one existing video. | `npm run clipkit -- caption --video "/path/to/video.mp4"` | `outputs/caption-run-*/final/` |
-| `8` | Enhance an existing edit with B-roll plus captions. | `npm run clipkit -- enhance --video "/path/to/edit.mp4"` | `outputs/enhance-run-*/final/` |
-| `9` | Find standalone B-roll from prompt lines. | `npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8` | `outputs/broll-run-*/` |
-| `10` | List or rerender a generated clip after transcript/style fixes. | `npm run clipkit -- rerender --clip <id>` | `*.corrected.mp4` or replaced `*.captioned.mp4` |
-| `11` | Clean temp files or old output folders. | `npm run clipkit -- cleanup` | Deletes generated files after confirmation |
-| `12` | Open Remotion Studio. | `npm run studio` | Remotion preview UI |
-| `13` | Open the newest output folder in Finder. | `npm run output:open` | Latest `outputs/run-*` folder |
-| `14` | Check local dependencies and config. | `npm run doctor` | Terminal health report |
+| `2` | Download YouTube videos into a local frame image. | `npm run clipkit -- frame --links links.txt --frame /Users/jonathangan/Desktop/Frame.png` | `outputs/frame-run-*/` |
+| `3` | Build one lean cinematic eBay ad kit. | `npm run clipkit -- ebay-ads roi-plan --credit-budget 45 --max-listings 1 --max-higgs-shots 1 --prepare-selected` | `outputs/ebay-cinematic-ads/roi-plan-*/` |
+| `4` | Download full videos and chop each whole source into fixed clips. | `npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15` | `outputs/fixed-clips-run-*/fixed-clips/` |
+| `5` | Cut one local video into fixed clips. | `npm run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15` | `outputs/local-fixed-clips-run-*/fixed-clips/` |
+| `6` | Find the strongest moments for manual editing only. | `npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.moment.mp4` |
+| `7` | Full auto-clips pipeline. | `npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| `8` | B-roll-heavy generator using labeled `links.txt`. | `npm run clipkit -- broll-captions --links links.txt --max-clips 3` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| `9` | Caption one existing video. | `npm run clipkit -- caption --video "/path/to/video.mp4"` | `outputs/caption-run-*/final/` |
+| `10` | Enhance an existing edit with B-roll plus captions. | `npm run clipkit -- enhance --video "/path/to/edit.mp4"` | `outputs/enhance-run-*/final/` |
+| `11` | Find standalone B-roll from prompt lines. | `npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8` | `outputs/broll-run-*/` |
+| `12` | List or rerender a generated clip after transcript/style fixes. | `npm run clipkit -- rerender --clip <id>` | `*.corrected.mp4` or replaced `*.captioned.mp4` |
+| `13` | Clean temp files or old output folders. | `npm run clipkit -- cleanup` | Deletes generated files after confirmation |
+| `14` | Open Remotion Studio. | `npm run studio` | Remotion preview UI |
+| `15` | Open the newest output folder in Finder. | `npm run output:open` | Latest `outputs/run-*` folder |
+| `16` | Check local dependencies and config. | `npm run doctor` | Terminal health report |
 
-Menu option `10` now supports both cases:
+Menu option `12` now supports both cases:
 
 - press Enter on clip input to list editable clips
 - enter a clip number, slug, title fragment, or full `.captions.json` path to rerender
@@ -307,7 +339,7 @@ What you get:
 
 The cleanup menu can:
 
-- delete temporary render files from `work/` and `public/media/`
+- delete temporary render files from `outputs/work/` and `public/media/`
 - delete old output folders while keeping the newest 5
 - delete all generated output folders
 - run a dry run so you can see what would be deleted first
@@ -333,6 +365,12 @@ The everyday command surface is `clipkit`:
 
 ```bash
 npm run clipkit -- download --links links.txt
+npm run clipkit -- frame --links links.txt --frame /Users/jonathangan/Desktop/Frame.png
+npm run clipkit -- ebay-ads roi-plan --credit-budget 45 --max-listings 1 --max-higgs-shots 1 --skip-item-ids 398166069187 --prepare-selected
+npm run clipkit -- ebay-ads prepare --item-ids 398160795273
+npm run clipkit -- ebay-ads seed-local-broll --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273
+npm run clipkit -- ebay-ads find-broll --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273
+npm run clipkit -- ebay-ads assemble --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273
 npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15
 npm run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15
 npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2
@@ -351,6 +389,8 @@ Shortcut aliases:
 | `npm run menu` | Open the interactive workflow menu. |
 | `npm run doctor` | Check Node, npm, ffmpeg, ffprobe, yt-dlp, `.env`, and keys. |
 | `npm run download:youtube` | Download YouTube videos from a links file and stop. |
+| `npm run frame:links` | Download YouTube videos and render them into a supplied frame image. |
+| `npm run ebay:cinematic-ads` | Plan Higgsfield credit spend, prepare listing briefs, assemble rendered clips, and upload final eBay videos. |
 | `npm run download:split` | Download YouTube videos, then slice each full source into fixed clips. |
 | `npm run video:split` | Slice one local video into fixed clips without using YouTube. |
 | `npm run clips:fixed` | Run the full-video fixed-clip workflow from `links.txt`. |
@@ -378,6 +418,12 @@ If you are not sure which command to run, use this:
 | Goal | Best command |
 | --- | --- |
 | Just download source videos | `npm run download:youtube -- --links links.txt` |
+| Decide which one listing gets the next Higgs credit spend | `npm run ebay:cinematic-ads -- roi-plan --credit-budget 45 --max-listings 1 --max-higgs-shots 1 --skip-item-ids 398166069187 --prepare-selected` |
+| Create a cinematic ad kit for live eBay listings | `npm run ebay:cinematic-ads -- prepare --item-ids 398160795273` |
+| Seed owned local footage into an eBay ad kit | `npm run ebay:cinematic-ads -- seed-local-broll --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273` |
+| Find story-building B-roll for an eBay ad kit | `npm run ebay:cinematic-ads -- find-broll --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273` |
+| Assemble Higgsfield renders into an eBay MP4 | `npm run ebay:cinematic-ads -- assemble --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273` |
+| Assemble a max-energy B-roll/SFX eBay MP4 | `npm run ebay:cinematic-ads -- assemble --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273 --energy max` |
 | Download full source videos and chop the entire thing into fixed 15-second clips | `npm run clips:fixed -- --links links.txt --segment-seconds 15` |
 | Chop one local source video into fixed 15-second clips | `npm run video:split -- --video "/path/to/video.mp4" --segment-seconds 15` |
 | Let AI find strong moments, but edit manually yourself | `npm run moments:auto -- --links links.txt --max-clips 6 --padding-seconds 2` |
@@ -389,6 +435,346 @@ If you are not sure which command to run, use this:
 | Fix one wrong caption word and rerender | `npm run rerender:clip -- --clip <id>` |
 | Open the newest run in Finder | `npm run output:open` |
 | Sanity-check the machine before a long run | `npm run doctor` |
+
+## eBay Cinematic Listing Ads
+
+Use this lane when the goal is a real product ad, not an automatic photo slideshow. The default workflow is lean: one listing at a time, one paid Higgs hero/product-proof shot, owned/local B-roll first, then final assembly/upload through the shopping MCP.
+
+Start with a credit ROI plan before rendering. Use `--skip-item-ids` when a listing should be excluded from paid generation:
+
+```bash
+npm run ebay:cinematic-ads -- roi-plan \
+  --credit-budget 45 \
+  --max-listings 1 \
+  --max-higgs-shots 1 \
+  --skip-item-ids 398166069187 \
+  --prepare-selected
+```
+
+The planner pulls the live eBay listing dashboard, ranks listings by likely conversion upside, assigns a render tier, and writes:
+
+```text
+outputs/ebay-cinematic-ads/roi-plan-YYYY-MM-DD-HHMMSS/
+  higgsfield-roi-plan.md
+  higgsfield-roi-plan.json
+  projects/
+```
+
+The default strategy is intentionally conservative: one paid Higgs shot per ad kit. The perceived production value should come from B-roll, pacing, captions, SFX, and clean assembly. The default `--credits-per-shot` is `22.5`, matching a verified Seedance 2.0 5-second 720p reference-video estimate on July 12, 2026. Re-run `higgsfield/estimate-costs.sh` before rendering if model pricing changes.
+
+For higher-energy sales creatives, use `--ad-strategy high-energy` during planning and `--energy max` while finding B-roll or assembling. Max energy mode uses more kinetic yt-dlp B-roll prompts, shorter B-roll source sections, interleaved 1-2 second cutaways, faster product cuts, and automatic transition/impact/money/camera SFX from `sfx-library/index.json`.
+
+Prepare one or more listing projects:
+
+```bash
+npm run ebay:cinematic-ads -- prepare --item-ids 398160795273,398166069187
+```
+
+That creates:
+
+```text
+outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/
+  workbench.json
+  <item-id>/
+    listing.json
+    higgsfield-brief.md
+    higgsfield-brief.json
+    story-broll-plan.md
+    story-broll-prompts.txt
+    01-actual-listing-photo.jpg
+    ...
+    higgsfield-renders/
+    story-broll/
+```
+
+The brief is strict on purpose: the actual listing photos are the source of truth, and every generated shot should preserve the exact item, condition, labels, and included accessories. Import the downloaded photos or source image URLs into Higgsfield, render the short cinematic clips from the shot prompts, then place the finished MP4/MOV/WebM clips in `higgsfield-renders/`.
+
+When the Higgsfield MCP tools are visible in Codex, import the image URLs with Higgsfield's media import tool, then call its video generation tool with the prompts in `higgsfield-brief.json`. If `codex mcp list` shows `higgsfield` enabled but the tools are not exposed in the current task, restart/re-auth the MCP session before trying to automate render creation.
+
+Before spending credits, you can build a competitive creative blueprint from Kalodata, Automatio, TikTok, YouTube, or hand-curated competitor rows:
+
+One-command live-listing workflow:
+
+```bash
+npm run ebay:cinematic-ads -- competitive-plan \
+  --max-listings 3 \
+  --credit-budget 60 \
+  --max-higgs-shots 1 \
+  --ad-strategy high-energy \
+  --run-control-loop \
+  --run-higgsfield-renders \
+  --higgs-render-model seedance_2_0_mini \
+  --higgs-render-dry-run \
+  --higgs-render-skip-cost
+```
+
+That ranks the live eBay listings by ROI/creative need, downloads the actual listing photos into `projects/`, seeds competitor references with public YouTube metadata by default, analyzes the selected reference video as a bounded research clip, and writes `competitive-pipeline-manifest.json` plus one `creative-blueprint.md` and `reference-video-analysis/shot-replica-map.md` per listing. With `--run-control-loop`, the same command continues into preview rendering, technical QA, premium render packet prep, and the Higgsfield handoff queue/review board. Add `--run-higgsfield-renders` to let the top-level command create/resume Higgsfield jobs from the premium plan before collection and finalization; use `--higgs-render-dry-run --higgs-render-skip-cost` first to prove the queue and budget without spending credits. Use `--competitors /path/to/kalodata-export.csv` to blend Kalodata, Automatio, TikTok, or hand-curated competitor rows into the same ranking pass. Use `--no-analyze-reference-video` for a faster metadata-only run.
+
+If eBay/MCP traffic is rate-limited, rerun the same planner from saved truth snapshots instead of waiting on the live API:
+
+```bash
+npm run ebay:cinematic-ads -- competitive-plan \
+  --dashboard-file exports/ebay-listing-performance-dashboard.json \
+  --workbench-file exports/ebay-listing-asset-workbench.json \
+  --competitors exports/automatio-kalodata.csv \
+  --no-download \
+  --run-control-loop \
+  --control-loop-dry-run \
+  --run-higgsfield-renders \
+  --higgs-render-dry-run \
+  --higgs-render-skip-cost
+```
+
+`--dashboard-file` replaces the live `ebay_get_listing_performance_dashboard` call, and `--workbench-file` replaces the live `ebay_get_listing_asset_workbench` call. The workbench snapshot should include the same `manifest.listings[]` shape that the MCP returns, with each listing's local `directory`, `images[].path`, and source metadata. This makes the competitor-video pipeline reproducible from a frozen eBay/export state.
+
+Single prepared-listing workflow:
+
+```bash
+npm run ebay:creative-intel -- plan \
+  --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273 \
+  --competitors /path/to/kalodata-export.csv
+```
+
+This ranks similar product videos, extracts the winning structure, and writes `competitive-creative/creative-blueprint.md`. It does not use competitor footage in the final ad. The blueprint copies only the strategy: hook pattern, beat order, pacing, proof density, B-roll intent, SFX style, and CTA role. Final assets still come from our own listing photos, owned/generated product-preserving video, licensed music, licensed SFX, and cleared B-roll.
+
+The import keeps trend evidence from Kalodata/Automatio-style exports. Useful columns include `Product Title`, `Video URL`, `Hook`, `Caption`, `Duration Seconds`, `Video Views`, `Product Units Sold`, `Product GMV`, `GMV Growth Rate`, `Video Likes`, `Video Comments`, `Video Shares`, `Engagement Rate`, `Posting Date`, `Shot Breakdown`, and `Audio Notes`. Each run writes `competitor-trend-report.json` and `competitor-trend-report.md` so the selected structure can be inspected by product fit and trend evidence before any paid render.
+
+When `Shot Breakdown` is present, the architect maps those ordered beats directly into the blueprint's `beats[].competitor_pattern` fields for structure-only copying. `Audio Notes` are preserved as analysis-only beat guidance so we can recreate the sound design with licensed/local music and SFX instead of competitor audio.
+
+Kalodata should be treated as an export source, not a hidden brittle scraper inside ClipCaptionAI. It is JavaScript-rendered, login-gated, paginated, and anti-bot protected, so use Automatio or another logged-in browser workflow to export CSV/JSON rows, then feed those rows to `--competitors`. Held listings also get `research/research-brief.md` with exact search queries, required columns, and the rerun command.
+
+If you do not have a Kalodata export yet, run the same command without `--competitors`; it writes `competitive-creative/kalodata-automatio-prompt.md` with the exact extraction prompt and fields to collect. Add `--discover-youtube` to seed public YouTube metadata links for manual review:
+
+```bash
+npm run ebay:creative-intel -- plan \
+  --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273 \
+  --discover-youtube
+```
+
+For the closest "1:1 structure copy" workflow, add `--analyze-reference-video`. This downloads only a bounded research clip from the selected reference, detects scene cuts, extracts a contact sheet, and writes a shot-by-shot replica map. The final commercial asset still cannot use competitor footage or audio:
+
+```bash
+npm run ebay:creative-intel -- plan \
+  --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273 \
+  --discover-youtube \
+  --analyze-reference-video \
+  --analysis-max-seconds 30
+```
+
+Render a product-safe preview MP4 from the blueprint and shot map before spending paid generation credits:
+
+```bash
+npm run ebay:render-blueprint-ad -- \
+  --blueprint outputs/competitive-plan-proof/.../competitive-creative/<item-id>/creative-blueprint.json
+```
+
+This creates `final/<item-id>-competitive-preview-ad.mp4`, a proof frame, and an audit manifest. It uses actual listing photos, local/cleared B-roll when available, local music, and local SFX. It is meant for creative QA and iteration; use Higgsfield renders for the final premium product-preserving hero shots when the preview direction is approved.
+
+For a batch QA pass across every listing blueprint from a competitive-plan run:
+
+```bash
+npm run ebay:render-blueprint-batch -- \
+  --blueprints-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative \
+  --duration 12 \
+  --limit 5
+```
+
+That recursively finds each `creative-blueprint.json`, renders the same product-safe preview MP4 for each listing, and writes `competitive-preview-render-manifest.json` with the final video, proof frame, selected reference, and render status per item. Use this to choose which listings deserve Higgsfield credits before making premium product-preserving shots.
+
+For the full post-blueprint control loop in one command:
+
+```bash
+npm run ebay:competitive-loop -- \
+  --blueprints-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative \
+  --credit-budget 45 \
+  --max-jobs-per-listing 1
+```
+
+That runs preview rendering, technical QA, premium render packet prep, a batch Higgsfield handoff export, Higgsfield output collection, finalizer readiness, pipeline status, per-listing creative packet export, and the HTML review board. If you already have a preview manifest, use `--preview-manifest` instead of `--blueprints-dir`. Use `--skip-handoff` only when you already have a current render queue and runbook.
+
+Run a quality gate on the preview videos before approving paid generation:
+
+```bash
+npm run ebay:competitive-qa -- \
+  --preview-manifest outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-preview-render-manifest.json
+```
+
+That writes `competitive-video-qa-report.json` and `competitive-video-qa-report.md`. It checks vertical resolution, duration, audio stream, audio loudness, black frames, frozen/slideshow risk, and scene-change density. Treat `fail` as a hard stop and `warn` as a review requirement before upload.
+
+After preview QA, prepare the paid-generation packet:
+
+```bash
+npm run ebay:prep-premium-renders -- \
+  --preview-manifest outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-preview-render-manifest.json \
+  --roi-plan outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/higgsfield-roi-plan.json \
+  --credit-budget 45 \
+  --max-jobs-per-listing 1
+```
+
+That writes `competitive-premium-render-plan/competitive-premium-render-plan.json` and per-listing Higgsfield packets in `projects/<item-id>/higgsfield/`. Each packet includes actual listing image references, cost/render shell scripts, strict product-truth QA, output filenames for `higgsfield-renders/`, and the final assemble command. When the selected competitor export includes a usable `Shot Breakdown`, the premium render jobs are generated from the blueprint beat map itself, so the first paid clips follow the imported hook/proof/b-roll/CTA timing instead of falling back to generic hero shots. The command does not spend credits by itself; run the generated `render-competitive-premium-shots.sh` only for approved listings.
+
+By default, premium prep holds listings whose selected structure is only a fallback template or has weak competitor-fit evidence. Those items appear as `research_review_required` in the status board. Add a real Kalodata/Automatio/TikTok/YouTube competitor export and rerun, or pass `--allow-weak-research` only when you intentionally want to make a direct product ad without competitor trend evidence.
+
+To hand the whole premium plan to Higgsfield/another agent without opening each listing folder:
+
+```bash
+npm run ebay:competitive-handoff -- \
+  --premium-plan outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json
+```
+
+That writes `competitive-render-handoff/` with `render-queue.json`, `render-queue.jsonl`, `render-url-map.template.json`, `higgsfield-render-runbook.md`, and `run-higgsfield-cli-jobs.sh`. Beat-driven jobs keep the competitor pattern, our original execution, caption intent, SFX intent, and audio feel in both the machine queue and human runbook. Use it to render/save the missing product-preserving MP4s to the exact `higgsfield-renders/<job-id>.mp4` paths, then run the collector/finalizer loop.
+
+To render the queue directly through the Higgsfield CLI with budget and resume controls:
+
+```bash
+npm run ebay:competitive-higgsfield-render -- \
+  --premium-plan outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json \
+  --model seedance_2_0_mini \
+  --credit-budget 40
+```
+
+That writes `competitive-higgsfield-render-run/competitive-higgsfield-render-manifest.json` plus `higgsfield-render-url-map.json`. It skips completed `*.competitive-job.json` files unless `--overwrite` is set, omits unsupported Mini-only flags like `--mode`, and can run safely as `--dry-run --skip-cost` before spending credits. Feed its URL map into `ebay:collect-premium-renders`.
+
+To package each listing into a portable creative packet for a generator/operator:
+
+```bash
+npm run ebay:competitive-packets -- \
+  --status outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-video-pipeline-status.json
+```
+
+That writes `competitive-creative-packets/<item-id>-*/` folders containing `creative-packet.md/json`, copied product reference images, preview proof assets, a per-listing render queue, URL-map template, competitor-inspired beat map, QA evidence, and a product-truth rejection checklist. If a listing is held as `research_review_required`, the packet also gets `research/research-brief.md`, `research/research-brief.json`, and `research/competitor-import-template.csv` with exact Kalodata/Automatio columns, search queries, and the rerun command.
+
+For a batch of held listings, export one consolidated Automatio/Kalodata research queue:
+
+```bash
+npm run ebay:competitive-research-queue -- \
+  --status outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-video-pipeline-status.json
+```
+
+That writes `competitive-research-queue/automatio-search-queue.csv`, `competitive-research-queue.json`, and `competitive-research-queue.md`. The CSV has one row per search query with the item, issue summary, required export columns, packet folder, competitor-import path, and rerun command.
+
+If Automatio/Kalodata gives you one consolidated export for several listings, route it back into the packet templates instead of copying rows by hand. The export should include `Item ID`, `Competitor Import Template`, `Packet Dir`, or the exact queued `Search Query` plus the competitor columns:
+
+```bash
+npm run ebay:competitive-research-import -- \
+  --queue outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-research-queue/competitive-research-queue.json \
+  --results /path/to/automatio-results.csv
+```
+
+That writes `competitive-research-import/competitive-research-import-manifest.json`, dedupes repeated competitor rows, and fans each matched result into the correct `research/competitor-import-template.csv`. Add `--dry-run` to preview routing without editing templates, or `--replace` when the export should become the whole template content.
+
+For the normal operator loop, import the consolidated export and immediately validate which listings are ready to rerun:
+
+```bash
+npm run ebay:competitive-research-loop -- \
+  --queue outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-research-queue/competitive-research-queue.json \
+  --results /path/to/automatio-results.csv \
+  --credit-budget 45 \
+  --max-jobs-per-listing 1
+```
+
+By default this writes the matched rows into the local packet templates, then runs the processor in dry-run mode so you can inspect planned reruns before spending credits. It also writes `competitive-research-import-loop/competitive-research-import-review.html`, an operator board showing imported competitor rows, trend evidence, product-match score/shared terms, skipped rows, and planned rerun commands. Treat low product-match warnings as a manual review stop even when trend metrics are strong. Add `--dry-run` to preview import routing without modifying templates. Add `--run-reruns` only after the review board and dry-run manifest show the right selected listings.
+
+After multiple packet templates have been filled, process every ready one in a batch:
+
+```bash
+npm run ebay:competitive-research-process -- \
+  --queue outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-research-queue/competitive-research-queue.json \
+  --credit-budget 45 \
+  --max-jobs-per-listing 1
+```
+
+The processor skips empty templates, requires at least one row with product title and video URL, requires trend evidence, requires copyable structure evidence, and requires at least one competitor row to meet the product-match threshold before a held listing can move toward premium render spend. Accepted structure fields include `Hook`, `Shot Breakdown`, `Caption`, `Video Title`, `Duration Seconds`, `Audio Notes`, and `Hashtags`. Accepted trend fields include `Video Views`, `Items Sold`, `Total Revenue`, `Revenue Growth Rate`, `Product GMV`, `GMV Growth Rate`, `Product Units Sold`, `Video Likes`, `Video Comments`, `Video Shares`, `Engagement Rate`, and `Posting Date`. The default product-match threshold is `0.2`; tune with `--min-product-match-score`. Use `--dry-run` first to see which listings will move. Use `--allow-no-trend-metrics` only when you intentionally want to proceed from product-fit evidence without measured trend data, `--allow-low-product-match` only after manually approving a weak title-match import, and `--allow-weak-structure` only when you accept that the architect will infer structure from sparse reference data.
+
+After filling a held packet's `research/competitor-import-template.csv` with real Automatio/Kalodata rows, rerun that listing with one command:
+
+```bash
+npm run ebay:competitive-research-rerun -- \
+  --packet-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-creative-packets/<item-id>-slug \
+  --competitors outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-creative-packets/<item-id>-slug/research/competitor-import-template.csv \
+  --credit-budget 45 \
+  --max-jobs-per-listing 1
+```
+
+The rerun helper infers the original listing project from the packet/status/preview breadcrumbs, rebuilds the competitive blueprint with the new competitor export, renders a fresh product-safe preview, runs QA, prepares premium Higgsfield packets, exports the handoff queue, rebuilds status, and refreshes the review board. If the imported competitor rows have a real video URL, product fit, and trend evidence, the listing should move from `research_review_required` to the premium render queue.
+
+Once approved Higgsfield clips have been saved to the expected `higgsfield-renders/` paths, finalize all ready listings in one pass:
+
+If Higgsfield gives you direct video URLs or downloaded files, import them into the expected paths first:
+
+```bash
+npm run ebay:collect-premium-renders -- \
+  --premium-plan outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json \
+  --url-map render-urls.json
+```
+
+`render-urls.json` can be either `{ "<item-id>": { "<job-id>": "/path/or/url/to/video.mp4" } }` or an array of `{ "item_id", "job_id", "url" }` rows. The collector also scans generated `*.competitive-job.json` files for result URLs, imports the clip into `higgsfield-renders/<job-id>.mp4`, and verifies the file has a video stream.
+
+```bash
+npm run ebay:finalize-premium-ads -- \
+  --premium-plan outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json
+```
+
+That writes `competitive-premium-finalize-manifest.json`, assembles only listings whose expected generated clips exist, probes the final MP4s, and reports missing clips as `not_ready`. It intentionally does not create slideshow fallbacks.
+
+At any point, audit the whole competitive-video run and get the next action per listing:
+
+```bash
+npm run ebay:competitive-status -- \
+  --premium-plan outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json
+```
+
+That writes `competitive-video-pipeline-status.json` and `competitive-video-pipeline-status.md` next to the premium plan. It merges the preview manifest, premium render packet, collector manifest, finalizer manifest, file existence checks, and `ffprobe` results into statuses like `preview_ready`, `waiting_for_generated_clips`, `ready_to_finalize`, and `final_ready`. Use it as the operator dashboard before spending more credits or uploading a listing video.
+
+For a visual operator board with the preview video, selected reference, trend evidence, blockers, and next action per listing:
+
+```bash
+npm run ebay:competitive-review -- \
+  --status outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-video-pipeline-status.json
+```
+
+That writes `competitive-review-board.html` next to the status file. Open it before running paid renders or uploads; it lets you review the actual preview MP4, product-fit/trend rationale, missing Higgsfield outputs, handoff runbook/queue links, creative packet folders, and source manifests in one place.
+
+For a story-building finish, use the generated `story-broll-prompts.txt`:
+
+Start with owned/local footage:
+
+```bash
+npm run ebay:cinematic-ads -- seed-local-broll \
+  --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273
+```
+
+Then search for extra clips only if the local footage does not carry the story:
+
+```bash
+npm run ebay:cinematic-ads -- find-broll \
+  --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273 \
+  --energy max
+```
+
+This uses the existing ClipCaptionAI B-roll finder and copies selected clips into `story-broll/`. Search/download runs through `yt-dlp`, so no YouTube API key is required. For live eBay ads, use only footage you have rights to use commercially; movie/TV scene search is useful for creative reference, not for publishing unless rights are cleared.
+
+Assemble the finished Higgsfield clips:
+
+```bash
+npm run ebay:cinematic-ads -- assemble \
+  --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273 \
+  --energy max
+```
+
+The assembler refuses to make a slideshow fallback. If there are no rendered clips in `higgsfield-renders/`, it stops so the listing does not get a low-effort placeholder by accident. With `--energy max`, it also writes `final/<item-id>-cinematic-ad.sfx-plan.json` so every sound effect and timing choice is auditable.
+
+After reviewing the final video and proof frame, upload and stage an eBay attachment:
+
+```bash
+npm run ebay:cinematic-ads -- upload \
+  --item-id 398160795273 \
+  --video outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273/final/398160795273-cinematic-ad.mp4 \
+  --attach \
+  --poll
+```
+
+Add `--apply-immediately` only when the video is approved for the live listing. Without it, the script writes the eBay revise response beside the final video for review.
 
 Each run creates a fresh folder:
 
@@ -634,7 +1020,7 @@ outputs/broll-run-YYYY-MM-DD-HHMMSS/
     clips/
 ```
 
-The clips are also cached in `scene-library/`, so repeated prompts do not redownload the same YouTube video when it already exists locally.
+The clips are also cached in `scene-library/`, so repeated prompts do not redownload the same YouTube video when it already exists locally. By default, `broll:find` uses `yt-dlp` in high-quality mode: it searches more cinematic variants, prefers 1080p-or-better sources when YouTube exposes them, and downloads a short usable section from the selected source.
 
 Useful `broll:find` options:
 
@@ -644,11 +1030,12 @@ Useful `broll:find` options:
 | `--out-dir DIR` | Output root. Defaults to `outputs`. |
 | `--run-name NAME` | Custom output folder name. |
 | `--scene-library DIR` | Reusable clip cache. Defaults to `scene-library`. |
+| `--quality fast\|standard\|high` | `yt-dlp` search/download quality mode. Defaults to `high`. |
 | `--max-results N` | YouTube results searched per prompt. |
 | `--max-downloads N` | Clips selected/copied per prompt. |
-| `--max-duration-seconds N` | Reject source videos longer than this. Default `60`. |
-| `--min-candidate-score N` | Search score cutoff. Defaults to `5` for manual B-roll finding. |
-| `--max-expanded-queries N` | Search variants per prompt. Defaults to `5`. |
+| `--max-duration-seconds N` | Seconds downloaded from each selected source. Defaults to `20` in high-quality mode. |
+| `--min-candidate-score N` | Search score cutoff. Defaults to `6` in high-quality mode. |
+| `--max-expanded-queries N` | Search variants per prompt. Defaults to `7` in high-quality mode. |
 | `--movie-scenes` | Search movie/TV/pop-culture scene queries instead of stock B-roll queries. |
 | `--channel-id ID` | Restrict YouTube search to one channel. |
 | `--no-copy` | Fill/update `scene-library` only, without creating prompt clip copies. |
@@ -663,9 +1050,10 @@ npm run broll:find -- --prompts "/path/to/ideas.txt" --max-downloads 5
 npm run broll:find -- \
   --prompts broll-prompts.txt \
   --run-name broll-money-scenes \
+  --quality high \
   --max-results 12 \
   --max-downloads 4 \
-  --max-duration-seconds 45
+  --max-duration-seconds 20
 ```
 
 Movie/TV scene style:
@@ -815,7 +1203,7 @@ Transcribe one video or clip:
 ```bash
 npm run transcribe -- \
   --video "/path/to/clip.mp4" \
-  --out "work/clip.captions.json"
+  --out "outputs/clip.captions.json"
 ```
 
 Render one clip with an existing captions file:
@@ -823,7 +1211,7 @@ Render one clip with an existing captions file:
 ```bash
 npm run render:clip -- \
   --video "/path/to/clip.mp4" \
-  --captions "work/clip.captions.json" \
+  --captions "outputs/clip.captions.json" \
   --out "outputs/clip.captioned.mp4"
 ```
 
@@ -832,7 +1220,7 @@ Render only a small frame range for a fast proof:
 ```bash
 npm run render:clip -- \
   --video "/path/to/clip.mp4" \
-  --captions "work/clip.captions.json" \
+  --captions "outputs/clip.captions.json" \
   --out "outputs/proof.mp4" \
   --frames 140-180
 ```
@@ -842,7 +1230,7 @@ Render one clip as 9:16 contain:
 ```bash
 npm run render:clip -- \
   --video "/path/to/clip.mp4" \
-  --captions "work/clip.captions.json" \
+  --captions "outputs/clip.captions.json" \
   --out "outputs/clip.vertical-contain.mp4" \
   --vertical-contain
 ```
@@ -1030,7 +1418,7 @@ Scene library options:
 2. Add a sidecar file next to a clip like `my-scene.mp4.scene.json`.
 3. Or create a top-level `scene-library/index.json`.
 
-When `youtubeIngest.enabled` is on and `YOUTUBE_API_KEY` is present, the pipeline can also add new YouTube clips into this library automatically from transcript-matched search queries.
+When `youtubeIngest.enabled` is on, the pipeline can add new YouTube clips into this library automatically from transcript-matched search queries through `yt-dlp`; no YouTube API key is required.
 
 If your library is a folder of raw personal clips, build metadata first:
 
@@ -1313,4 +1701,4 @@ npm run sample:props
 npm run studio
 ```
 
-Then open the `CaptionedClip` composition in Remotion Studio and load `work/sample-props.json` as props.
+Then open the `CaptionedClip` composition in Remotion Studio and load `outputs/studio/sample-props/sample-props.json` as props.

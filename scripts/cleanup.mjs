@@ -13,7 +13,7 @@ Usage:
   npm run cleanup -- --all --yes
 
 Options:
-  --temp             Clean temporary render staging: work/ and public/media/.
+  --temp             Clean temporary render staging: outputs/work/ and public/media/.
   --outputs          Clean old output folders, keeping the newest folders.
   --keep-latest N    Number of output folders to keep with --outputs. Default: 5.
   --all              Clean temp files and all output folders.
@@ -95,7 +95,7 @@ const buildPlan = ({cleanTemp, cleanOutputs, cleanAll, keepLatest}) => {
   const targets = [];
 
   if (cleanTemp || cleanAll) {
-    targets.push(...listChildren(path.join(projectRoot, 'work')));
+    targets.push(...listChildren(path.join(projectRoot, 'outputs', 'work')));
     targets.push(...listChildren(path.join(projectRoot, 'public', 'media')));
   }
 
@@ -178,7 +178,7 @@ const confirmDelete = async (plan) => {
 
 const main = async () => {
   ensureDir(path.join(projectRoot, 'outputs'));
-  ensureDir(path.join(projectRoot, 'work'));
+  ensureDir(path.join(projectRoot, 'outputs', 'work'));
   ensureDir(path.join(projectRoot, 'public', 'media'));
 
   const explicitMode =
@@ -236,7 +236,7 @@ const main = async () => {
   }
 
   ensureDir(path.join(projectRoot, 'outputs'));
-  ensureDir(path.join(projectRoot, 'work'));
+  ensureDir(path.join(projectRoot, 'outputs', 'work'));
   ensureDir(path.join(projectRoot, 'public', 'media'));
 
   console.log('Cleanup complete.');

@@ -48,9 +48,10 @@ const props = {
   },
 };
 
-const outPath = path.join(projectRoot, 'work', 'sample-props.json');
-const captionsPath = path.join(projectRoot, 'work', 'sample-captions.json');
-ensureDir(path.dirname(outPath));
+const samplePropsDir = path.join(projectRoot, 'outputs', 'studio', 'sample-props');
+const outPath = path.join(samplePropsDir, 'sample-props.json');
+const captionsPath = path.join(samplePropsDir, 'sample-captions.json');
+ensureDir(samplePropsDir);
 fs.writeFileSync(outPath, JSON.stringify(props, null, 2));
 fs.writeFileSync(
   captionsPath,

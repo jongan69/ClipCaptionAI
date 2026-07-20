@@ -55,7 +55,6 @@ if (queries.length === 0) {
 }
 
 const result = await ingestYouTubeScenes({
-  apiKey: process.env.YOUTUBE_API_KEY ?? null,
   sceneLibraryDir,
   queries,
   maxResultsPerQuery: Number(args['max-results'] ?? 6),

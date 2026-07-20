@@ -103,7 +103,6 @@ const props = {
 };
 
 ensureDir(path.dirname(out));
-ensureDir(path.join(projectRoot, 'work'));
 
 const propsPath = path.join(
   os.tmpdir(),

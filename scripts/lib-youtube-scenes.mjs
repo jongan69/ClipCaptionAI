@@ -67,6 +67,9 @@ const normalizeStringList = (value, fallback = []) => {
 };
 
 const buildQueryStyle = (queryStyle = {}) => ({
+  quality: ['fast', 'standard', 'high'].includes(String(queryStyle.quality ?? '').toLowerCase())
+    ? String(queryStyle.quality).toLowerCase()
+    : 'standard',
   maxExpandedQueriesPerBase: Math.max(
     1,
     Math.min(10, Number(queryStyle.maxExpandedQueriesPerBase ?? 5)),
@@ -216,6 +219,14 @@ const buildFallbackQueries = (query, queryStyle = {}) => {
     variants.push(`${base} ${modifier}`);
   }
 
+  if (style.quality === 'high') {
+    variants.push(`${base} cinematic 4k b roll`);
+    variants.push(`${base} product commercial b roll`);
+    variants.push(`${base} professionally shot`);
+    variants.push(`${base} macro detail close up`);
+    variants.push(`${base} smooth camera movement`);
+  }
+
   if (style.preferCinematic) {
     variants.push(`${base} cinematic 4k`);
     variants.push(`${base} dramatic close up`);
@@ -344,6 +355,18 @@ const scoreCandidate = (candidate, query, queryStyle = {}) => {
     score -= style.lowQualityPenalty;
   }
 
+  if (style.quality === 'high') {
+    if (/\b(8k|6k|5k|4k|uhd|2160p|cinematic|b-?roll|slow motion|macro|close up|commercial|professionally shot|film look|color graded)\b/i.test(text)) {
+      score += 4;
+    }
+    if (/\b(1080p|hd|high definition)\b/i.test(text)) {
+      score += 1.5;
+    }
+    if (/\b(low quality|low resolution|template|slideshow|screen recording|shorts?|tiktok|vertical video|ai generated|generated video|watermark)\b/i.test(text)) {
+      score -= 8;
+    }
+  }
+
   if (Number(candidate.durationSeconds ?? 0) > 0 && Number(candidate.durationSeconds) <= 20) {
     score += 0.8;
   }
@@ -365,29 +388,6 @@ export const parseIso8601DurationToSeconds = (iso) => {
   const minutes = Number(match[3] ?? 0);
   const seconds = Number(match[4] ?? 0);
   return days * 86400 + hours * 3600 + minutes * 60 + seconds;
-};
-
-const youtubeApiGet = async (apiKey, endpoint, params) => {
-  const url = new URL(`https://www.googleapis.com/youtube/v3/${endpoint}`);
-  url.searchParams.set('key', apiKey);
-
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || value === null || value === '') {
-      continue;
-    }
-
-    url.searchParams.set(key, String(value));
-  }
-
-  const response = await fetch(url);
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(
-      `YouTube Data API ${endpoint} failed with ${response.status}: ${body.slice(0, 400)}`,
-    );
-  }
-
-  return response.json();
 };
 
 const ytDlpJson = (args) => {
@@ -504,62 +504,23 @@ const mergeSceneIntoIndex = (sceneLibraryDir, sceneEntry) => {
   saveIndex(sceneLibraryDir, index);
 };
 
-const searchVideos = async ({
-  apiKey,
-  query,
-  maxResults,
-  channelId,
-}) => {
-  const searchResponse = await youtubeApiGet(apiKey, 'search', {
-    part: 'snippet',
-    type: 'video',
-    q: query,
-    maxResults,
-    safeSearch: 'none',
-    relevanceLanguage: 'en',
-    videoEmbeddable: 'true',
-    ...(channelId ? {channelId} : {}),
-  });
-
-  const ids = (searchResponse.items ?? [])
-    .map((item) => item.id?.videoId)
-    .filter(Boolean);
-
-  if (ids.length === 0) {
-    return [];
-  }
-
-  const detailsResponse = await youtubeApiGet(apiKey, 'videos', {
-    part: 'snippet,contentDetails,status',
-    id: ids.join(','),
-    maxResults: ids.length,
-  });
-
-  return (detailsResponse.items ?? []).map((item) => ({
-    videoId: item.id,
-    title: item.snippet?.title ?? '',
-    description: item.snippet?.description ?? '',
-    channelTitle: item.snippet?.channelTitle ?? '',
-    channelId: item.snippet?.channelId ?? '',
-    publishedAt: item.snippet?.publishedAt ?? '',
-    durationSeconds: parseIso8601DurationToSeconds(item.contentDetails?.duration),
-    url: youtubeWatchUrl(item.id),
-    thumbnails: item.snippet?.thumbnails ?? {},
-  }));
-};
-
 const searchVideosViaYtDlp = async ({
   query,
   maxResults,
+  channelId,
+  quality = 'standard',
   log = console,
 }) => {
   const entries = [];
 
-  log.log?.(`Searching YouTube via yt-dlp fallback for: ${query}`);
+  log.log?.(`Searching YouTube via yt-dlp (${quality}) for: ${query}`);
+  const searchTarget = channelId
+    ? `https://www.youtube.com/channel/${channelId}/search?query=${encodeURIComponent(query)}`
+    : `ytsearch${maxResults}:${query}`;
   const searchResults = ytDlpJson([
     '--flat-playlist',
     '--dump-single-json',
-    `ytsearch${maxResults}:${query}`,
+    searchTarget,
   ]);
   const variantEntries = Array.isArray(searchResults?.entries) ? searchResults.entries : [];
   entries.push(...variantEntries);
@@ -595,21 +556,72 @@ const searchVideosViaYtDlp = async ({
   return results;
 };
 
-const ytDlpDownload = (url, outputTemplate) => {
+const ytdlpFormatArgsForQuality = (quality) => {
+  if (quality === 'high') {
+    return [
+      '--format',
+      [
+        'bv*[height>=2160]+ba/best[height>=2160]',
+        'bv*[height>=1440]+ba/best[height>=1440]',
+        'bv*[height>=1080]+ba/best[height>=1080]',
+        'bv*[height>=720]+ba/best[height>=720]',
+      ].join('/'),
+      '--format-sort',
+      'res,fps,br',
+      '--format-sort-force',
+    ];
+  }
+
+  if (quality === 'fast') {
+    return [
+      '--format',
+      'bv*[height<=720][ext=mp4]+ba[ext=m4a]/best[height<=720]/best',
+    ];
+  }
+
+  return [
+    '--format',
+    'bv*[height>=720][ext=mp4]+ba[ext=m4a]/bv*[height>=720]+ba/bestvideo+bestaudio/best',
+  ];
+};
+
+const ytDlpDownload = (url, outputTemplate, {maxSectionSeconds = null, quality = 'standard'} = {}) => {
+  const clientArgs = quality === 'high'
+    ? []
+    : [
+      '--extractor-args',
+      'youtube:player_client=android,web',
+    ];
   const baseArgs = [
     '--no-playlist',
-    '--extractor-args',
-    'youtube:player_client=android,web',
+    ...clientArgs,
+    ...ytdlpFormatArgsForQuality(quality),
     '--merge-output-format',
     'mp4',
     '--remux-video',
     'mp4',
+    '--embed-metadata',
+    '--concurrent-fragments',
+    '4',
+    '--retries',
+    '3',
+    '--fragment-retries',
+    '3',
     '--output',
     outputTemplate,
     '--print',
     'after_move:filepath',
-    url,
   ];
+
+  if (Number.isFinite(maxSectionSeconds) && maxSectionSeconds > 0) {
+    baseArgs.push(
+      '--download-sections',
+      `*0-${Math.round(maxSectionSeconds)}`,
+      '--force-keyframes-at-cuts',
+    );
+  }
+
+  baseArgs.push(url);
 
   let stdout = '';
   try {
@@ -655,19 +667,26 @@ const writeSidecar = (videoPath, sceneEntry) => {
 };
 
 export const ingestYouTubeScenes = async ({
-  apiKey = null,
   sceneLibraryDir,
   queries,
   maxResultsPerQuery = 6,
   maxDownloadsPerQuery = 2,
   maxDurationSeconds = 60,
   channelId = null,
+  quality = 'standard',
   queryStyle = {},
   log = console,
 }) => {
   ensureDir(sceneLibraryDir);
 
-  const resolvedQueryStyle = buildQueryStyle(queryStyle);
+  const resolvedQuality = ['fast', 'standard', 'high'].includes(String(quality).toLowerCase())
+    ? String(quality).toLowerCase()
+    : 'standard';
+  const minDownloadedHeight = resolvedQuality === 'high' ? 720 : 0;
+  const resolvedQueryStyle = buildQueryStyle({
+    ...queryStyle,
+    quality: queryStyle.quality ?? resolvedQuality,
+  });
   const dedupedQueries = [...new Set((queries ?? []).map((query) => String(query ?? '').trim()).filter(Boolean))];
   if (dedupedQueries.length === 0) {
     return {downloaded: [], skipped: []};
@@ -683,30 +702,13 @@ export const ingestYouTubeScenes = async ({
     const resultByUrl = new Map();
 
     for (const searchQuery of expandedQueries) {
-      let results = [];
-
-      if (apiKey) {
-        try {
-          results = await searchVideos({
-            apiKey,
-            query: searchQuery,
-            maxResults: maxResultsPerQuery,
-            channelId,
-          });
-        } catch (error) {
-          log.warn?.(
-            `YouTube Data API search failed for "${searchQuery}", falling back to yt-dlp search: ${error.message}`,
-          );
-        }
-      }
-
-      if (results.length === 0) {
-        results = await searchVideosViaYtDlp({
-          query: searchQuery,
-          maxResults: maxResultsPerQuery,
-          log,
-        });
-      }
+      const results = await searchVideosViaYtDlp({
+        query: searchQuery,
+        maxResults: maxResultsPerQuery,
+        channelId,
+        quality: resolvedQuality,
+        log,
+      });
 
       for (const result of results) {
         if (!result.url) {
@@ -772,16 +774,6 @@ export const ingestYouTubeScenes = async ({
         continue;
       }
 
-      if (durationSeconds > maxDurationSeconds) {
-        skipped.push({
-          query,
-          reason: 'too_long',
-          videoId: result.videoId,
-          durationSeconds,
-        });
-        continue;
-      }
-
       const baseName = `${sceneId}-${slugify(result.title || result.videoId) || result.videoId}`;
       const outputTemplate = path.join(sceneLibraryDir, `${baseName}.%(ext)s`);
       log.log?.(
@@ -790,13 +782,26 @@ export const ingestYouTubeScenes = async ({
       let downloadedPath = null;
       let metadata = null;
       try {
-        downloadedPath = ytDlpDownload(result.url, outputTemplate);
+        downloadedPath = ytDlpDownload(result.url, outputTemplate, {
+          maxSectionSeconds: maxDurationSeconds,
+          quality: resolvedQuality,
+        });
         metadata = probeVideo(downloadedPath);
+        if (
+          minDownloadedHeight > 0 &&
+          Number(metadata.height ?? 0) > 0 &&
+          Number(metadata.height) < minDownloadedHeight
+        ) {
+          throw new Error(`downloaded_height_${metadata.height}_below_${minDownloadedHeight}`);
+        }
       } catch (error) {
+        const reason = /^downloaded_height_\d+_below_\d+$/.test(error.message)
+          ? 'low_download_quality'
+          : 'download_failed';
         skipped.push({
           query,
           searchQuery: result.searchQuery ?? query,
-          reason: 'download_failed',
+          reason,
           videoId: result.videoId,
           error: error.message,
         });
@@ -819,7 +824,7 @@ export const ingestYouTubeScenes = async ({
         description: result.description,
         tags,
         startSeconds: 0,
-        endSeconds: Math.min(durationSeconds, maxDurationSeconds),
+        endSeconds: Math.min(metadata.durationSeconds || durationSeconds, maxDurationSeconds),
         attribution: {
           platform: 'YouTube',
           videoId: result.videoId,
@@ -830,6 +835,7 @@ export const ingestYouTubeScenes = async ({
           ingestedFromQuery: result.baseQuery ?? query,
           ingestedFromSearchQuery: result.searchQuery ?? query,
           searchScore: Number(result.searchScore.toFixed(2)),
+          quality: resolvedQuality,
         },
       };
 

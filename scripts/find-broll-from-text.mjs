@@ -25,11 +25,13 @@ Options:
   --run-name NAME            Custom run folder name. Default: broll-run-YYYY-MM-DD-HHMMSS
   --scene-library DIR        Reusable cache folder. Default: ./scene-library
   --style-config FILE        Reads contextScenes.youtubeIngest/queryStyle defaults.
-  --max-results N            YouTube search results fetched per prompt. Default: style config or 8
+  --quality fast|standard|high
+                            yt-dlp search/download quality mode. Default: high
+  --max-results N            YouTube search results fetched per prompt. Default: style config or 12 in high quality
   --max-downloads N          Clips copied/downloaded per prompt. Default: style config or 3
-  --max-duration-seconds N   Skip anything longer than this. Default: style config or 60
-  --min-candidate-score N    Search score cutoff. Default: 5 for manual B-roll finding
-  --max-expanded-queries N   Search variants per prompt. Default: 5
+  --max-duration-seconds N   Download this many seconds from each selected source. Default: style config or 20 in high quality
+  --min-candidate-score N    Search score cutoff. Default: 6 in high quality
+  --max-expanded-queries N   Search variants per prompt. Default: 7 in high quality
   --movie-scenes             Search for pop-culture/movie/TV scene clips instead of stock B-roll
   --channel-id ID            Restrict YouTube ingest to one channel.
   --no-copy                  Only ingest into scene-library; do not copy clips into the run folder.
@@ -261,6 +263,10 @@ const styleConfig = readCaptionStyleConfig(
 const youtubeIngestConfig = styleConfig.contextScenes?.youtubeIngest ?? {};
 const queryStyleConfig = styleConfig.contextScenes?.queryStyle ?? {};
 const movieScenesMode = Boolean(args['movie-scenes']);
+const brollQuality = ['fast', 'standard', 'high'].includes(String(args.quality ?? '').toLowerCase())
+  ? String(args.quality).toLowerCase()
+  : 'high';
+const highQualityMode = brollQuality === 'high';
 
 const outRoot = path.resolve(String(args['out-dir'] ?? path.join(projectRoot, 'outputs')));
 const runName = String(args['run-name'] ?? `broll-run-${timestampSlug()}`);
@@ -279,9 +285,10 @@ const config = {
   runDir,
   sceneLibraryDir,
   searchKind: movieScenesMode ? 'movie-scenes' : 'stock-broll',
+  quality: brollQuality,
   maxResultsPerPrompt: Math.max(
     1,
-    Number(args['max-results'] ?? youtubeIngestConfig.maxResultsPerQuery ?? 8),
+    Number(args['max-results'] ?? youtubeIngestConfig.maxResultsPerQuery ?? (highQualityMode ? 12 : 8)),
   ),
   maxDownloadsPerPrompt: Math.max(
     1,
@@ -289,7 +296,7 @@ const config = {
   ),
   maxDurationSeconds: Math.max(
     5,
-    Number(args['max-duration-seconds'] ?? youtubeIngestConfig.maxDurationSeconds ?? 60),
+    Number(args['max-duration-seconds'] ?? youtubeIngestConfig.maxDurationSeconds ?? (highQualityMode ? 20 : 60)),
   ),
   channelId: args['channel-id']
     ? String(args['channel-id'])
@@ -301,11 +308,11 @@ const config = {
       1,
       Math.min(
         10,
-        Number(args['max-expanded-queries'] ?? 5),
+        Number(args['max-expanded-queries'] ?? (highQualityMode ? 7 : 5)),
       ),
     ),
     minCandidateScore: Number(
-      args['min-candidate-score'] ?? (movieScenesMode ? 14 : 5),
+      args['min-candidate-score'] ?? (movieScenesMode ? 14 : highQualityMode ? 6 : 5),
     ),
     minCoreQueryMatches: Math.max(
       1,
@@ -313,8 +320,9 @@ const config = {
     ),
     preferMotion: queryStyleConfig.preferMotion !== false,
     preferCinematic: queryStyleConfig.preferCinematic !== false,
-    preferMovieScenes: movieScenesMode || Boolean(queryStyleConfig.preferMovieScenes),
+    preferMovieScenes: movieScenesMode,
     avoidTalkingHeads: queryStyleConfig.avoidTalkingHeads !== false,
+    quality: brollQuality,
     officialClipBoost: Number(queryStyleConfig.officialClipBoost ?? (movieScenesMode ? 12 : 10)),
     movieSceneBoost: Number(queryStyleConfig.movieSceneBoost ?? (movieScenesMode ? 14 : 12)),
     stockFootagePenalty: Number(queryStyleConfig.stockFootagePenalty ?? (movieScenesMode ? 18 : 0)),
@@ -326,7 +334,17 @@ const config = {
       ? ['official clip', 'movie scene', 'tv scene', 'iconic scene', 'famous scene']
       : Array.isArray(queryStyleConfig.styleModifiers)
         ? queryStyleConfig.styleModifiers
-        : undefined,
+        : highQualityMode
+          ? [
+            'cinematic 4k',
+            'b roll',
+            'commercial',
+            'professionally shot',
+            'macro detail',
+            'close up',
+            'smooth camera movement',
+          ]
+          : undefined,
     themeBoosts: Array.isArray(queryStyleConfig.themeBoosts)
       ? queryStyleConfig.themeBoosts
       : undefined,
@@ -349,6 +367,7 @@ console.log(`Prompt file: ${promptsPath}`);
 console.log(`Output run: ${runDir}`);
 console.log(`Scene cache: ${sceneLibraryDir}`);
 console.log(`Search kind: ${config.searchKind}`);
+console.log(`Quality: ${config.quality}`);
 console.log('');
 
 for (const [promptIndex, prompt] of prompts.entries()) {
@@ -359,7 +378,6 @@ for (const [promptIndex, prompt] of prompts.entries()) {
     : stockQueriesForPrompt(prompt);
 
   const ingestResult = await ingestYouTubeScenes({
-    apiKey: process.env.YOUTUBE_API_KEY ?? null,
     sceneLibraryDir,
     queries: searchQueries,
     maxResultsPerQuery: config.maxResultsPerPrompt,
@@ -368,6 +386,7 @@ for (const [promptIndex, prompt] of prompts.entries()) {
       : config.maxDownloadsPerPrompt,
     maxDurationSeconds: config.maxDurationSeconds,
     channelId: config.channelId,
+    quality: config.quality,
     queryStyle: config.queryStyle,
     log: console,
   });

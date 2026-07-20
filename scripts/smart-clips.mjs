@@ -26,7 +26,7 @@ Usage:
 
 Options:
   --out-dir DIR           Output folder. Default: outputs/smart-clips
-  --work-dir DIR          Intermediate folder. Default: work/smart-clips
+  --work-dir DIR          Intermediate folder. Default: outputs/smart-clips/work
   --max-clips N           Number of clips to create. Default: 3
   --min-seconds N         Minimum clip length. Default: 18
   --max-seconds N         Maximum clip length. Default: 55
@@ -178,7 +178,9 @@ loadEnv();
 
 const video = path.resolve(requireArg(args, 'video', usage));
 const outDir = path.resolve(args['out-dir'] ?? path.join(projectRoot, 'outputs', 'smart-clips'));
-const workDir = path.resolve(args['work-dir'] ?? path.join(projectRoot, 'work', 'smart-clips'));
+const workDir = path.resolve(
+  args['work-dir'] ?? path.join(projectRoot, 'outputs', 'smart-clips', 'work'),
+);
 const maxClips = Number(args['max-clips'] ?? 3);
 const minSeconds = Number(args['min-seconds'] ?? 18);
 const maxSeconds = Number(args['max-seconds'] ?? 55);
