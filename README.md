@@ -1,33 +1,120 @@
 # ClipCaptionAI
 
-A local AI video-editing automation toolkit for viral short-form clips, YouTube clipping, masked/inverted captions, transcript-aware B-roll, standalone B-roll discovery, rerenders, and Remotion-based review renders.
+A CLI-first local AI video editor and model harness. An agent can turn a brief and approved assets into a versioned video run, render deterministic Remotion compositions, call optional AI providers, and validate final media without relying on the Electron UI.
 
 Useful search terms this project is built around: AI video editor, YouTube shorts generator, TikTok captions, Reels captions, Remotion captions, automatic B-roll, viral clip finder, faceless video generator, AI shorts automation, podcast clipper, transcript-based video editing, and contextual movie-scene B-roll.
 
-Clone it anywhere:
+## Start here: first video in five minutes
+
+This first run is local and does not require an OpenAI, ElevenLabs, or fal API key. It creates a deterministic Remotion video from the included example brief, then verifies the finished MP4.
+
+### 1. Install prerequisites
+
+You need:
+
+- Node.js 20 or newer
+- `ffmpeg` and `ffprobe`
+
+On macOS with Homebrew:
+
+```bash
+brew install node ffmpeg
+```
+
+On Windows or Linux, install Node.js 20+ and FFmpeg using your normal package manager or the official installers, then continue with `npm run doctor` below.
+
+### 2. Install ClipCaptionAI
 
 ```bash
 git clone https://github.com/jongan69/ClipCaptionAI.git
 cd ClipCaptionAI
 npm install
-cp .env.example .env
+npm run doctor
 ```
 
-## Quick Start
+The doctor command tells you exactly which required dependency is missing. Do not create `.env` yet; it is only needed for optional provider workflows.
 
-1. Run `npm install`.
-2. `cp .env.example .env`
-3. The default setup is now local-first transcription with `whisper-cli`.
-4. Add `OPENAI_API_KEY=...` if you want cheap transcript cleanup, AI clip picking, and stronger B-roll planning on top of the local transcript.
-5. Local transcription still works without OpenAI if `whisper-cli` is installed.
-6. Double-click `RUN.command`, or use the commands below.
+### 3. Render the example video
 
-From Terminal:
+```bash
+npm run clipkit -- video run \
+  --brief-file examples/brief.example.txt \
+  --run-id first-video
+```
+
+### 4. Verify the result
+
+```bash
+npm run clipkit -- video qa \
+  --run outputs/video-runs/first-video
+```
+
+If QA passes, open this file:
+
+```text
+outputs/video-runs/first-video/final/first-video.mp4
+```
+
+The same run also records its inputs, plan, hashes, output metadata, and QA result in:
+
+```text
+outputs/video-runs/first-video/run.json
+```
+
+What this first run does: it renders a local, deterministic video from the brief. It does not call a paid AI provider. To use existing footage, captions, B-roll, narration, or generated assets, continue to [the command reference](#basic-commands) and [AI provider setup](docs/AI_PROVIDERS.md).
+
+### Optional: use the interactive menu
+
+Once the first command works, you can use the guided menu instead:
 
 ```bash
 npm run menu
-npx clipcaptionai menu
 ```
+
+The menu is convenient for interactive editing. The direct `npm run clipkit -- ...` commands above are the recommended path for scripts and AI agents because they are easier to reproduce.
+
+## Optional setup: AI providers and transcription
+
+Copy the example environment file only when you need provider-backed workflows:
+
+```bash
+cp .env.example .env
+```
+
+Then add only the keys for the providers you intend to use. OpenAI, ElevenLabs, and fal are optional. Local transcription additionally requires a `whisper-cli`/whisper.cpp installation; run `npm run doctor` to see which capabilities are available.
+
+See [AI provider setup](docs/AI_PROVIDERS.md) for keys, review gates, and what counts as live-provider evidence.
+
+## Quick Start troubleshooting
+
+### `npm run doctor` says `ffmpeg` or `ffprobe` is missing
+
+Install FFmpeg, restart the terminal, and run `npm run doctor` again. Both commands must be available on your `PATH`.
+
+### The command says `clipcaptionai: command not found`
+
+When running from a cloned checkout, use the repo-local form:
+
+```bash
+npm run clipkit -- --help
+```
+
+The README uses this form intentionally. `npx clipcaptionai` is for an installed/published package and may resolve a registry version instead of the checkout you are editing.
+
+### I want to use my own brief or assets
+
+Copy `examples/brief.example.txt`, edit the text, and pass your file:
+
+```bash
+npm run clipkit -- video run \
+  --brief-file /absolute/path/to/brief.txt \
+  --assets-dir /absolute/path/to/approved-assets \
+  --run-id my-video
+```
+
+The assets directory may contain images or videos. Keep source media you have permission to use in that directory.
+
+## Optional desktop app
 
 From Desktop:
 
@@ -63,7 +150,6 @@ Run a quick local health check:
 
 ```bash
 npm run doctor
-npx clipcaptionai doctor
 ```
 
 Run the repo verification suite:
@@ -71,6 +157,36 @@ Run the repo verification suite:
 ```bash
 npm run check
 ```
+
+## Production model-facing workflow
+
+The generic video workflow is designed for Claude, Codex, GPT, and other coding agents. The agent owns the creative brief; ClipCaptionAI owns reproducible planning, rendering, manifests, and media QA.
+
+```bash
+npm run clipkit -- video plan --brief-file brief.txt --assets-dir ./assets --json
+npm run clipkit -- video render --run outputs/video-runs/brief
+npm run clipkit -- video qa --run outputs/video-runs/brief --json
+npm run clipkit -- video inspect --run outputs/video-runs/brief --json
+```
+
+For a single non-interactive pass:
+
+```bash
+npm run clipkit -- video run --brief-file brief.txt --assets-dir ./assets --dry-run --json
+```
+
+Each run writes `outputs/video-runs/<run-id>/run.json`. The manifest records the brief hash, approved asset hashes, shot plan, provider intent, output metadata, and QA status. A successful render is not considered complete until `video qa` passes.
+
+The generic local renderer currently creates deterministic image/video shot cards with Remotion. Existing caption, B-roll, YouTube, eBay, ElevenLabs, fal, and Rotato commands remain available as specialized workflows.
+
+Read [the agent guide](docs/AGENT_GUIDE.md) before automating the CLI and [the production support matrix](docs/PRODUCTION_SUPPORT.md) before describing a provider or external integration as production-ready.
+
+## Demo capture and reviewed AI assets
+
+- Record the real workflow in Cursorful at 1080p, then caption/render it here. Cursorful remains an operator tool, not a project dependency.
+- Generate a local ElevenLabs narration file with `npm run voiceover:elevenlabs -- --script narration.txt --voice-id VOICE_ID`.
+- Create opt-in, human-reviewed fal assets with `npm run fal:image-edit -- ... --approved-for-generated-marketing` or `npm run fal:reference-video -- ... --approved-for-generated-marketing`.
+- Generated images/video are never eBay source-of-truth/main listing photos or evidence of condition. Full setup and QA details: [AI provider workflows](docs/AI_PROVIDERS.md).
 
 Open the interactive front door:
 
@@ -94,6 +210,7 @@ For render-producing workflows, the menu can now optionally open an advanced set
 
 | Menu | What it does | Direct command | Main output |
 | --- | --- | --- | --- |
+| `0` | Plan, render, inspect, or QA a model-directed video run. | `clipcaptionai video run --brief-file brief.txt --assets-dir assets` | `outputs/video-runs/<run-id>/` |
 | `1` | Download links from `links.txt` and stop. | `npm run clipkit -- download --links links.txt` | `outputs/download-run-*/downloads/` |
 | `2` | Download YouTube videos into a local frame image. | `npm run clipkit -- frame --links links.txt --frame /Users/jonathangan/Desktop/Frame.png` | `outputs/frame-run-*/` |
 | `3` | Build one lean cinematic eBay ad kit. | `npm run clipkit -- ebay-ads roi-plan --credit-budget 45 --max-listings 1 --max-higgs-shots 1 --prepare-selected` | `outputs/ebay-cinematic-ads/roi-plan-*/` |
@@ -118,8 +235,7 @@ Menu option `12` now supports both cases:
 - optionally point it at an older run folder instead of the latest run
 - add `--no-captions` if you want a B-roll-only rerender for one specific export
 
-If you prefer the terminal directly, `npm run clipkit -- help` prints the same command hub summary.
-The local package bin works too: `npx clipcaptionai --help`.
+If you prefer the terminal directly, `npm run clipkit -- help` prints the same command hub summary. When using an installed package, the equivalent `clipcaptionai --help` command is available.
 
 ## Basic Commands
 

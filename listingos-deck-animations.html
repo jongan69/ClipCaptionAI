@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ListingOS Deck Animation Kit</title>
+    <style>
+      :root {
+        --bg: #07101f;
+        --ink: #eef3ff;
+        --accent: #7cf4d4;
+        --muted: #9aa8c7;
+        --danger: #ff7a8a;
+        --ok: #6bff9f;
+        --brand: #3e6cff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+        background: radial-gradient(1200px 700px at 20% 10%, #12254a, var(--bg));
+        color: var(--ink);
+        display: grid;
+        place-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .wrap {
+        width: min(1200px, 95vw);
+        background: rgba(8, 18, 34, 0.72);
+        border: 1px solid rgba(255,255,255,0.16);
+        backdrop-filter: blur(2px);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      h1 { margin: 0 0 8px; font-size: 22px; }
+      p { color: #c6d2ef; max-width: 950px; line-height: 1.45; margin-top: 4px; margin-bottom: 12px; }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+      .toolbar button {
+        border: 0;
+        background: #14284b;
+        color: #e8efff;
+        border: 1px solid rgba(255,255,255,.2);
+        padding: 8px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .toolbar button.active { background: #2b53d9; }
+      .scene {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border: 1px solid rgba(255,255,255,.22);
+        border-radius: 12px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 13% 15%, rgba(124,244,212,.20), transparent 36%),
+          radial-gradient(circle at 84% 84%, rgba(62,108,255,.20), transparent 34%),
+          #0a1730;
+      }
+      .hidden { display: none; }
+      .card {
+        position: absolute;
+        border-radius: 12px;
+        padding: 10px 14px;
+        background: rgba(6, 16, 33, 0.92);
+        border: 1px solid rgba(255,255,255,.18);
+        box-shadow: 0 8px 24px rgba(0,0,0,.25);
+        color: #f4f8ff;
+      }
+      .dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--accent);
+        box-shadow: 0 0 0 0 rgba(124,244,212,.6);
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+      .node {
+        position: absolute;
+        width: 130px;
+        height: 70px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        text-align: center;
+        color: #f7fbff;
+        border: 1px solid rgba(255,255,255,.22);
+      }
+      .node.phone { background: linear-gradient(120deg, #5f63ff, #8ea2ff); }
+      .node.worker { background: linear-gradient(120deg, #3e6cff, #66e0ff); }
+      .node.ebay { background: linear-gradient(120deg, #3ac5a3, #5cff98); }
+      .chip {
+        position: absolute;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.24);
+        color: #ecf3ff;
+        background: #1e2f57;
+        font-size: 13px;
+      }
+      .pill {
+        position: absolute;
+        font-size: 12px;
+        color: #1b253b;
+        background: #b9c8ff;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-weight: 700;
+      }
+      .arrow {
+        position: absolute;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(255,255,255,.95), rgba(255,255,255,0));
+        width: 130px;
+      }
+      .arrow::after {
+        content: "";
+        position: absolute;
+        right: -8px;
+        top: -4px;
+        border: 4px solid transparent;
+        border-left-color: rgba(255,255,255,.95);
+      }
+      .label {
+        position: absolute;
+        font-size: 14px;
+        color: var(--ink);
+      }
+
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(124,244,212,.5); }
+        70% { box-shadow: 0 0 0 14px rgba(124,244,212,0); }
+        100% { box-shadow: 0 0 0 0 rgba(124,244,212,0); }
+      }
+      @keyframes grow {
+        0% { transform: scale(.75); opacity: 0; }
+        18% { transform: scale(1); opacity: 1; }
+        90% { transform: scale(1); opacity: 1; }
+        100% { opacity: 0; }
+      }
+      @keyframes slideIn {
+        0% { transform: translateX(-40px); opacity: 0; }
+        20% { transform: translateX(0); opacity: 1; }
+        85% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      .title {
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-transform: uppercase;
+        letter-spacing: 1.7px;
+        font-size: 12px;
+        color: #8da3ca;
+      }
+      .foot {
+        position: absolute;
+        right: 14px; bottom: 10px;
+        color: #9ca9d1;
+        font-size: 12px;
+      }
+
+      #sceneA .card.time { left: 5%; top: 40%; animation: grow 7.8s infinite; }
+      #sceneA .card.listing { left: 25%; top: 65%; animation: grow 7.8s infinite; animation-delay: .8s; }
+      #sceneA .timebar { position:absolute; left:18%; top:50%; width:72%; height:20px; border-radius:999px; border:1px solid rgba(255,255,255,.24); background:#152b4a; overflow:hidden; }
+      #sceneA .timebar::before {content:""; position:absolute; left:0; top:0; bottom:0; width:85%; background: linear-gradient(90deg, #5f6ef5, #7cf4d4); animation: fill 7.8s infinite;}
+      #sceneA .timebar-label { position:absolute; top: 48px; left:58%; color:#c6d2ef; font-size:15px; }
+      @keyframes fill {
+        0% { width: 0; }
+        16% { width: 80%; }
+        60% { width: 80%; }
+        74% { width: 16%; }
+        82% { width: 16%; }
+        100% { width: 0; }
+      }
+
+      #sceneB .node { opacity: 0; animation: showNode 5s infinite; }
+      #sceneB .node:nth-child(1) { left: 11%; top: 44%; animation-delay: .2s; }
+      #sceneB .node:nth-child(2) { left: 39%; top: 44%; animation-delay: .9s; }
+      #sceneB .node:nth-child(3) { left: 68%; top: 44%; animation-delay: 1.6s; }
+      #sceneB .arrow {left: 26%; top: 50%; animation: arrowFlow 5s infinite; }
+      #sceneB .arrow:nth-of-type(4) { left: 55%; top: 50%; animation-delay: .7s; }
+      #sceneB .chip { left: 24%; top: 22%; opacity: 0; animation: chipPop 5s infinite; animation-delay: .45s; }
+      #sceneB .chip:nth-of-type(6) { left: 52%; top: 22%; animation-delay: 1.15s; }
+      #sceneB .chip:nth-of-type(7) { left: 82%; top: 22%; animation-delay: 1.85s; }
+      #sceneB .chip:nth-of-type(8) { left: 18%; top: 75%; animation-delay: 2.2s; }
+      #sceneB .chip:nth-of-type(9) { left: 52%; top: 75%; animation-delay: 2.35s; }
+      #sceneB .chip:nth-of-type(10){ left: 82%; top: 75%; animation-delay: 2.5s; }
+      #sceneB .node.phone { background: linear-gradient(125deg, #5f63ff, #8ea2ff); }
+
+      @keyframes showNode {
+        0%, 10% { opacity: 0; transform: translateY(14px) scale(.96); }
+        16%, 72% { opacity: 1; transform: translateY(0) scale(1); }
+        90% { opacity: 0.3; }
+        100% { opacity: 0; }
+      }
+      @keyframes arrowFlow {
+        0%, 14% { transform: scaleX(0.06); transform-origin: left; }
+        24%, 72% { transform: scaleX(1); transform-origin: left; opacity: 1; }
+        88%,100% { opacity: 0; transform: scaleX(.8); }
+      }
+      @keyframes chipPop {
+        0%, 30% { opacity: 0; transform: scale(.8) }
+        38%, 78% { opacity: 1; transform: scale(1) }
+        100% { opacity: 0; }
+      }
+
+      #sceneC .value { position: absolute; left: 56%; top: 20%; width: 36%; height: 70%; border: 1px solid rgba(255,255,255,.16); border-radius: 14px; }
+      #sceneC .value::before {
+        content:"Evidence evidence evidence";
+        position:absolute; inset:0; display:grid; place-items:center; color:#aeb9de; letter-spacing: .8px;
+      }
+      .card.comps {
+        position: absolute;
+        left: 8%; top: 20%; width: 36%; height: 70%;
+      }
+      .compRow {
+        width: calc(100% - 20px);
+        margin: 8px;
+        border-radius: 10px;
+        padding: 8px 10px;
+        border: 1px solid rgba(255,255,255,.2);
+        background: rgba(15, 31, 56, 0.94);
+        opacity: 0;
+        animation: compReveal 7s infinite;
+      }
+      .compRow:nth-child(1){ animation-delay: .5s; }
+      .compRow:nth-child(2){ animation-delay: 1.2s; }
+      .compRow:nth-child(3){ animation-delay: 1.9s; }
+      .meter {
+        position:absolute;
+        left: 62%; top: 44%; width: 28%; height: 14px;
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .meter:before {
+        content:"";
+        position:absolute;
+        left:0; top:0; bottom:0;
+        width: 0;
+        background: linear-gradient(90deg, var(--danger), #ffd86b, var(--ok));
+        animation: score 7s infinite;
+      }
+      .decision {
+        position: absolute;
+        right: 10%;
+        top: 28%;
+        width: 16%;
+        height: 17%;
+        border-radius: 12px;
+        display:grid;
+        place-items:center;
+        font-weight: 800;
+        color: #0e1a2f;
+        background: linear-gradient(120deg, #ff6f78, #ffb16b);
+        opacity: 0;
+        animation: guess 7s infinite;
+        animation-delay: 5.3s;
+      }
+      .decision.ok {
+        left: 10%;
+        top: 65%;
+        background: linear-gradient(120deg, #46ec85, #7cf4d4);
+        animation-delay: 6.1s;
+      }
+      @keyframes compReveal {
+        0%, 28% { opacity:0; transform: translateX(-10px); }
+        40%, 62% { opacity:1; transform: translateX(0); }
+        88% { opacity: 0; }
+      }
+      @keyframes score {
+        0%, 18% { width: 20%; }
+        40%, 76% { width: 92%; }
+        86% { width: 92%; }
+        100% { width: 0; }
+      }
+      @keyframes guess {
+        0%, 66%, 100% { opacity:0; transform: scale(.92); }
+        72%, 78% { opacity:1; transform: scale(1); }
+        86% { opacity:0; }
+      }
+
+      #sceneD .timeline {
+        position: absolute;
+        left: 7%; right: 7%;
+        top: 58px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 12px;
+      }
+      .step {
+        border: 1px solid rgba(255,255,255,.2);
+        background: linear-gradient(140deg, #172f59, #112547);
+        border-radius: 12px;
+        text-align:center;
+        padding: 18px 12px;
+        color: #f0f6ff;
+        opacity: 0;
+        transform: translateY(14px);
+        animation: stepIn 8s infinite;
+      }
+      .step:nth-child(2){ animation-delay: .5s; }
+      .step:nth-child(3){ animation-delay: 1s; }
+      .step:nth-child(4){ animation-delay: 1.5s; }
+      .step:nth-child(5){ animation-delay: 2s; }
+      .cursor {
+        position: absolute;
+        width: 24px; height: 24px;
+        border-radius: 50%;
+        background: var(--danger);
+        left: 7%;
+        top: 47%;
+        opacity: 0;
+        animation: cursorMove 8s infinite;
+      }
+      .cursor::after {
+        content: '';
+        position: absolute;
+        left: 11px; top: 8px;
+        width: 12px; height: 3px;
+        border-right: 3px solid #10203d;
+        border-bottom: 3px solid #10203d;
+        transform: rotate(45deg);
+      }
+      .status {
+        position: absolute;
+        top: 46%;
+        left: 3%; right: 3%;
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #a9b8df;
+      }
+      @keyframes stepIn {
+        0%, 10% { opacity:0; transform: translateY(14px); }
+        18%, 60% { opacity:1; transform: translateY(0); }
+        80%,100% { opacity:0; transform: translateY(10px); }
+      }
+      @keyframes cursorMove {
+        0%, 11% { left: 7%; top: 48%; opacity:0; }
+        16% { opacity:1; }
+        16% { left: 7%; }
+        38% { left: 25%; }
+        56% { left: 45%; }
+        74% { left: 67%; }
+        92% { left: 87%; opacity: 1; }
+        100% { opacity: 0; }
+      }
+      .chip2 { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); font-size: 20px; color: #b5c7ef; }
+
+      .scene-inner { position: relative; width: 100%; height: 100%; padding: 48px 48px 34px; }
+      .scene-note {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        background: #0f1d3b;
+        border: 1px solid rgba(255,255,255,.15);
+        color: #c5d4f7;
+        border-radius: 999px;
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>ListingOS Animation Pack</h1>
+      <p>Use this as a motion source for your slide narration beats. Click a scene to record directly from your browser window and trim in your editor. All scenes are 16:9, loop forever, and start on load with Scene A.</p>
+      <div class="toolbar">
+        <button data-scene="sceneA" class="active">Scene A — Problem Gap</button>
+        <button data-scene="sceneB">Scene B — Capture to Publish</button>
+        <button data-scene="sceneC">Scene C — Evidence Gate</button>
+        <button data-scene="sceneD">Scene D — 5-Step Flow</button>
+      </div>
+
+      <div class="scene" id="stage"></div>
+    </div>
+
+    <template id="sceneA">
+      <div class="scene-inner">
+        <div class="title">Slide 3 · 12s — "Photographing takes 20s, listing takes 5-10m"</div>
+        <div class="card time" style="top:34%; left:40px; width:300px; animation-delay:0s">Photographer time per item</div>
+        <div class="card listing" style="top:55%; left:40px; width:280px; animation-delay:.8s">Manual listing process time</div>
+        <div class="timebar" style="top:47%; left:8%;"></div>
+        <div class="timebar-label" style="left:44%; top:46%;">20s → 5 to 10 minutes</div>
+        <div class="card" style="left:52%; top:38%; width:360px; animation: grow 7.8s infinite; animation-delay:2.3s">ListingOS: one phone session, fast approval, publish in one flow</div>
+      </div>
+    </template>
+
+    <template id="sceneB">
+      <div class="scene-inner">
+        <div class="title">Slide 14/4 · Pipeline visual for product flow</div>
+        <div class="scene-note">Use as a lower-third overlay on the deck while you narrate</div>
+        <div class="node phone">Take Photos</div>
+        <div class="node worker" style="left: 40%;">Cloudflare Worker</div>
+        <div class="node ebay">Draft, Verify,
+Publish</div>
+        <div class="arrow"></div>
+        <div class="arrow"></div>
+        <div class="chip">Title</div>
+        <div class="chip">Category</div>
+        <div class="chip">Price</div>
+        <div class="chip">eBay API</div>
+        <div class="chip">Fixed-price</div>
+      </div>
+    </template>
+
+    <template id="sceneC">
+      <div class="scene-inner">
+        <div class="title">Slide 13 · Evidence over guessing</div>
+        <div class="card comps">
+          <div class="compRow">Open comp pool: 12 matching sold listings</div>
+          <div class="compRow">Cross-check with catalog + image search</div>
+          <div class="compRow">PSA graded card signals recognized</div>
+        </div>
+        <div class="value"><div class="label" style="left:16px; top:8px;">Confidence Signal</div></div>
+        <div class="meter"></div>
+        <div class="decision" style="left: 10%;">Refuse to Guess</div>
+        <div class="decision ok" style="left: 78%; top: 62%;">Publish</div>
+      </div>
+    </template>
+
+    <template id="sceneD">
+      <div class="scene-inner">
+        <div class="title">Slide 14 · 2-line process summary</div>
+        <div class="chip2">Capture → Analyze → Verify → Review → Publish</div>
+        <div class="timeline">
+          <div class="step">Capture</div>
+          <div class="step">Analyze</div>
+          <div class="step">Verify</div>
+          <div class="step">Review</div>
+          <div class="step">Publish</div>
+        </div>
+        <div class="status">
+          <span>0.6s start</span><span>1.2s analyze</span><span>1.9s verify</span><span>2.8s review</span><span>3.4s publish</span>
+        </div>
+        <div class="cursor"></div>
+      </div>
+    </template>
+
+    <script>
+      const buttons = document.querySelectorAll('.toolbar button');
+      const stage = document.getElementById('stage');
+      const templates = {
+        sceneA: document.getElementById('sceneA'),
+        sceneB: document.getElementById('sceneB'),
+        sceneC: document.getElementById('sceneC'),
+        sceneD: document.getElementById('sceneD'),
+      };
+
+      function switchScene(id) {
+        stage.innerHTML = '';
+        const tpl = templates[id];
+        stage.appendChild(tpl.content.firstElementChild.cloneNode(true));
+        buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.scene === id));
+      }
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => switchScene(btn.dataset.scene));
+      });
+
+      // Start with Scene A
+      switchScene('sceneA');
+    </script>
+  </body>
+</html>

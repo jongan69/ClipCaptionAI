@@ -6,6 +6,31 @@
     "description": "Open the built-in interactive menu for all ClipCaptionAI workflows."
   },
   {
+    "id": "video",
+    "title": "Model Video Run",
+    "command": "video",
+    "description": "Plan, render, inspect, and QA a model-directed local video run.",
+    "args": [
+      {
+        "name": "brief-file",
+        "label": "Brief file",
+        "type": "text",
+        "placeholder": "brief.txt"
+      },
+      {
+        "name": "assets-dir",
+        "label": "Approved assets directory",
+        "type": "text",
+        "placeholder": "./assets"
+      },
+      {
+        "name": "dry-run",
+        "label": "Dry run",
+        "type": "boolean"
+      }
+    ]
+  },
+  {
     "id": "download",
     "title": "Download Links",
     "command": "download",

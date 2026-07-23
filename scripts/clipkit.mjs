@@ -1007,7 +1007,7 @@ const createProgram = () => {
   const program = new Command();
   program
     .name('clipcaptionai')
-    .description('Polished command hub for AI video clipping, captions, B-roll, rerenders, and local creator workflows.')
+    .description('CLI-first AI video editor and model harness for planning, rendering, captioning, B-roll, and QA.')
     .version(packageJson.version)
     .showHelpAfterError()
     .showSuggestionAfterError();
@@ -1017,6 +1017,8 @@ const createProgram = () => {
     `
 Examples:
   clipcaptionai menu
+  clipcaptionai video run --brief-file brief.txt --assets-dir assets --json
+  clipcaptionai video qa --run outputs/video-runs/brief
   clipcaptionai download --links links.txt
   clipcaptionai frame --links links.txt --frame /Users/jonathangan/Desktop/Frame.png
   clipcaptionai ebay-ads prepare --item-ids 398160795273
@@ -1030,6 +1032,9 @@ Examples:
   clipcaptionai broll-captions --links links.txt --max-clips 3
   clipcaptionai caption --video "/path/to/video.mp4"
   clipcaptionai rotato render ~/Desktop/demo.rotato --screen-media ~/Desktop/app.mp4 --output outputs/mockups/demo.mp4
+  clipcaptionai voiceover --script narration.txt --voice-id VOICE_ID
+  clipcaptionai fal-image-edit --image approved.jpg --prompt "Edit instruction" --approved-for-generated-marketing
+  clipcaptionai fal-reference-video --image approved.jpg --prompt "Animation instruction" --approved-for-generated-marketing
   clipcaptionai rerender --clip 03-your-website-is-leaking-money --no-captions
 `,
   );
@@ -1048,7 +1053,11 @@ Examples:
   configurePassthroughCommand(program, 'caption', 'Caption any existing video with the current caption style.', (args) => npmRun('caption:auto', args));
   configurePassthroughCommand(program, 'enhance', 'Add contextual B-roll and captions to an existing edit.', (args) => npmRun('broll:enhance', args));
   configurePassthroughCommand(program, 'broll', 'Find reusable B-roll clips from a text prompt file.', runBroll, ['finder']);
+  configurePassthroughCommand(program, 'video', 'Plan, render, inspect, and QA model-directed videos.', (args) => run('node', ['scripts/video.mjs', ...args]));
   configurePassthroughCommand(program, 'rotato', 'Inspect or render Rotato mockup projects through the local Rotato CLI.', (args) => npmRun('rotato', args), ['mockup']);
+  configurePassthroughCommand(program, 'voiceover', 'Generate a local ElevenLabs narration file and non-secret manifest.', (args) => npmRun('voiceover:elevenlabs', args), ['elevenlabs']);
+  configurePassthroughCommand(program, 'fal-image-edit', 'Create a reviewed marketing/B-roll image edit through fal GPT Image 2.', (args) => npmRun('fal:image-edit', args));
+  configurePassthroughCommand(program, 'fal-reference-video', 'Create a muted, human-reviewed Veo 3.1 reference-video proof through fal.', (args) => npmRun('fal:reference-video', args));
   configurePassthroughCommand(program, 'rerender', 'Rerender an existing generated clip after caption/style edits.', (args) => npmRun('rerender:clip', args));
   configurePassthroughCommand(program, 'cleanup', 'Clean temp files or old output folders.', (args) => npmRun('cleanup', args));
   program.command('studio').description('Open Remotion Studio.').action(() => npmRun('studio'));

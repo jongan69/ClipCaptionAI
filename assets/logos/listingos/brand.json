@@ -2,9 +2,9 @@
   "name": "ListingOS",
   "slug": "listingos",
   "wordmark": {
-    "text": "ListingOS",
+    "text": "OS",
     "accentText": "OS",
-    "accentSplitIndex": 7
+    "accentSplitIndex": 0
   },
   "palette": {
     "background": "#05071c",

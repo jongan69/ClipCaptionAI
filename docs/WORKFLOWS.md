@@ -11,6 +11,19 @@ npx clipcaptionai menu
 
 The menu is the safest front door for everyday editing. It can download YouTube videos, slice whole videos into fixed clips, cut one local video into fixed clips, find important moments for manual editing, run YouTube clipping, caption an existing edit, enhance a video with B-roll, find standalone B-roll, rerender a generated clip, open Studio, open the latest output, and run diagnostics.
 
+## Model-directed video runs
+
+Use the generic `video` namespace when an AI model is directing a production from a brief and approved local assets:
+
+```bash
+clipcaptionai video plan --brief-file brief.txt --assets-dir ./approved-assets --json
+clipcaptionai video inspect --run outputs/video-runs/brief --json
+clipcaptionai video render --run outputs/video-runs/brief --json
+clipcaptionai video qa --run outputs/video-runs/brief --json
+```
+
+`video run` combines planning and rendering, while `--dry-run` creates the plan and planned output without rendering. The resulting `run.json` is the durable contract. The generic renderer is deterministic and local; use the specialized provider commands below when the model explicitly needs narration or generated marketing assets.
+
 For workflows that render video, the menu can also open an optional advanced settings prompt before the run. That prompt can override the most common live decisions without making you hand-edit `caption-style.json` first:
 
 - style preset or custom style-config path

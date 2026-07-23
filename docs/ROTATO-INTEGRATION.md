@@ -1,6 +1,6 @@
 # Rotato Integration Notes
 
-Verified on July 18, 2026:
+Optional local integration (the CLI remains usable without Rotato):
 
 - Rotato desktop app exists at `/Applications/Rotato.app`.
 - Rotato CLI exists at `/usr/local/bin/rotato`.
@@ -40,4 +40,4 @@ If we want phase two, the smart move is probably a ClipCaption command that:
 3. swaps media and overlay text,
 4. exports a polished mockup video into `outputs/mockups/`.
 
-That would give you AI-assisted demo generation without keeping a separate orphaned video-assets repo around.
+That would give you AI-assisted demo generation without keeping a separate orphaned video-assets repo around. Until then, a Rotato scene must exist locally and a successful bridge command is not proof that a final product video has passed visual QA.

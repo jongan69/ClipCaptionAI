@@ -7,7 +7,7 @@
     "name": "ListingOS",
     "slug": "listingos",
     "wordmark": {
-      "text": "ListingOS",
+      "text": "OS",
       "accentText": "OS",
       "accentSplitIndex": 7
     },
@@ -195,15 +195,14 @@
       "stroke": null,
       "strokeWidth": null,
       "children": [
-        "wordmark-primary",
-        "wordmark-accent"
+        "wordmark-primary"
       ],
       "data": {
         "layer": "wordmark",
         "role": "text",
-        "text": "ListingOS",
-        "accent-text": "OS",
-        "accent-split": "7",
+        "text": "OS",
+        "accent-text": "",
+        "accent-split": "0",
         "primary-fill": "#ffffff",
         "accent-fill": "#7c5cff",
         "font-family": "Poppins, Montserrat, Inter, sans-serif",
@@ -212,7 +211,7 @@
         "center-x": "540",
         "baseline-y": "556"
       },
-      "markup": "<g id=\"wordmark\" data-layer=\"wordmark\" data-role=\"text\"\n     data-text=\"ListingOS\" data-accent-text=\"OS\" data-accent-split=\"7\"\n     data-primary-fill=\"#ffffff\" data-accent-fill=\"#7c5cff\"\n     data-font-family=\"Poppins, Montserrat, Inter, sans-serif\"\n     data-font-size=\"104\" data-font-weight=\"700\"\n     data-center-x=\"540\" data-baseline-y=\"556\"\n     font-family=\"Poppins, Montserrat, Inter, 'Helvetica Neue', Arial, sans-serif\"\n     font-size=\"104\" font-weight=\"700\">\n    <text id=\"wordmark-primary\" x=\"540\" y=\"556\" text-anchor=\"end\"   fill=\"#ffffff\">Listing</text>\n    <text id=\"wordmark-accent\"  x=\"540\" y=\"556\" text-anchor=\"start\" fill=\"#7c5cff\">OS</text>\n  </g>"
+      "markup": "<g id=\"wordmark\" data-layer=\"wordmark\" data-role=\"text\"\n     data-text=\"OS\" data-accent-text=\"\" data-accent-split=\"0\"\n     data-primary-fill=\"#ffffff\" data-accent-fill=\"#7c5cff\"\n     data-font-family=\"Poppins, Montserrat, Inter, sans-serif\"\n     data-font-size=\"104\" data-font-weight=\"700\"\n     data-center-x=\"540\" data-baseline-y=\"556\"\n     font-family=\"Poppins, Montserrat, Inter, 'Helvetica Neue', Arial, sans-serif\"\n     font-size=\"104\" font-weight=\"700\">\n    <text id=\"wordmark-primary\" x=\"540\" y=\"556\" text-anchor=\"start\"   fill=\"#ffffff\">OS</text>\n  </g>"
     }
   ]
 }

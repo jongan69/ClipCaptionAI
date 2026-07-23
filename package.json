@@ -1,7 +1,7 @@
 {
   "name": "clipcaptionai",
   "version": "0.1.0",
-  "description": "Polished local-first AI video editing toolkit for clipping YouTube videos, rendering invert-mask captions, finding contextual B-roll, and rerendering creator edits.",
+  "description": "CLI-first local AI video editor and model harness for planning, rendering, captioning, and QA of production video assets.",
   "main": "desktop/main.mjs",
   "license": "MIT",
   "type": "module",
@@ -97,6 +97,10 @@
     "transcribe": "node scripts/transcribe-openai.mjs",
     "transcribe:benchmark": "node scripts/benchmark-transcription.mjs",
     "sample:props": "node scripts/make-sample-props.mjs",
+    "video": "node scripts/video.mjs",
+    "voiceover:elevenlabs": "node scripts/generate-elevenlabs-voiceover.mjs",
+    "fal:image-edit": "node scripts/fal-image-edit.mjs",
+    "fal:reference-video": "node scripts/fal-reference-video.mjs",
     "typecheck": "tsc --noEmit",
     "desktop:env-check": "node desktop/check-environment.mjs",
     "desktop:env-check:json": "node desktop/check-environment.mjs --json",
@@ -110,6 +114,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
+    "@fal-ai/client": "^1.10.1",
     "@remotion/captions": "4.0.481",
     "@remotion/cli": "4.0.481",
     "@remotion/openai-whisper": "4.0.481",

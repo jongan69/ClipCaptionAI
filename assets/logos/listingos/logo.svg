@@ -68,14 +68,13 @@
     only so the .svg previews correctly in a browser or Figma.
   -->
   <g id="wordmark" data-layer="wordmark" data-role="text"
-     data-text="ListingOS" data-accent-text="OS" data-accent-split="7"
+     data-text="OS" data-accent-text="" data-accent-split="0"
      data-primary-fill="#ffffff" data-accent-fill="#7c5cff"
      data-font-family="Poppins, Montserrat, Inter, sans-serif"
      data-font-size="104" data-font-weight="700"
      data-center-x="540" data-baseline-y="556"
      font-family="Poppins, Montserrat, Inter, 'Helvetica Neue', Arial, sans-serif"
      font-size="104" font-weight="700">
-    <text id="wordmark-primary" x="540" y="556" text-anchor="end"   fill="#ffffff">Listing</text>
-    <text id="wordmark-accent"  x="540" y="556" text-anchor="start" fill="#7c5cff">OS</text>
+    <text id="wordmark-primary" x="540" y="556" text-anchor="start"   fill="#ffffff">OS</text>
   </g>
 </svg>

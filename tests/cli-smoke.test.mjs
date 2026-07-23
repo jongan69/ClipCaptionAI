@@ -14,13 +14,61 @@ test('clipkit top-level help renders the polished command hub', () => {
   });
 
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /Polished command hub/);
+  assert.match(result.stdout, /CLI-first AI video editor and model harness/);
   assert.match(result.stdout, /broll-captions\|heavy/);
   assert.match(result.stdout, /ebay-intel/);
   assert.match(result.stdout, /split-video\|slice-video/);
   assert.match(result.stdout, /review-moments\|review/);
   assert.match(result.stdout, /rotato\|mockup/);
+  assert.match(result.stdout, /video/);
+  assert.match(result.stdout, /fal-reference-video/);
+  assert.match(result.stdout, /voiceover\|elevenlabs/);
   assert.match(result.stdout, /rerender --clip 03-your-website-is-leaking-money --no-captions/);
+});
+
+test('video plan creates a versioned machine-readable run manifest', () => {
+  const runId = `test-video-${Date.now()}`;
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-video-'));
+  const brief = path.join(tempDir, 'brief.txt');
+  fs.writeFileSync(brief, 'Open with the product.\nShow the workflow.\nClose with the result.\n');
+  const result = spawnSync('node', ['scripts/video.mjs', 'plan', '--brief-file', brief, '--run-id', runId, '--json'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
+  try {
+    assert.equal(result.status, 0, result.stderr);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, true);
+    const manifest = JSON.parse(fs.readFileSync(payload.manifestPath, 'utf8'));
+    assert.equal(manifest.schemaVersion, 1);
+    assert.equal(manifest.kind, 'clipcaptionai.video.run');
+    assert.equal(manifest.plan.shots.length, 3);
+    assert.equal(manifest.status, 'planned');
+  } finally {
+    fs.rmSync(path.join(projectRoot, 'outputs', 'video-runs', runId), {recursive: true, force: true});
+    fs.rmSync(tempDir, {recursive: true, force: true});
+  }
+});
+
+test('video dry-run is resumable and does not require provider secrets', () => {
+  const runId = `test-video-dry-${Date.now()}`;
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-video-'));
+  const brief = path.join(tempDir, 'brief.txt');
+  fs.writeFileSync(brief, 'A deterministic local render plan.');
+  const result = spawnSync('node', ['scripts/video.mjs', 'run', '--brief-file', brief, '--run-id', runId, '--dry-run', '--json'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
+  try {
+    assert.equal(result.status, 0, result.stderr);
+    const payload = JSON.parse(result.stdout);
+    assert.equal(payload.ok, true);
+    assert.equal(payload.dryRun, true);
+    assert.match(payload.plannedOutput, new RegExp(`${runId}.*mp4`));
+  } finally {
+    fs.rmSync(path.join(projectRoot, 'outputs', 'video-runs', runId), {recursive: true, force: true});
+    fs.rmSync(tempDir, {recursive: true, force: true});
+  }
 });
 
 test('bin entry works and exposes help output', () => {
@@ -224,6 +272,18 @@ test('competitive voiceover plan exporter exposes help', () => {
   assert.equal(result.status, 0);
   assert.match(result.stdout, /export-competitive-voiceover-plan/);
   assert.match(result.stdout, /voiceover/i);
+});
+
+test('local AI provider commands expose guarded help without requiring secrets', () => {
+  for (const [script, expected] of [
+    ['scripts/generate-elevenlabs-voiceover.mjs', /ELEVENLABS_API_KEY/],
+    ['scripts/fal-image-edit.mjs', /approved-for-generated-marketing/],
+    ['scripts/fal-reference-video.mjs', /disables native/i],
+  ]) {
+    const result = spawnSync('node', [script, '--help'], {cwd: projectRoot, encoding: 'utf8'});
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, expected);
+  }
 });
 
 test('eBay main photo candidate generator exposes help', () => {
