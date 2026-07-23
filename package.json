@@ -131,7 +131,7 @@
     "@types/react-dom": "^19.1.6",
     "typescript": "5.8.3",
     "electron": "^34.2.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^26.15.3"
   },
   "build": {
     "appId": "com.clipcaptionai.desktop",
