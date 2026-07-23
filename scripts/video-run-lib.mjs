@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {execFileSync} from 'node:child_process';
+import {execFileSync, spawnSync} from 'node:child_process';
 import {outputsRoot, ensureDir, projectRoot} from './lib.mjs';
 
 export const VIDEO_RUN_SCHEMA_VERSION = 1;
@@ -91,6 +91,14 @@ export const probeArtifact = (filePath) => {
   const video = parsed.streams?.find((stream) => stream.codec_type === 'video') ?? null;
   const audio = parsed.streams?.find((stream) => stream.codec_type === 'audio') ?? null;
   if (!video) throw new Error(`Artifact has no video stream: ${filePath}`);
+  let meanVolumeDb = null;
+  if (audio) {
+    const volumeResult = spawnSync('ffmpeg', [
+      '-i', filePath, '-af', 'volumedetect', '-f', 'null', '-',
+    ], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']});
+    const volumeOutput = `${volumeResult.stdout ?? ''}\n${volumeResult.stderr ?? ''}`;
+    meanVolumeDb = Number(volumeOutput.match(/mean_volume:\s*(-?[0-9.]+) dB/)?.[1] ?? null);
+  }
   return {
     path: filePath,
     sha256: hashFile(filePath),
@@ -102,6 +110,7 @@ export const probeArtifact = (filePath) => {
     videoCodec: video.codec_name ?? null,
     audioCodec: audio?.codec_name ?? null,
     hasAudio: Boolean(audio),
+    meanVolumeDb: Number.isFinite(meanVolumeDb) ? meanVolumeDb : null,
   };
 };
 

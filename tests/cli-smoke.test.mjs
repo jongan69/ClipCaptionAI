@@ -31,7 +31,7 @@ test('video plan creates a versioned machine-readable run manifest', () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-video-'));
   const brief = path.join(tempDir, 'brief.txt');
   fs.writeFileSync(brief, 'Open with the product.\nShow the workflow.\nClose with the result.\n');
-  const result = spawnSync('node', ['scripts/video.mjs', 'plan', '--brief-file', brief, '--run-id', runId, '--json'], {
+  const result = spawnSync('node', ['scripts/video.mjs', 'plan', '--brief-file', brief, '--audio', 'music-library/lofi-house/01-dmca-free-lofi-chilled-beats.mp3', '--run-id', runId, '--json'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -43,6 +43,7 @@ test('video plan creates a versioned machine-readable run manifest', () => {
     assert.equal(manifest.schemaVersion, 1);
     assert.equal(manifest.kind, 'clipcaptionai.video.run');
     assert.equal(manifest.plan.shots.length, 3);
+    assert.equal(manifest.audio.type, 'audio');
     assert.equal(manifest.status, 'planned');
   } finally {
     fs.rmSync(path.join(projectRoot, 'outputs', 'video-runs', runId), {recursive: true, force: true});

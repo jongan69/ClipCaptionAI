@@ -2,8 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import {pathToFileURL} from 'node:url';
-import {parseArgs, ensureDir, projectRoot, run} from './lib.mjs';
+import {parseArgs, ensureDir, projectRoot, run, videoToSrc} from './lib.mjs';
 import {
   VIDEO_RUN_SCHEMA_VERSION, collectMedia, createRunDir, describeAsset, emitResult,
   hashText, manifestPathFor, probeArtifact, requireManifest,
@@ -12,7 +11,7 @@ import {
 
 const usage = `
 Usage:
-  clipcaptionai video plan --brief-file brief.txt [--assets-dir ./assets] [--run-id NAME]
+  clipcaptionai video plan --brief-file brief.txt [--assets-dir ./assets] [--audio music.mp3] [--run-id NAME]
   clipcaptionai video render --run outputs/video-runs/NAME [--dry-run]
   clipcaptionai video run --brief-file brief.txt [--assets-dir ./assets]
   clipcaptionai video inspect --run NAME [--json]
@@ -60,6 +59,8 @@ const plan = () => {
   const assetsDir = path.resolve(String(args['assets-dir'] || path.dirname(brief.path)));
   const runDir = createRunDir(args['run-id'] || path.basename(brief.path, path.extname(brief.path)));
   const assets = collectMedia(assetsDir).map((file) => describeAsset(file, projectRoot));
+  const audioPath = args.audio ? path.resolve(String(args.audio)) : null;
+  if (audioPath && !fs.existsSync(audioPath)) throw new Error(`Audio file not found: ${audioPath}`);
   const imageAssets = assets.filter((asset) => asset.type === 'image');
   const shots = makeShots(brief.text).map((shot, index) => ({
     ...shot,
@@ -73,6 +74,7 @@ const plan = () => {
     createdAt: new Date().toISOString(),
     brief: {path: brief.path, sha256: hashText(brief.text), text: brief.text},
     assets,
+    audio: audioPath ? describeAsset(audioPath, projectRoot) : null,
     plan: {
       shots,
       durationSeconds: shots.reduce((total, shot) => total + shot.durationSeconds, 0),
@@ -108,9 +110,10 @@ const render = () => {
     width: manifest.plan.width,
     height: manifest.plan.height,
     fps: manifest.plan.fps,
+    audio: manifest.audio?.absolutePath ? videoToSrc(manifest.audio.absolutePath) : null,
     shots: manifest.plan.shots.map((shot) => ({
       ...shot,
-      asset: shot.asset?.absolutePath ? pathToFileURL(shot.asset.absolutePath).href : null,
+      asset: shot.asset?.absolutePath ? videoToSrc(shot.asset.absolutePath) : null,
     })),
   };
   fs.writeFileSync(propsPath, JSON.stringify(props));
@@ -136,6 +139,7 @@ const qa = () => {
     {name: 'video-stream', ok: artifact.width > 0 && artifact.height > 0},
     {name: 'duration', ok: artifact.durationSeconds > 0},
     {name: 'h264-video', ok: artifact.videoCodec === 'h264'},
+    {name: 'audio-not-silent', ok: !artifact.hasAudio || artifact.meanVolumeDb === null || artifact.meanVolumeDb > -60},
   ];
   const status = checks.every((check) => check.ok) ? 'passed' : 'failed';
   const updated = {...manifest, artifact, qa: {status, checkedAt: new Date().toISOString(), checks}};

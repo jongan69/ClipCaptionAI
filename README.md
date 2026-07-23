@@ -114,6 +114,16 @@ npm run clipkit -- video run \
 
 The assets directory may contain images or videos. Keep source media you have permission to use in that directory.
 
+Add a local music or narration track with `--audio`:
+
+```bash
+npm run clipkit -- video run \
+  --brief-file /absolute/path/to/brief.txt \
+  --assets-dir /absolute/path/to/approved-assets \
+  --audio /absolute/path/to/music-or-narration.mp3 \
+  --run-id my-video
+```
+
 ## Optional desktop app
 
 From Desktop:
