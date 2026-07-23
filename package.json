@@ -99,6 +99,7 @@
     "sample:props": "node scripts/make-sample-props.mjs",
     "video": "node scripts/video.mjs",
     "voiceover:elevenlabs": "node scripts/generate-elevenlabs-voiceover.mjs",
+    "voiceover:library": "node scripts/generate-elevenlabs-library.mjs",
     "fal:image-edit": "node scripts/fal-image-edit.mjs",
     "fal:reference-video": "node scripts/fal-reference-video.mjs",
     "typecheck": "tsc --noEmit",

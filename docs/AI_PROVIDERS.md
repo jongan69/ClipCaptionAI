@@ -17,6 +17,14 @@ npm run voiceover:elevenlabs -- \
 
 The command writes MP3 audio and a sibling generation manifest containing the voice/model IDs, text hash, response request ID, and audio hash. It never writes the key or narration text into that manifest.
 
+To spend a bounded character budget building reusable local assets across the configured cloned voice and available premade voices:
+
+```bash
+npm run voiceover:library -- --budget 36000 --resume
+```
+
+This writes `outputs/voiceover/elevenlabs-library/library.json`, one MP3 plus one non-secret manifest per phrase, and retries only safe provider failures. Use `--dry-run` before a large batch; the command checks the live subscription balance and leaves a safety reserve. The checked-in phrase catalog covers hooks, workflow, features, captions, B-roll, quality, and calls to action. Generated audio remains subject to human review for pronunciation, tone, and licensing suitability.
+
 For the demo, review the exact narration before generation and make sure it clearly explains how Codex and GPT-5.6 were used.
 
 ## fal reviewed marketing assets

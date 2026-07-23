@@ -1,0 +1,8 @@
+Meet ClipCaptionAI.
+Turn a creative brief into a real video run.
+Use your footage, images, captions, B-roll, narration, and AI providers.
+Let your coding model direct the workflow through a reproducible CLI.
+Plan the shots and inspect the run before spending provider credits.
+Render a polished cut from the command line.
+Every render gets a manifest, hashes, output metadata, and technical QA.
+ClipCaptionAI. Prompt it. Render it. Ship the cut.

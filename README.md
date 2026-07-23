@@ -195,6 +195,8 @@ Read [the agent guide](docs/AGENT_GUIDE.md) before automating the CLI and [the p
 
 - Record the real workflow in Cursorful at 1080p, then caption/render it here. Cursorful remains an operator tool, not a project dependency.
 - Generate a local ElevenLabs narration file with `npm run voiceover:elevenlabs -- --script narration.txt --voice-id VOICE_ID`.
+- Build a reusable local ElevenLabs phrase library with `npm run voiceover:library -- --budget 36000`; use `--resume` to continue safely. The library is indexed by voice and phrase category, and its manifests contain no API key.
+- Restore the generated library from the [voice library guide](docs/VOICE_LIBRARY.md) when working from a fresh clone.
 - Create opt-in, human-reviewed fal assets with `npm run fal:image-edit -- ... --approved-for-generated-marketing` or `npm run fal:reference-video -- ... --approved-for-generated-marketing`.
 - Generated images/video are never eBay source-of-truth/main listing photos or evidence of condition. Full setup and QA details: [AI provider workflows](docs/AI_PROVIDERS.md).
 
