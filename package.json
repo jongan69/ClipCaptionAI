@@ -150,6 +150,7 @@
     "sample:props": "bun scripts/make-sample-props.mjs",
     "video": "bun scripts/video.mjs",
     "voiceover:elevenlabs": "bun scripts/generate-elevenlabs-voiceover.mjs",
+    "voiceover:library": "bun scripts/generate-elevenlabs-library.mjs",
     "fal:image-edit": "bun scripts/fal-image-edit.mjs",
     "fal:reference-video": "bun scripts/fal-reference-video.mjs",
     "interview:qa": "bun scripts/interview-qa.mjs",

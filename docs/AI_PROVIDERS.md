@@ -64,6 +64,14 @@ bun run voiceover:elevenlabs -- \
 
 Writes MP3 audio and a generation manifest with voice/model IDs, text hash, and request ID. Never writes the key or narration text into the manifest.
 
+Build or resume the reusable phrase library within an explicit character budget:
+
+```bash
+bun run voiceover:library -- --budget 36000 --resume
+```
+
+The command writes one MP3 and non-secret manifest per phrase, retries only safe provider failures, checks the live subscription balance, and preserves a safety reserve. Use `--dry-run` before spending credits. Generated audio still requires human review for pronunciation, tone, and licensing suitability; see [the voice library guide](VOICE_LIBRARY.md).
+
 ### fal reviewed marketing assets
 
 ```bash

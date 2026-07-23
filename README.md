@@ -226,6 +226,7 @@ Detailed walkthroughs for every workflow live in [docs/WORKFLOWS.md](docs/WORKFL
 | `bun run ebay:render-blueprint-ad` / `ebay:render-blueprint-batch` | Product-safe preview ads from blueprints | [Competitive eBay Creative Blueprints](docs/WORKFLOWS.md#competitive-ebay-creative-blueprints) |
 | `bun run ebay:competitive-*` | Post-blueprint pipeline: `competitive-loop`, `competitive-qa`, `prep-premium-renders`, `competitive-handoff`, `competitive-higgsfield-render`, `competitive-packets`, `competitive-research-queue/import/loop/process/rerun`, `collect-premium-renders`, `finalize-premium-ads`, `competitive-status`, `competitive-review` | [Competitive eBay Creative Blueprints](docs/WORKFLOWS.md#competitive-ebay-creative-blueprints) |
 | `bun run voiceover:elevenlabs` | ElevenLabs narration file | [Demo Capture And Reviewed AI Assets](docs/WORKFLOWS.md#demo-capture-and-reviewed-ai-assets) |
+| `bun run voiceover:library` | Build or resume a reusable ElevenLabs phrase library | [Voice Library](docs/VOICE_LIBRARY.md) |
 | `bun run fal:image-edit` / `fal:reference-video` | fal.ai asset generation (opt-in, human-reviewed) | [Demo Capture And Reviewed AI Assets](docs/WORKFLOWS.md#demo-capture-and-reviewed-ai-assets) |
 | `bun run sample:props` | Write Remotion Studio sample props | [Preview In Remotion Studio](docs/WORKFLOWS.md#preview-in-remotion-studio) |
 | `bun run cleanup` | Clean temp files / old outputs | [Clean Up Generated Files](docs/WORKFLOWS.md#clean-up-generated-files) |
@@ -238,6 +239,7 @@ See `package.json` scripts for the full list (including `rotato`, `interview:qa`
 
 - [docs/WORKFLOWS.md](docs/WORKFLOWS.md) — every workflow walkthrough, in depth
 - [docs/AI_PROVIDERS.md](docs/AI_PROVIDERS.md) — provider keys, review gates, live-provider evidence
+- [docs/VOICE_LIBRARY.md](docs/VOICE_LIBRARY.md) — restore or extend the released ElevenLabs phrase library
 - [docs/AGENT_GUIDE.md](docs/AGENT_GUIDE.md) — automation guide for coding agents
 - [docs/PRODUCTION_SUPPORT.md](docs/PRODUCTION_SUPPORT.md) — production support matrix
 - [docs/GITHUB.md](docs/GITHUB.md) — GitHub-specific setup
