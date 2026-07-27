@@ -94,6 +94,7 @@
     "logo:verify": "bunx tsx scripts/logo/verify-variant.tsx",
     "logo:render": "bun scripts/logo/render-all.mjs",
     "render:clip": "bun scripts/render-clip.mjs",
+    "portrait:analyze": "bun scripts/portrait-framing.mjs",
     "render:batch": "bun scripts/render-batch.mjs",
     "rerender:clip": "bun scripts/rerender-clip.mjs",
     "smart:clips": "bun scripts/smart-clips.mjs",

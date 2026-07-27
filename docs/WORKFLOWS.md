@@ -1748,3 +1748,23 @@ For the "letters react to the footage underneath" look, use blend modes:
   "highlightTextFilterCss": "contrast(1.12) saturate(0.96)"
 }
 ```
+
+## Subject-aware portrait framing
+
+Create a reviewable framing plan before rendering landscape footage into 9:16:
+
+```bash
+bun run portrait:analyze -- \
+  --video /absolute/path/input.mp4 \
+  --out outputs/input.framing.json \
+  --auto
+
+bun run render:clip -- \
+  --video /absolute/path/input.mp4 \
+  --captions outputs/input.captions.json \
+  --out outputs/input.vertical.mp4 \
+  --vertical \
+  --framing outputs/input.framing.json
+```
+
+`--auto` uses the optional local YOLO/OpenCV detector when available and otherwise writes a centered fallback. Use `--center-x 0.32` for a deterministic manual adjustment. Framing plans are non-destructive JSON inputs.

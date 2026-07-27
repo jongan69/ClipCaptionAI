@@ -111,6 +111,35 @@ test('bin entry works and exposes help output', () => {
   assert.match(result.stdout, /rotato\|mockup/);
 });
 
+test('portrait framing planner writes a manual track plan', () => {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cca-portrait-'));
+  const output = path.join(outDir, 'framing.json');
+  const result = spawnSync(
+    process.execPath,
+    [
+      'scripts/portrait-framing.mjs',
+      '--video',
+      path.join(projectRoot, 'public', 'listingos-horizontal-demo-rotato-enhanced-20260718.mp4'),
+      '--out',
+      output,
+      '--center-x',
+      '0.32',
+    ],
+    {cwd: projectRoot, encoding: 'utf8'},
+  );
+
+  try {
+    assert.equal(result.status, 0, result.stderr);
+    const plan = JSON.parse(fs.readFileSync(output, 'utf8'));
+    assert.equal(plan.source, 'manual');
+    assert.equal(plan.strategy, 'track');
+    assert.equal(plan.keyframes[0].centerX, 0.32);
+    assert.equal(plan.keyframes[1].centerX, 0.32);
+  } finally {
+    fs.rmSync(outDir, {recursive: true, force: true});
+  }
+});
+
 test('moments review helper exposes the standalone report command', () => {
   const result = spawnSync('node', ['scripts/review-moments.mjs', '--help'], {
     cwd: projectRoot,

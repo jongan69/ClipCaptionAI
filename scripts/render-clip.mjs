@@ -34,6 +34,8 @@ Options:
   --text-opacity N        Caption fill opacity. Default: 0.92.
   --frames START-END      Optional Remotion frame range for proof renders.
   --uppercase             Render caption text uppercase.
+  --framing FILE          JSON framing plan from portrait:analyze.
+  --center-x N             Manual horizontal subject center from 0 to 1.
 `;
 
 const args = parseArgs(process.argv.slice(2));
@@ -71,6 +73,28 @@ const highlightedWords = args['highlight-words']
     ? styleConfig.highlightedWords
     : [];
 
+const readFraming = () => {
+  if (args.framing) {
+    const framingPath = path.resolve(String(args.framing));
+    return JSON.parse(fs.readFileSync(framingPath, 'utf8'));
+  }
+  if (args['center-x'] !== undefined) {
+    const centerX = Number(args['center-x']);
+    if (!Number.isFinite(centerX) || centerX < 0 || centerX > 1) {
+      throw new Error('--center-x must be a number between 0 and 1.');
+    }
+    return {
+      strategy: 'track',
+      source: 'manual',
+      keyframes: [
+        {at: 0, centerX},
+        {at: 1, centerX},
+      ],
+    };
+  }
+  return null;
+};
+
 const props = {
   videoSrc: videoToSrc(video),
   foregroundSrc: foregroundVideo ? videoToSrc(foregroundVideo) : null,
@@ -79,6 +103,7 @@ const props = {
   height,
   fps,
   durationInFrames: Math.max(1, Math.ceil(metadata.durationSeconds * fps)),
+  framing: readFraming(),
   style: {
     ...styleConfig,
     position: String(args.position ?? styleConfig.position ?? 'left-hook'),

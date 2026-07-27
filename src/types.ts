@@ -1,19 +1,11 @@
 import type {Caption} from '@remotion/captions';
 
 export type CaptionPosition =
-  | 'left-hook'
-  | 'right-hook'
-  | 'lower-left'
-  | 'center-bottom'
-  | 'center-impact';
+  'left-hook' | 'right-hook' | 'lower-left' | 'center-bottom' | 'center-impact';
 export type CaptionFit = 'cover' | 'contain';
 export type CaptionLayout = 'stacked' | 'inline' | 'inline-wrap';
 export type CaptionMotionPreset =
-  | 'static'
-  | 'center-pop'
-  | 'center-to-left'
-  | 'center-to-right'
-  | 'float';
+  'static' | 'center-pop' | 'center-to-left' | 'center-to-right' | 'float';
 
 export type CaptionMotionKeyframe = {
   at: number;
@@ -22,6 +14,18 @@ export type CaptionMotionKeyframe = {
   scale?: number;
   opacity?: number;
   rotateDeg?: number;
+};
+
+export type PortraitFramingKeyframe = {
+  at: number;
+  centerX: number;
+  confidence?: number;
+};
+
+export type PortraitFraming = {
+  strategy: 'center' | 'track' | 'contain';
+  source?: 'manual' | 'detector' | 'fallback';
+  keyframes: PortraitFramingKeyframe[];
 };
 
 export type CaptionStyle = {
@@ -107,5 +111,6 @@ export type CaptionedClipProps = {
   height: number;
   fps: number;
   durationInFrames: number;
+  framing?: PortraitFraming | null;
   style: CaptionStyle;
 };

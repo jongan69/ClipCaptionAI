@@ -16,6 +16,7 @@ import type {
   CaptionMotionPreset,
   CaptionPosition,
   CaptionStyle,
+  PortraitFraming,
 } from './types';
 
 export const captionedClipDefaultProps: CaptionedClipProps = {
@@ -26,6 +27,7 @@ export const captionedClipDefaultProps: CaptionedClipProps = {
   height: 1920,
   fps: 30,
   durationInFrames: 450,
+  framing: null,
   style: {
     position: 'left-hook',
     fit: 'cover',
@@ -533,6 +535,33 @@ const matrixToCss = (matrix: MotionMatrix) =>
 const matrixToSvg = (matrix: MotionMatrix) =>
   `matrix(${matrix.a} ${matrix.b} ${matrix.c} ${matrix.d} ${matrix.e} ${matrix.f})`;
 
+const framingCenterX = (
+  framing: PortraitFraming | null | undefined,
+  frame: number,
+  durationInFrames: number,
+) => {
+  if (!framing || framing.strategy !== 'track' || framing.keyframes.length === 0) return 50;
+  const progress =
+    durationInFrames <= 1 ? 0 : Math.max(0, Math.min(1, frame / (durationInFrames - 1)));
+  const keyframes = [...framing.keyframes]
+    .filter((keyframe) => Number.isFinite(keyframe.at) && Number.isFinite(keyframe.centerX))
+    .sort((left, right) => left.at - right.at);
+  if (keyframes.length === 0) return 50;
+  if (progress <= keyframes[0].at) return Math.max(0, Math.min(100, keyframes[0].centerX * 100));
+  for (let index = 1; index < keyframes.length; index += 1) {
+    const previous = keyframes[index - 1];
+    const next = keyframes[index];
+    if (progress <= next.at) {
+      const local = (progress - previous.at) / Math.max(0.0001, next.at - previous.at);
+      return Math.max(
+        0,
+        Math.min(100, (previous.centerX + (next.centerX - previous.centerX) * local) * 100),
+      );
+    }
+  }
+  return Math.max(0, Math.min(100, keyframes.at(-1)!.centerX * 100));
+};
+
 const escapeXml = (value: string) =>
   value
     .replaceAll('&', '&amp;')
@@ -589,10 +618,11 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
   videoSrc,
   foregroundSrc,
   captions,
+  framing,
   style,
 }) => {
   const frame = useCurrentFrame();
-  const {fps, width, height} = useVideoConfig();
+  const {fps, width, height, durationInFrames} = useVideoConfig();
   const currentMs = (frame / fps) * 1000;
   const normalFontFamily =
     style.normalFontFamily ?? '"Arial Rounded MT Bold", "Avenir Next", "Arial Black", sans-serif';
@@ -604,6 +634,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
   const normalFontStyle = style.normalFontStyle ?? 'normal';
   const highlightFontStyle = style.highlightFontStyle ?? 'italic';
   const videoSource = /^https?:\/\//.test(videoSrc) ? videoSrc : staticFile(videoSrc);
+  const objectPosition = `${framingCenterX(framing, frame, durationInFrames)}% 50%`;
   const foregroundSource =
     foregroundSrc && /^https?:\/\//.test(foregroundSrc)
       ? foregroundSrc
@@ -1019,6 +1050,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
     width: '100%',
     height: '100%',
     objectFit: style.fit,
+    objectPosition,
     borderRadius: style.videoBorderRadius ?? 0,
   };
   const captionMotionLayerStyle: CSSProperties = layout.motionMatrix
@@ -1051,6 +1083,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
             width: '100%',
             height: '100%',
             objectFit: style.fit,
+            objectPosition,
             borderRadius: style.videoBorderRadius ?? 0,
             filter: style.videoFilter ?? 'none',
           }}
@@ -1166,6 +1199,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
             width: '100%',
             height: '100%',
             objectFit: style.fit,
+            objectPosition,
             borderRadius: style.videoBorderRadius ?? 0,
             pointerEvents: 'none',
           }}

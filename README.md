@@ -210,6 +210,7 @@ Detailed walkthroughs for every workflow live in [docs/WORKFLOWS.md](docs/WORKFL
 | `bun run transcribe:benchmark` | Compare local vs reference transcription providers | [Transcription Notes](docs/WORKFLOWS.md#transcription-notes) |
 | `bun run smart:clips` | AI clip selection on one local video | [AI Clip Selection](docs/WORKFLOWS.md#ai-clip-selection) |
 | `bun run render:clip` | Render one clip from captions JSON | [Single Clip Commands](docs/WORKFLOWS.md#single-clip-commands) |
+| `bun run portrait:analyze` | Plan subject-aware 9:16 framing | [Subject-aware portrait framing](docs/WORKFLOWS.md#subject-aware-portrait-framing) |
 | `bun run render:batch` | Batch render clips from a captions folder | — |
 | `bun run rerender:clip` | Rerender after caption/fix edits | [Rerender](docs/WORKFLOWS.md#rerender) |
 | `bun run moments:review` | Viral scorecard report for a moments run | [Find Important Moments Only](docs/WORKFLOWS.md#find-important-moments-only) |
