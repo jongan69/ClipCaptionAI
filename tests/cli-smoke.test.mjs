@@ -21,6 +21,7 @@ test('clipkit top-level help renders the polished command hub', () => {
   assert.match(result.stdout, /review-moments\|review/);
   assert.match(result.stdout, /rotato\|mockup/);
   assert.match(result.stdout, /video/);
+  assert.match(result.stdout, /portrait-analyze\|portrait/);
   assert.match(result.stdout, /fal-reference-video/);
   assert.match(result.stdout, /voiceover\|elevenlabs/);
   assert.match(result.stdout, /rerender --clip 03-your-website-is-leaking-money --no-captions/);
@@ -84,6 +85,27 @@ test('bin entry works and exposes help output', () => {
   assert.match(result.stdout, /ebay-intel/);
   assert.match(result.stdout, /review-moments\|review/);
   assert.match(result.stdout, /rotato\|mockup/);
+});
+
+test('portrait framing planner writes a manual track plan', () => {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cca-portrait-'));
+  const output = path.join(outDir, 'framing.json');
+  const result = spawnSync('node', ['scripts/portrait-framing.mjs',
+    '--video', path.join(projectRoot, 'public', 'listingos-horizontal-demo-rotato-enhanced-20260718.mp4'),
+    '--out', output,
+    '--center-x', '0.32',
+  ], {cwd: projectRoot, encoding: 'utf8'});
+
+  try {
+    assert.equal(result.status, 0, result.stderr);
+    const plan = JSON.parse(fs.readFileSync(output, 'utf8'));
+    assert.equal(plan.source, 'manual');
+    assert.equal(plan.strategy, 'track');
+    assert.equal(plan.keyframes[0].centerX, 0.32);
+    assert.equal(plan.keyframes[1].centerX, 0.32);
+  } finally {
+    fs.rmSync(outDir, {recursive: true, force: true});
+  }
 });
 
 test('moments review helper exposes the standalone report command', () => {

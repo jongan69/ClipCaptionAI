@@ -1030,6 +1030,7 @@ Examples:
   clipcaptionai review-moments --write --format markdown
   clipcaptionai auto-clips --links links.txt --max-clips 6
   clipcaptionai broll-captions --links links.txt --max-clips 3
+  clipcaptionai portrait-analyze --video input.mp4 --out framing.json --auto
   clipcaptionai caption --video "/path/to/video.mp4"
   clipcaptionai rotato render ~/Desktop/demo.rotato --screen-media ~/Desktop/app.mp4 --output outputs/mockups/demo.mp4
   clipcaptionai voiceover --script narration.txt --voice-id VOICE_ID
@@ -1050,6 +1051,7 @@ Examples:
   configurePassthroughCommand(program, 'review-moments', 'Review why moments were flagged as viral and optionally persist scorecards.', runReviewMoments, ['review']);
   configurePassthroughCommand(program, 'auto-clips', 'Download YouTube links, pick viral clips, caption, and render.', runAutoClips, ['auto']);
   configurePassthroughCommand(program, 'broll-captions', 'Run the B-roll-heavy labeled workflow.', runBrollCaptions, ['heavy']);
+  configurePassthroughCommand(program, 'portrait-analyze', 'Analyze or plan subject-aware 9:16 framing for a video.', (args) => npmRun('portrait:analyze', args), ['portrait']);
   configurePassthroughCommand(program, 'caption', 'Caption any existing video with the current caption style.', (args) => npmRun('caption:auto', args));
   configurePassthroughCommand(program, 'enhance', 'Add contextual B-roll and captions to an existing edit.', (args) => npmRun('broll:enhance', args));
   configurePassthroughCommand(program, 'broll', 'Find reusable B-roll clips from a text prompt file.', runBroll, ['finder']);

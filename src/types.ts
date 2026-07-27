@@ -24,6 +24,18 @@ export type CaptionMotionKeyframe = {
   rotateDeg?: number;
 };
 
+export type PortraitFramingKeyframe = {
+  at: number;
+  centerX: number;
+  confidence?: number;
+};
+
+export type PortraitFraming = {
+  strategy: 'center' | 'track' | 'contain';
+  source?: 'manual' | 'detector' | 'fallback';
+  keyframes: PortraitFramingKeyframe[];
+};
+
 export type CaptionStyle = {
   position: CaptionPosition;
   customPosition?: Record<string, string | number>;
@@ -107,5 +119,6 @@ export type CaptionedClipProps = {
   height: number;
   fps: number;
   durationInFrames: number;
+  framing?: PortraitFraming | null;
   style: CaptionStyle;
 };

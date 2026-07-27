@@ -1363,6 +1363,24 @@ npm run render:clip -- \
   --vertical-contain
 ```
 
+Plan subject-aware 9:16 framing:
+
+```bash
+npm run portrait:analyze -- \
+  --video "/path/to/clip.mp4" \
+  --out "outputs/clip.framing.json" \
+  --auto
+
+npm run render:clip -- \
+  --video "/path/to/clip.mp4" \
+  --captions "outputs/clip.captions.json" \
+  --out "outputs/clip.subject-framed.mp4" \
+  --vertical \
+  --framing "outputs/clip.framing.json"
+```
+
+`--auto` uses an optional local YOLO/OpenCV adapter when its dependencies and model are available. If they are not available, the command writes a reviewable center-framing fallback. For a quick manual adjustment, use `--center-x 0.32` instead. Framing plans are non-destructive JSON inputs; they do not modify the source video.
+
 Useful `render:clip` options:
 
 | Option | Meaning |
@@ -1375,6 +1393,8 @@ Useful `render:clip` options:
 | `--vertical` | 1080x1920 cropped fill. |
 | `--vertical-contain` | 1080x1920 contained with black bars. |
 | `--foreground-video FILE` | Optional transparent foreground/subject layer rendered above captions. |
+| `--framing FILE` | JSON subject-framing plan from `portrait:analyze`. |
+| `--center-x N` | Manual horizontal subject center from `0` to `1`. |
 | `--fit cover\|contain` | CSS video fit. Normally controlled by `caption-style.json`. |
 | `--position NAME` | `left-hook`, `right-hook`, `lower-left`, `center-bottom`, or `center-impact`. |
 | `--combine-ms N` | Caption grouping window. |

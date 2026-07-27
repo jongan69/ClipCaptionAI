@@ -46,6 +46,7 @@
     "logo:verify": "tsx scripts/logo/verify-variant.tsx",
     "logo:render": "node scripts/logo/render-all.mjs",
     "render:clip": "node scripts/render-clip.mjs",
+    "portrait:analyze": "node scripts/portrait-framing.mjs",
     "render:batch": "node scripts/render-batch.mjs",
     "rerender:clip": "node scripts/rerender-clip.mjs",
     "smart:clips": "node scripts/smart-clips.mjs",
