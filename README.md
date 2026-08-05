@@ -170,7 +170,7 @@ npm run check
 
 ## Production model-facing workflow
 
-The generic video workflow is designed for Claude, Codex, GPT, and other coding agents. The agent owns the creative brief; ClipCaptionAI owns reproducible planning, rendering, manifests, and media QA.
+The generic video workflow is designed for Claude, GPT, and other coding agents. The agent owns the creative brief; ClipCaptionAI owns reproducible planning, rendering, manifests, and media QA.
 
 ```bash
 npm run clipkit -- video plan --brief-file brief.txt --assets-dir ./assets --json
@@ -218,27 +218,28 @@ For render-producing workflows, the menu can now optionally open an advanced set
 - B-roll/context-scenes on or off where that workflow supports it
 - sound effects on or off where that workflow supports it
 
-| Menu | What it does | Direct command | Main output |
-| --- | --- | --- | --- |
-| `0` | Plan, render, inspect, or QA a model-directed video run. | `clipcaptionai video run --brief-file brief.txt --assets-dir assets` | `outputs/video-runs/<run-id>/` |
-| `1` | Download links from `links.txt` and stop. | `npm run clipkit -- download --links links.txt` | `outputs/download-run-*/downloads/` |
-| `2` | Download YouTube videos into a local frame image. | `npm run clipkit -- frame --links links.txt --frame /Users/jonathangan/Desktop/Frame.png` | `outputs/frame-run-*/` |
-| `3` | Build one lean cinematic eBay ad kit. | `npm run clipkit -- ebay-ads roi-plan --credit-budget 45 --max-listings 1 --max-higgs-shots 1 --prepare-selected` | `outputs/ebay-cinematic-ads/roi-plan-*/` |
-| `4` | Download full videos and chop each whole source into fixed clips. | `npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15` | `outputs/fixed-clips-run-*/fixed-clips/` |
-| `5` | Cut one local video into fixed clips. | `npm run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15` | `outputs/local-fixed-clips-run-*/fixed-clips/` |
-| `6` | Find the strongest moments for manual editing only. | `npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.moment.mp4` |
-| `7` | Full auto-clips pipeline. | `npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
-| `8` | B-roll-heavy generator using labeled `links.txt`. | `npm run clipkit -- broll-captions --links links.txt --max-clips 3` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
-| `9` | Caption one existing video. | `npm run clipkit -- caption --video "/path/to/video.mp4"` | `outputs/caption-run-*/final/` |
-| `10` | Enhance an existing edit with B-roll plus captions. | `npm run clipkit -- enhance --video "/path/to/edit.mp4"` | `outputs/enhance-run-*/final/` |
-| `11` | Find standalone B-roll from prompt lines. | `npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8` | `outputs/broll-run-*/` |
-| `12` | List or rerender a generated clip after transcript/style fixes. | `npm run clipkit -- rerender --clip <id>` | `*.corrected.mp4` or replaced `*.captioned.mp4` |
-| `13` | Clean temp files or old output folders. | `npm run clipkit -- cleanup` | Deletes generated files after confirmation |
-| `14` | Open Remotion Studio. | `npm run studio` | Remotion preview UI |
-| `15` | Open the newest output folder in Finder. | `npm run output:open` | Latest `outputs/run-*` folder |
-| `16` | Check local dependencies and config. | `npm run doctor` | Terminal health report |
+| Menu option | Direct command | Main output |
+| --- | --- | --- |
+| Download YouTube videos and stop | `npm run clipkit -- download --links links.txt` | `outputs/download-run-*/downloads/` |
+| Download YouTube videos into a frame | `npm run clipkit -- frame --links links.txt` | `outputs/frame-run-*/` |
+| eBay cinematic listing ads | `npm run clipkit -- ebay-ads roi-plan --credit-budget 45` | `outputs/ebay-cinematic-ads/roi-plan-*/` |
+| eBay competitor creative blueprints | `npm run clipkit -- ebay-intel plan --project-dir ...` | `projects/<item-id>/` |
+| Download full videos and chop fixed clips | `npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15` | `outputs/fixed-clips-run-*/fixed-clips/` |
+| Cut one local video into fixed clips | `npm run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15` | `outputs/local-fixed-clips-run-*/fixed-clips/` |
+| Find important moments only | `npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.moment.mp4` |
+| Full auto-clips pipeline | `npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| B-roll-heavy labeled workflow | `npm run clipkit -- broll-captions --links links.txt --max-clips 3` | `outputs/run-*/captioned-clips/*.captioned.mp4` |
+| Caption one existing video | `npm run clipkit -- caption --video "/path/to/video.mp4"` | `outputs/caption-run-*/final/` |
+| Auto-chapter a conversation video | `npm run chapter:auto -- --video "/path/to/video.mp4"` | `outputs/chapters/<name>.chapters.json` |
+| Enhance an existing edit with B-roll + captions | `npm run clipkit -- enhance --video "/path/to/edit.mp4"` | `outputs/enhance-run-*/final/` |
+| Find standalone B-roll from prompts | `npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8` | `outputs/broll-run-*/` |
+| Rerender or list a generated clip | `npm run clipkit -- rerender --clip <id>` | `*.corrected.mp4` or replaced `*.captioned.mp4` |
+| Clean temp files / old outputs | `npm run clipkit -- cleanup` | Deletes generated files after confirmation |
+| Open Remotion Studio | `npm run studio` | Remotion preview UI |
+| Open newest output folder | `npm run output:open` | Latest `outputs/run-*` folder |
+| Doctor / dependency check | `npm run doctor` | Terminal health report |
 
-Menu option `12` now supports both cases:
+The rerender option supports both cases:
 
 - press Enter on clip input to list editable clips
 - enter a clip number, slug, title fragment, or full `.captions.json` path to rerender
@@ -586,7 +587,7 @@ outputs/ebay-cinematic-ads/roi-plan-YYYY-MM-DD-HHMMSS/
   projects/
 ```
 
-The default strategy is intentionally conservative: one paid Higgs shot per ad kit. The perceived production value should come from B-roll, pacing, captions, SFX, and clean assembly. The default `--credits-per-shot` is `22.5`, matching a verified Seedance 2.0 5-second 720p reference-video estimate on July 12, 2026. Re-run `higgsfield/estimate-costs.sh` before rendering if model pricing changes.
+The default strategy is intentionally conservative: one paid Higgs shot per ad kit. The perceived production value should come from B-roll, pacing, captions, SFX, and clean assembly. The default `--credits-per-shot` is `22.5`, matching a verified Seedance 2.0 5-second 720p reference-video estimate on July 12, 2026. Re-run the per-listing `projects/<item-id>/higgsfield/estimate-costs.sh` before rendering if model pricing changes.
 
 For higher-energy sales creatives, use `--ad-strategy high-energy` during planning and `--energy max` while finding B-roll or assembling. Max energy mode uses more kinetic yt-dlp B-roll prompts, shorter B-roll source sections, interleaved 1-2 second cutaways, faster product cuts, and automatic transition/impact/money/camera SFX from `sfx-library/index.json`.
 
@@ -615,7 +616,7 @@ outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/
 
 The brief is strict on purpose: the actual listing photos are the source of truth, and every generated shot should preserve the exact item, condition, labels, and included accessories. Import the downloaded photos or source image URLs into Higgsfield, render the short cinematic clips from the shot prompts, then place the finished MP4/MOV/WebM clips in `higgsfield-renders/`.
 
-When the Higgsfield MCP tools are visible in Codex, import the image URLs with Higgsfield's media import tool, then call its video generation tool with the prompts in `higgsfield-brief.json`. If `codex mcp list` shows `higgsfield` enabled but the tools are not exposed in the current task, restart/re-auth the MCP session before trying to automate render creation.
+When the Higgsfield MCP tools are available in your agent environment, import the image URLs with Higgsfield's media import tool, then call its video generation tool with the prompts in `higgsfield-brief.json`. If the MCP tools list shows `higgsfield` enabled but the tools are not exposed in the current task, restart/re-auth the MCP session before trying to automate render creation.
 
 Before spending credits, you can build a competitive creative blueprint from Kalodata, Automatio, TikTok, YouTube, or hand-curated competitor rows:
 

@@ -8,7 +8,7 @@ Optional local integration (the CLI remains usable without Rotato):
 
 ## What We Added
 
-ClipCaption now has a thin Rotato bridge so mockup rendering can live beside the rest of the video tooling:
+ClipCaptionAI now has a thin Rotato bridge so mockup rendering can live beside the rest of the video tooling:
 
 ```bash
 clipcaptionai rotato doctor

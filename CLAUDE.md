@@ -10,7 +10,7 @@ scripts/
 ├── clipkit-lib.mjs          # 2nd tier — buildThoughtUnits, buildViralScorecard, snapSelectionToThoughtBoundaries
 ├── ai-provider.mjs           # Provider registry (DeepSeek + OpenAI), createClient, resolveModel, chatCompletion
 ├── command-utils.mjs         # commandExists, commandPath
-├── clipkit.mjs               # Commander CLI hub (imports nothing from other scripts)
+├── clipkit.mjs               # Commander CLI hub (imports from shared modules only)
 ├── lib-youtube-scenes.mjs    # Scene-library helpers
 ├── lib-youtube-download.mjs  # YouTube download helpers
 ├── lib-pop-culture-scenes.mjs # Pop-culture B-roll research (client-injected)
@@ -115,14 +115,15 @@ const parsed = JSON.parse(text);
 3. `styles/*.json` — caption style presets, selected via `--style-config`
 4. CLI flags — per-run overrides
 5. `caption-style.json` `contextScenes` / `soundEffects` blocks — feature toggles per style
-6. `.env.example` — documents all env vars, kept in sync
+6. `.env.example` — documents the most common env vars; see `scripts/ai-provider.mjs` for full model override vars
 
 ## Testing
 
 ```bash
-npm test                    # 73 tests, all pass required
-node --test tests/cli-smoke.test.mjs    # 65 CLI smoke/integration tests
-node --test tests/clipkit-lib.test.mjs  # 8 unit tests
+npm test                    # 98 tests across 3 suites, all pass required
+node --test tests/cli-smoke.test.mjs        # 68 CLI smoke/integration tests
+node --test tests/clipkit-lib.test.mjs      # 8 unit tests
+node --test tests/ai-provider.test.mjs      # 22 provider abstraction tests
 ```
 
 Tests use Node's built-in test runner. Integration tests create temp dirs, run the actual CLI, generate real MP4s, and clean up. They skip gracefully when ffmpeg/ImageMagick are absent.

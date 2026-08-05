@@ -1,11 +1,11 @@
 # Logo Animation Pipeline
 
-Generating Remotion logo animations with a **text-only** code model (Codex Spark,
-or any model without vision).
+Generating Remotion logo animations with a **text-only** code model (Claude,
+or any LLM without vision).
 
 ## The problem, and the actual fix
 
-Codex Spark can't accept an image, so it can't see your logo. The instinct is to
+A text-only code model can't accept an image, so it can't see your logo. The instinct is to
 find a way to smuggle the image in. Don't — that's solving the wrong problem.
 
 A model doesn't need to *see* a logo to animate it. It needs to know **what the
@@ -19,7 +19,7 @@ on every logo you onboard later**. Adding a new brand is a 3-command job with no
 new model calls.
 
 ```
-logo.png ──vectorize──> layered SVG ──build-spec──> LOGO_SPEC.md ──paste──> Codex Spark
+logo.png ──vectorize──> layered SVG ──build-spec──> LOGO_SPEC.md ──paste──> Claude / LLM
                                           │                                     │
                                           └──> layers.json ──> Remotion harness <┘
                                                                     │
@@ -84,7 +84,7 @@ Writes two files:
 Both come from the same source, so the spec the model reads and the data the code
 uses can never drift apart.
 
-### 3. Hand it to Codex Spark
+### 3. Hand it to the LLM
 
 Paste the entire `LOGO_SPEC.md`, then:
 

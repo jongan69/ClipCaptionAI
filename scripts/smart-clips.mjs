@@ -60,7 +60,7 @@ Options:
   --sfx-library DIR       Folder of indexed sound effects. Default: soundEffects.libraryDir, then ./sfx-library.
   --sound-effects         Force-enable automatic low-volume sound effects.
   --disable-sound-effects Disable automatic sound effects for this run.
-  --selection-model ID    OpenAI model for editorial selection. Default: OPENAI_SELECTION_MODEL or gpt-5.5.
+  --selection-model ID    Model for editorial selection. Default: provider-specific (see ai-provider.mjs).
 `;
 
 const stopWords = new Set([
