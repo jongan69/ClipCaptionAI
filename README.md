@@ -1829,3 +1829,16 @@ npm run studio
 ```
 
 Then open the `CaptionedClip` composition in Remotion Studio and load `outputs/studio/sample-props/sample-props.json` as props.
+
+
+---
+
+## Related Projects
+
+- **[YouTubeResearchAI](https://github.com/jongan69/YouTubeResearchAI)** — Turn any video URL into a PhD-grade cited research report. Academic pipeline: download → transcribe → literature search → claim verification → cited report.
+- **[PrepAI](https://github.com/jongan69/PrepAI)** — Local-first fitness AI for iPhone. On-device ML, zero cloud storage.
+- **[ListingOS](https://github.com/jongan69/ListingOS-AI)** — Camera-first AI listing workflow for eBay sellers.
+
+---
+
+*More projects at [github.com/jongan69](https://github.com/jongan69)*
