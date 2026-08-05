@@ -22,6 +22,7 @@ test('clipkit top-level help renders the polished command hub', () => {
   assert.match(result.stdout, /rotato\|mockup/);
   assert.match(result.stdout, /video/);
   assert.match(result.stdout, /fal-reference-video/);
+  assert.match(result.stdout, /compress\|crush/);
   assert.match(result.stdout, /voiceover\|elevenlabs/);
   assert.match(result.stdout, /rerender --clip 03-your-website-is-leaking-money --no-captions/);
 });
@@ -2903,5 +2904,85 @@ test('clipkit tighten command is registered', () => {
   assert.ok(
     result.stdout.includes('tighten') || result.stdout.includes('Tighten'),
     'help should mention tighten',
+  );
+});
+
+// ── Compression ───────────────────────────────────────────────────────────
+
+test('compress:video exposes help without requiring a video file', () => {
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/compress-video.mjs', '--help'],
+    {cwd: projectRoot, encoding: 'utf8'},
+  );
+
+  assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
+  assert.ok(
+    result.stdout.includes('compress:video'),
+    'help should mention compress:video',
+  );
+  assert.ok(
+    result.stdout.includes('--quality'),
+    'help should document --quality',
+  );
+  assert.ok(
+    result.stdout.includes('--codec'),
+    'help should document --codec',
+  );
+  assert.ok(
+    result.stdout.includes('--preset'),
+    'help should document --preset',
+  );
+  assert.ok(
+    result.stdout.includes('--scale'),
+    'help should document --scale',
+  );
+});
+
+test('compress:video dry-run produces manifest without encoding', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cca-compress-'));
+  const fixture = path.join(tmp, 'source.mp4');
+
+  try {
+    // Synthesize a tiny test video
+    const ff = spawnSync('ffmpeg', [
+      '-hide_banner', '-loglevel', 'error', '-y',
+      '-f', 'lavfi', '-i', 'color=c=black:s=640x360:d=3',
+      '-f', 'lavfi', '-i', 'anullsrc=r=16000:cl=mono',
+      '-shortest',
+      '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '35',
+      '-c:a', 'aac', '-b:a', '24k',
+      fixture,
+    ], {encoding: 'utf8'});
+
+    if (ff.status !== 0) {
+      console.log('Skipping compress dry-run test — ffmpeg lavfi unavailable');
+      return;
+    }
+
+    const result = spawnSync(
+      process.execPath,
+      ['scripts/compress-video.mjs', '--video', fixture, '--dry-run', '--quality', 'high'],
+      {cwd: projectRoot, encoding: 'utf8'},
+    );
+
+    assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
+    assert.match(result.stdout, /dry run/i, 'dry-run output should confirm no encoding');
+  } finally {
+    fs.rmSync(tmp, {recursive: true, force: true});
+  }
+});
+
+test('clipkit compress command is registered', () => {
+  const result = spawnSync(
+    process.execPath,
+    ['bin/clipcaptionai.js', 'compress', '--help'],
+    {cwd: projectRoot, encoding: 'utf8'},
+  );
+
+  assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
+  assert.ok(
+    result.stdout.includes('compress') || result.stdout.includes('Compress'),
+    'help should mention compress',
   );
 });

@@ -84,6 +84,7 @@
     "caption:auto": "node scripts/caption-video.mjs",
     "chapter:auto": "node scripts/chapter-video.mjs",
     "tighten:auto": "node scripts/tighten-video.mjs",
+    "compress:video": "node scripts/compress-video.mjs",
     "video:enhance": "node scripts/enhance-video-with-broll.mjs",
     "output:open": "node scripts/clipkit.mjs open-latest",
     "scene:mix": "node scripts/assemble-context-scenes.mjs",

@@ -709,6 +709,7 @@ const interactiveMenu = async () => {
         {value: 'caption', label: 'Caption one existing video', hint: 'keep the base edit intact'},
         {value: 'chapter', label: 'Auto-chapter a conversation video', hint: 'detect topics, split into titled sections'},
         {value: 'tighten', label: 'Tighten a conversation — remove filler and repetition', hint: 'AI finds dead air, repetition, tangents to cut'},
+        {value: 'compress', label: 'Compress a video — reduce file size with minimal quality loss', hint: 'CRF encoding, h264/h265, lossless-to-aggressive presets'},
         {value: 'enhance', label: 'Enhance an existing edit with B-roll', hint: 'timed cutaways + captions'},
         {value: 'broll', label: 'Find standalone B-roll from prompts', hint: 'no final render'},
         {value: 'rerender', label: 'Rerender or list a generated clip', hint: 'fix text or style and rerender'},
@@ -954,6 +955,51 @@ const interactiveMenu = async () => {
     }
     return;
   }
+  if (choice === 'compress') {
+    const video = await askForVideo('Source');
+    if (video) {
+      const quality = unwrapPrompt(
+        await select({
+          message: 'Compression quality:',
+          options: [
+            {value: 'lossless', label: 'Lossless', hint: 'CRF 17 — visually lossless, minimal size reduction'},
+            {value: 'high', label: 'High (recommended)', hint: 'CRF 20 — excellent quality with meaningful savings'},
+            {value: 'medium', label: 'Medium', hint: 'CRF 23 — good balance of quality and file size'},
+            {value: 'aggressive', label: 'Aggressive', hint: 'CRF 28 — smaller file, minor quality loss'},
+          ],
+        }),
+      );
+      const codec = unwrapPrompt(
+        await select({
+          message: 'Video codec:',
+          options: [
+            {value: 'h264', label: 'H.264 (recommended)', hint: 'Best compatibility, widely supported'},
+            {value: 'h265', label: 'H.265 / HEVC', hint: '~30-50% smaller files at same quality'},
+          ],
+        }),
+      );
+      const scaleAnswer = await askYesNo('Scale down resolution?', false);
+      let scaleArg = null;
+      if (scaleAnswer) {
+        const scaleVal = unwrapPrompt(
+          await select({
+            message: 'Max width:',
+            options: [
+              {value: '1920', label: '1080p (1920px)', hint: 'Full HD'},
+              {value: '1280', label: '720p (1280px)', hint: 'HD ready'},
+              {value: '854', label: '480p (854px)', hint: 'SD — large savings'},
+            ],
+          }),
+        );
+        scaleArg = scaleVal;
+      }
+      const compressArgs = ['--video', video, '--quality', quality, '--codec', codec];
+      if (scaleArg) compressArgs.push('--scale', scaleArg);
+      npmRun('compress:video', compressArgs);
+      outro('Compression complete.');
+    }
+    return;
+  }
   if (choice === 'caption') {
     const video = await askForVideo('Existing');
     if (video) {
@@ -1084,6 +1130,7 @@ Examples:
   clipcaptionai auto-clips --links links.txt --max-clips 6
   clipcaptionai broll-captions --links links.txt --max-clips 3
   clipcaptionai caption --video "/path/to/video.mp4"
+  clipcaptionai compress --video "/path/to/video.mp4" --quality high --codec h265
   clipcaptionai rotato render ~/Desktop/demo.rotato --screen-media ~/Desktop/app.mp4 --output outputs/mockups/demo.mp4
   clipcaptionai voiceover --script narration.txt --voice-id VOICE_ID
   clipcaptionai fal-image-edit --image approved.jpg --prompt "Edit instruction" --approved-for-generated-marketing
@@ -1106,6 +1153,7 @@ Examples:
   configurePassthroughCommand(program, 'caption', 'Caption any existing video with the current caption style.', (args) => npmRun('caption:auto', args));
   configurePassthroughCommand(program, 'chapter', 'Auto-detect chapters in a conversation video with topic descriptions.', (args) => npmRun('chapter:auto', args));
   configurePassthroughCommand(program, 'tighten', 'Analyze a conversation video for filler, repetition, and tangents to cut.', (args) => npmRun('tighten:auto', args));
+  configurePassthroughCommand(program, 'compress', 'Compress a video with minimal quality loss using CRF encoding.', (args) => npmRun('compress:video', args), ['crush']);
   configurePassthroughCommand(program, 'enhance', 'Add contextual B-roll and captions to an existing edit.', (args) => npmRun('broll:enhance', args));
   configurePassthroughCommand(program, 'broll', 'Find reusable B-roll clips from a text prompt file.', runBroll, ['finder']);
   configurePassthroughCommand(program, 'video', 'Plan, render, inspect, and QA model-directed videos.', (args) => run('node', ['scripts/video.mjs', ...args]));
