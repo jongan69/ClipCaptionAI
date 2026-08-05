@@ -385,5 +385,49 @@
     "title": "Doctor",
     "command": "doctor",
     "description": "Run local dependency and config checks."
+  },
+  {
+    "id": "interview-qa",
+    "title": "Interview Q&A Detection",
+    "command": "interview-qa",
+    "description": "Analyze 2-person interviews — detect question/answer pairs with speaker labels and timestamps.",
+    "group": "AI Features",
+    "args": [
+      {
+        "name": "video",
+        "label": "Interview Video",
+        "type": "path",
+        "placeholder": "/path/to/interview.mp4",
+        "required": true
+      },
+      {
+        "name": "captions",
+        "label": "Existing Captions (optional)",
+        "type": "text",
+        "placeholder": "Auto-transcribes if empty"
+      },
+      {
+        "name": "max-segments",
+        "label": "Max Q&A Segments",
+        "type": "number",
+        "placeholder": "20"
+      },
+      {
+        "name": "min-segment-seconds",
+        "label": "Min Segment (seconds)",
+        "type": "number",
+        "placeholder": "5"
+      },
+      {
+        "name": "provider",
+        "label": "AI Provider",
+        "type": "select",
+        "options": [
+          { "value": "auto", "label": "Auto-detect" },
+          { "value": "deepseek", "label": "DeepSeek" },
+          { "value": "openai", "label": "OpenAI" }
+        ]
+      }
+    ]
   }
 ]

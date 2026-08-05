@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ClipCaptionAI Desktop</title>
+    <style>
+      /* Inline styles so something shows before JS loads */
+      body {
+        margin: 0;
+        background: #0b1020;
+        color: #f3f5ff;
+        font-family: "Avenir Next", "Avenir", "Segoe UI", Inter, system-ui, sans-serif;
+      }
+      #app-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        flex-direction: column;
+        gap: 12px;
+      }
+      #app-loading .spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid rgba(255,255,255,0.1);
+        border-top-color: #6ce6d2;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      #app-loading p {
+        font-size: 14px;
+        color: rgba(255,255,255,0.5);
+      }
+      #app-error {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        flex-direction: column;
+        gap: 12px;
+        padding: 20px;
+        text-align: center;
+      }
+      #app-error h2 { color: #ff8fa3; margin: 0; font-size: 18px; }
+      #app-error pre {
+        background: rgba(255,255,255,0.06);
+        padding: 16px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.1);
+        max-width: 600px;
+        overflow: auto;
+        font-size: 12px;
+        color: rgba(255,255,255,0.6);
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+    </style>
+    <script src="./assets/index-DO6kEdqt.js"></script>
+  </head>
+  <body>
+    <div id="app-loading">
+      <div class="spinner"></div>
+      <p>Loading ClipCaptionAI...</p>
+    </div>
+    <div id="app-error">
+      <h2>Failed to load</h2>
+      <pre id="app-error-text"></pre>
+    </div>
+    <div id="root"></div>
+  <script>
+try {
+  var el = document.getElementById("app-loading");
+  if (el) el.style.display = "none";
+} catch(e) {}
+</script>
+</body>
+</html>

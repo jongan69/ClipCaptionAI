@@ -7,6 +7,8 @@ import {fileURLToPath} from 'node:url';
 import crypto from 'node:crypto';
 import {commandExists} from '../scripts/command-utils.mjs';
 import {outputsRoot as DESKTOP_OUTPUTS_ROOT} from '../scripts/lib.mjs';
+import {SecretVault} from './shared/env.mjs';
+import {resolveRuntimePaths, ensureRuntimeDirs} from './shared/paths.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..');
@@ -49,6 +51,8 @@ let runtimeDiagnostics = null;
 let mainWindow = null;
 let LOG_PATH = null;
 let ipcHandlersInstalled = false;
+let secretVault = null;
+let runtimePaths = null;
 
 function readJson(filePath, fallback) {
   try {
@@ -609,7 +613,17 @@ function createWindow() {
     },
   });
 
-  window.loadFile(path.join(__dirname, 'index.html'));
+  // Dev: load from Vite dev server; Prod: load built React app
+  if (process.env.CCA_DESKTOP_DEV === '1') {
+    const VITE_DEV_PORT = process.env.CCA_VITE_PORT || 5173;
+    window.loadURL(`http://localhost:${VITE_DEV_PORT}`);
+  } else if (fs.existsSync(path.join(__dirname, 'dist-renderer', 'index.html'))) {
+    window.loadFile(path.join(__dirname, 'dist-renderer', 'index.html'));
+  } else {
+    // Fallback: legacy renderer
+    window.loadFile(path.join(__dirname, 'index.html'));
+  }
+
   window.once('ready-to-show', () => window.show());
 
   window.webContents.on('did-fail-load', (_event, code, desc) => {
@@ -846,11 +860,150 @@ function installIpcHandlers() {
     return killProcess(target);
   });
 
+  // ── New: Secrets management ─────────────────────────────────
+  ipcMain.handle('cca:get-secret-state', () => {
+    return secretVault ? secretVault.getPresence() : {};
+  });
+
+  ipcMain.handle('cca:set-secret', (_event, { key, value }) => {
+    if (secretVault) secretVault.set(key, value);
+    return secretVault ? secretVault.getPresence() : {};
+  });
+
+  ipcMain.handle('cca:clear-secret', (_event, { key }) => {
+    if (secretVault) secretVault.clear(key);
+    return secretVault ? secretVault.getPresence() : {};
+  });
+
+  // ── New: Path info ──────────────────────────────────────────
+  ipcMain.handle('cca:get-paths', () => {
+    if (!runtimePaths) return {};
+    return {
+      projectRoot: runtimePaths.projectRoot,
+      outputsRoot: runtimePaths.outputsRoot,
+      userDataRoot: runtimePaths.userDataRoot,
+      configRoot: runtimePaths.configRoot,
+    };
+  });
+
+  // ── New: Output listing ─────────────────────────────────────
+  ipcMain.handle('cca:list-outputs', () => {
+    const outDir = runtimePaths?.outputsRoot || DESKTOP_OUTPUTS_ROOT;
+    try {
+      const entries = fs.readdirSync(outDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory())
+        .map((d) => {
+          const fullPath = path.join(outDir, d.name);
+          const stat = fs.statSync(fullPath);
+          return {
+            name: d.name,
+            path: fullPath,
+            type: d.name.includes("caption") ? "captioned" :
+                  d.name.includes("chapter") ? "chapters" :
+                  d.name.includes("tighten") ? "tightened" :
+                  d.name.includes("run") ? "run" : "other",
+            date: stat.mtime.toISOString(),
+          };
+        })
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 50);
+      return entries;
+    } catch {
+      return [];
+    }
+  });
+
+  // ── New: Project file I/O (allowlist only) ──────────────────
+  ipcMain.handle('cca:read-project-file', (_event, name) => {
+    const allowed = ['links.txt', 'broll-prompts.txt', 'caption-style.json'];
+    const base = name?.split('/')?.pop() || '';
+    if (!allowed.includes(base)) {
+      throw new Error(`Reading "${base}" is not allowed. Use links.txt, broll-prompts.txt, or caption-style.json.`);
+    }
+    const filePath = path.join(runtimePaths?.configRoot || PROJECT_ROOT, base);
+    if (!fs.existsSync(filePath)) return '';
+    return fs.readFileSync(filePath, 'utf8');
+  });
+
+  ipcMain.handle('cca:write-project-file', (_event, { name, content }) => {
+    const allowed = ['links.txt', 'broll-prompts.txt'];
+    const base = name?.split('/')?.pop() || '';
+    if (!allowed.includes(base)) {
+      throw new Error(`Writing "${base}" is not allowed.`);
+    }
+    const targetDir = runtimePaths?.configRoot || PROJECT_ROOT;
+    ensureDir(targetDir);
+    fs.writeFileSync(path.join(targetDir, base), String(content), 'utf8');
+    return { ok: true };
+  });
+
+  // ── New: Cleanup ────────────────────────────────────────────
+  ipcMain.handle('cca:cleanup', (_event, { scope }) => {
+    const outDir = runtimePaths?.outputsRoot || DESKTOP_OUTPUTS_ROOT;
+    const workDir = runtimePaths?.workRoot || path.join(outDir, 'work');
+    const mediaDir = runtimePaths?.publicMediaRoot || path.join(PROJECT_ROOT, 'public', 'media');
+
+    const cleaned = [];
+    try {
+      if (scope === 'temp' || scope === 'all') {
+        if (fs.existsSync(workDir)) {
+          fs.rmSync(workDir, { recursive: true, force: true });
+          cleaned.push('temp');
+        }
+      }
+      if (scope === 'media-staging' || scope === 'all') {
+        if (fs.existsSync(mediaDir)) {
+          const files = fs.readdirSync(mediaDir);
+          for (const f of files) {
+            fs.unlinkSync(path.join(mediaDir, f));
+          }
+          cleaned.push('media-staging');
+        }
+      }
+      if (scope === 'old-outputs' || scope === 'all') {
+        if (fs.existsSync(outDir)) {
+          const dirs = fs.readdirSync(outDir, { withFileTypes: true })
+            .filter((d) => d.isDirectory())
+            .map((d) => ({ name: d.name, path: path.join(outDir, d.name) }))
+            .sort((a, b) => {
+              const sa = fs.statSync(a.path);
+              const sb = fs.statSync(b.path);
+              return sb.mtimeMs - sa.mtimeMs;
+            });
+          // Keep last 5, remove rest
+          for (const d of dirs.slice(5)) {
+            fs.rmSync(d.path, { recursive: true, force: true });
+          }
+          cleaned.push(`old-outputs (kept ${Math.min(5, dirs.length)})`);
+        }
+      }
+    } catch (e) {
+      return { ok: false, error: e.message, cleaned };
+    }
+    return { ok: true, cleaned };
+  });
+
   ipcHandlersInstalled = true;
 }
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
+
+  // ── Initialize paths & vault ─────────────────────────────────
+  runtimePaths = resolveRuntimePaths();
+  ensureRuntimeDirs(runtimePaths);
+
+  // Override lib.mjs paths for any in-process module usage
+  process.env.CCA_ELECTRON = '1';
+  process.env.CCA_PROJECT_ROOT = runtimePaths.projectRoot;
+  process.env.CCA_OUTPUTS_ROOT = runtimePaths.outputsRoot;
+  process.env.CCA_PUBLIC_MEDIA_ROOT = runtimePaths.publicMediaRoot;
+
+  secretVault = new SecretVault(runtimePaths.secretsPath);
+  secretVault.load();
+  // Inject secrets into process.env so ai-provider.mjs works
+  secretVault.injectIntoEnv(process.env);
+
   preferencesPath = getPreferencesPath();
   preferences = readPreferences();
   LOG_PATH = createSessionLogPath();

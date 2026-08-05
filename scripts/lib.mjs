@@ -4,16 +4,25 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import dotenv from 'dotenv';
 
-export const projectRoot = path.resolve(
-  new URL('..', import.meta.url).pathname,
-);
+// ── Runtime roots ──────────────────────────────────────────────────
+// In CLI mode these resolve from the script's location (project root).
+// In Electron mode (CCA_ELECTRON=1), the main process pre-sets env vars
+// pointing to writable userData paths, so packaged apps work correctly.
 
-export const outputsRoot = path.join(projectRoot, 'outputs');
+const baseRoot = path.resolve(new URL('..', import.meta.url).pathname);
+
+export const projectRoot = process.env.CCA_PROJECT_ROOT || baseRoot;
+export const outputsRoot = process.env.CCA_OUTPUTS_ROOT || path.join(projectRoot, 'outputs');
 export const outputWorkRoot = path.join(outputsRoot, 'work');
-export const publicMediaRoot = path.join(projectRoot, 'public', 'media');
+export const publicMediaRoot = process.env.CCA_PUBLIC_MEDIA_ROOT || path.join(projectRoot, 'public', 'media');
 export const ebayCinematicAdsOutputRoot = path.join(outputsRoot, 'ebay-cinematic-ads');
 
+export const isElectron = () => !!process.env.CCA_ELECTRON;
+
 export const loadEnv = () => {
+  // In Electron, the main process injects secrets directly into process.env
+  // before spawning workers — skip the .env file read.
+  if (process.env.CCA_ENV_PREINJECTED === '1') return;
   dotenv.config({path: path.join(projectRoot, '.env')});
 };
 
@@ -57,12 +66,37 @@ export const parseArgs = (argv) => {
   return args;
 };
 
+/**
+ * Parse a flat options object (as received from Electron IPC).
+ * Normalizes the same way parseArgs would, so scripts can use the
+ * same logic regardless of whether they were invoked via CLI or IPC.
+ */
+export const parseOptions = (options = {}) => {
+  const result = { ...options };
+  // Coerce string "true"/"false" to boolean for checkbox fields
+  for (const [key, value] of Object.entries(result)) {
+    if (value === 'true') result[key] = true;
+    if (value === 'false') result[key] = false;
+  }
+  return result;
+};
+
 export const requireArg = (args, key, message) => {
   if (!args[key]) {
     throw new Error(message ?? `Missing required option --${key}`);
   }
 
   return String(args[key]);
+};
+
+/**
+ * Same as requireArg but works with both CLI args and parsed options.
+ */
+export const requireOption = (options, key, message) => {
+  if (!options[key] && options[key] !== 0 && options[key] !== false) {
+    throw new Error(message ?? `Missing required option: ${key}`);
+  }
+  return options[key];
 };
 
 export const ensureDir = (dir) => {

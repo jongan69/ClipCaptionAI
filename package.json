@@ -104,15 +104,18 @@
     "voiceover:elevenlabs": "node scripts/generate-elevenlabs-voiceover.mjs",
     "fal:image-edit": "node scripts/fal-image-edit.mjs",
     "fal:reference-video": "node scripts/fal-reference-video.mjs",
+    "interview:qa": "node scripts/interview-qa.mjs",
     "typecheck": "tsc --noEmit",
     "desktop:env-check": "node desktop/check-environment.mjs",
     "desktop:env-check:json": "node desktop/check-environment.mjs --json",
+    "desktop:build": "vite build --config desktop/vite.config.ts && node desktop/lib/fix-crossorigin.mjs",
     "desktop": "node desktop/check-environment.mjs && electron ./desktop/main.mjs",
     "desktop:dev": "CCA_DESKTOP_DEV=1 node desktop/check-environment.mjs && electron ./desktop/main.mjs",
-    "desktop:package": "node desktop/check-environment.mjs && electron-builder --publish never",
-    "desktop:package:mac": "node desktop/check-environment.mjs && electron-builder --mac --publish never",
-    "desktop:package:win": "node desktop/check-environment.mjs && electron-builder --win --publish never",
-    "desktop:package:linux": "node desktop/check-environment.mjs && electron-builder --linux --publish never",
+    "desktop:dev:ui": "vite build --watch --config desktop/vite.config.ts",
+    "desktop:package": "npm run desktop:build && node desktop/check-environment.mjs && electron-builder --publish never",
+    "desktop:package:mac": "npm run desktop:build && node desktop/check-environment.mjs && electron-builder --mac --publish never",
+    "desktop:package:win": "npm run desktop:build && node desktop/check-environment.mjs && electron-builder --win --publish never",
+    "desktop:package:linux": "npm run desktop:build && node desktop/check-environment.mjs && electron-builder --linux --publish never",
     "desktop:package:all": "npm run desktop:package:mac && npm run desktop:package:win && npm run desktop:package:linux"
   },
   "dependencies": {
@@ -125,16 +128,24 @@
     "dotenv": "16.4.7",
     "openai": "5.7.0",
     "picocolors": "^1.1.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2",
     "remotion": "4.0.481",
-    "tsx": "4.20.3"
+    "tsx": "4.20.3",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "24.0.3",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "typescript": "5.8.3",
+    "@vitejs/plugin-react": "^6.0.5",
     "electron": "^34.2.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "tailwindcss": "^4.3.3",
+    "typescript": "5.8.3",
+    "vite": "^8.2.0"
   },
   "build": {
     "appId": "com.clipcaptionai.desktop",
@@ -169,16 +180,23 @@
       }
     ],
     "asar": true,
-    "asarUnpack": ["**/node_modules/**/*"],
+    "asarUnpack": [
+      "**/node_modules/**/*"
+    ],
     "mac": {
       "category": "public.app-category.video",
       "target": "dmg"
     },
     "win": {
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ]
     },
     "linux": {
-      "target": ["AppImage", "deb"]
+      "target": [
+        "AppImage",
+        "deb"
+      ]
     }
   }
 }

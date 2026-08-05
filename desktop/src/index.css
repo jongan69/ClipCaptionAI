@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@theme {
+  --color-glass-bg: rgba(255, 255, 255, 0.06);
+  --color-glass-bg-strong: rgba(255, 255, 255, 0.12);
+  --color-glass-bg-hover: rgba(255, 255, 255, 0.10);
+  --color-glass-border: rgba(255, 255, 255, 0.12);
+  --color-glass-border-strong: rgba(255, 255, 255, 0.20);
+  --color-glass-border-focus: rgba(255, 255, 255, 0.25);
+
+  --color-accent-cyan: #6ce6d2;
+  --color-accent-blue: #8fd3ff;
+  --color-accent-purple: #b794f4;
+  --color-accent-rose: #ff8fa3;
+  --color-accent-green: #70d99f;
+
+  --color-surface-darkest: #050912;
+  --color-surface-dark: #0b1020;
+  --color-surface-mid: #121936;
+  --color-surface-light: #18224a;
+
+  --color-text-main: #f3f5ff;
+  --color-text-dim: #9eb0d4;
+  --color-text-muted: #6b7da8;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: "Avenir Next", "Avenir", "Segoe UI", Inter, system-ui, sans-serif;
+    color: var(--color-text-main);
+    background: var(--color-surface-dark);
+    min-height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
+@utility glass {
+  background: var(--color-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-glass-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(2, 4, 16, 0.4);
+}
+
+@utility glass-strong {
+  background: var(--color-glass-bg-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-glass-border-strong);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(2, 4, 16, 0.5);
+}
+
+@utility glass-sm {
+  border-radius: 10px;
+}
+
+@utility glass-lg {
+  border-radius: 24px;
+}
+
+/* Ambient background — must be regular CSS for pseudo-elements */
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--color-surface-dark);
+}
+
+.ambient-bg::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: -20%;
+  width: 70%;
+  height: 70%;
+  background: radial-gradient(circle, rgba(108, 230, 210, 0.12), transparent 70%);
+  filter: blur(80px);
+}
+
+.ambient-bg::after {
+  content: "";
+  position: absolute;
+  bottom: -20%;
+  right: -15%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(circle, rgba(143, 211, 255, 0.10), transparent 70%);
+  filter: blur(80px);
+}
+
+/* Loading shimmer animation */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
