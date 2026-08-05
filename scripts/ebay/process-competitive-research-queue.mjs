@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
@@ -349,7 +349,7 @@ for (const listing of queue.listings ?? []) {
 const results = [];
 for (const listing of selected) {
   const commandArgs = [
-    'scripts/rerun-competitive-research-packet.mjs',
+    'scripts/ebay/rerun-competitive-research-packet.mjs',
     '--packet-dir',
     listing.packet_dir,
     '--competitors',

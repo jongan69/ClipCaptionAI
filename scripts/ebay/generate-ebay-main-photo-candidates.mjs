@@ -3,9 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
-import {ensureDir, parseArgs} from './lib.mjs';
-import {commandPath} from './command-utils.mjs';
-import {timestampSlug} from './clipkit-lib.mjs';
+import {ensureDir, parseArgs} from '../lib.mjs';
+import {commandPath} from '../command-utils.mjs';
+import {timestampSlug} from '../clipkit-lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));

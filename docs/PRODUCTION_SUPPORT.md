@@ -9,6 +9,8 @@ This table describes what the repository can currently prove locally. “Support
 | YouTube download and clipping | Supported with local prerequisites | Requires `yt-dlp`, network, and rights to use source media |
 | Local transcription | Supported when whisper.cpp is installed | Provider selected by environment/configuration |
 | OpenAI analysis/transcription | Supported integration | Requires `OPENAI_API_KEY`; live request proof is separate |
+| DeepSeek chat/analysis | Supported integration | Requires `DEEPSEEK_API_KEY`; uses OpenAI-compatible API via `ai-provider.mjs` |
+| AI provider abstraction | Supported | `scripts/ai-provider.mjs` — auto-detects DeepSeek or OpenAI; all chat/analysis scripts use it |
 | ElevenLabs narration | Supported guarded integration | Requires key; output manifest is non-secret and reviewable |
 | fal GPT Image 2 / Veo reference video | Supported guarded integration | Requires explicit marketing approval and human review |
 | Remotion logo/deck compositions | Supported local rendering | Visual QA remains separate from source checks |

@@ -61,6 +61,31 @@ For one-off exports where you want the B-roll/video only, you can rerender witho
 npm run clipkit -- rerender --run outputs/run-YYYY-MM-DD-HHMMSS --clip 03-your-website-is-leaking-money --no-captions
 ```
 
+## Auto-Chapter a Conversation Video
+
+Use this when you have a long conversation (podcast, interview, coaching call) and want to automatically detect topic changes, split it into chapters with titles and descriptions.
+
+```bash
+npm run chapter:auto -- --video "/path/to/conversation.mp4"
+```
+
+With video splitting:
+
+```bash
+npm run chapter:auto -- --video "/path/to/conversation.mp4" --split
+```
+
+Options:
+
+- `--split` — export each chapter as a standalone `.mp4` file
+- `--provider deepseek|openai` — override auto-detected AI provider
+- `--chapter-model ID` — override the default model
+- `--min-chapter-seconds N` — minimum chapter length (default: 45)
+- `--max-chapters N` — maximum number of chapters (default: 20)
+- `--context TEXT` — extra hint like "podcast interview about startups"
+
+Output: `outputs/chapters/<name>.chapters.json` with title, start/end timestamps, and description per chapter. With `--split`, individual `01-title.mp4` files.
+
 ## Clean Up Generated Files
 
 Use this when the project folder is getting too heavy.

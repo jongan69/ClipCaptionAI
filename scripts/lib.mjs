@@ -198,3 +198,106 @@ export const run = (command, args, options = {}) => {
     throw new Error(`${command} ${args.join(' ')} failed.`);
   }
 };
+
+// ── Media utilities (ffmpeg / ffprobe) ─────────────────────────────────
+
+/**
+ * Probe any media file — returns duration and streams.
+ * Prefer probeVideo() for video-specific metadata (width, height, fps).
+ */
+export const probeMedia = (mediaPath) => {
+  const output = execFileSync(
+    'ffprobe',
+    [
+      '-v', 'error',
+      '-show_entries', 'format=duration',
+      '-of', 'default=nw=1:nk=1',
+      mediaPath,
+    ],
+    {encoding: 'utf8'},
+  );
+
+  return {
+    durationSeconds: Number(output.trim()),
+    path: mediaPath,
+  };
+};
+
+/**
+ * Extract audio from a video file to MP3 (default) or WAV.
+ * Returns the path to the extracted audio file.
+ */
+export const extractAudio = (videoPath, outputPath, {bitrate = '48k', sampleRate = '16000', channels = 1, format = 'mp3'} = {}) => {
+  const codec = format === 'wav' ? 'pcm_s16le' : 'libmp3lame';
+  const ext = format === 'wav' ? 'wav' : 'mp3';
+
+  const args = [
+    '-hide_banner', '-loglevel', 'error', '-y',
+    '-i', videoPath,
+    '-vn',
+    '-acodec', codec,
+    '-b:a', bitrate,
+    '-ar', sampleRate,
+    '-ac', String(channels),
+  ];
+
+  if (format === 'mp3') {
+    args.push('-f', 'mp3');
+  }
+
+  args.push(outputPath);
+  execFileSync('ffmpeg', args, {stdio: 'inherit'});
+
+  return outputPath;
+};
+
+/**
+ * Split a video segment by start time and duration.
+ * Returns the path to the output segment.
+ */
+export const splitVideoSegment = (videoPath, startSeconds, durationSeconds, outputPath, {width = 1280, fps = 30} = {}) => {
+  execFileSync(
+    'ffmpeg',
+    [
+      '-hide_banner', '-loglevel', 'error', '-y',
+      '-ss', String(startSeconds),
+      '-t', String(durationSeconds),
+      '-i', videoPath,
+      '-map', '0:v?',
+      '-map', '0:a?',
+      '-c:v', 'libx264',
+      '-vf', `scale='min(${width},iw)':-2`,
+      '-preset', 'veryfast',
+      '-crf', '18',
+      '-c:a', 'aac',
+      '-b:a', '192k',
+      outputPath,
+    ],
+    {stdio: 'inherit'},
+  );
+
+  return outputPath;
+};
+
+// ── Formatting utilities ───────────────────────────────────────────────
+
+/**
+ * Format seconds as MM:SS.
+ */
+export const formatTimestamp = (totalSeconds) => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
+/**
+ * Create a safe filename slug from a human-readable string.
+ */
+export const slugify = (value, fallback = 'untitled') => {
+  const slug = String(value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80);
+  return slug || fallback;
+};

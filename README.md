@@ -135,7 +135,7 @@ npm run desktop
 Production checks run before booting the desktop shell:
 
 - Required: Node.js + `ffmpeg` + `ffprobe` + project CLI/runtime files
-- Optional: `yt-dlp`, `remotion`, `openai`
+- Optional: `yt-dlp`, `remotion`; AI provider: DeepSeek or OpenAI (auto-detected from `.env`)
 
 ```bash
 npm run desktop:env-check:json
@@ -1761,7 +1761,7 @@ Provider order in `auto` mode:
 
 The default `.env.example` now pins `TRANSCRIBE_PROVIDER=local-whispercpp`, so the pipeline stays local-first unless you override it.
 
-If an OpenAI key is present and the audio transcription did not come from OpenAI, the script also does a cheap text-only cleanup pass over the transcript. That cleanup is used for better clip selection and planning, while the rendered captions keep their original timings.
+If an AI provider key (DeepSeek or OpenAI) is present and the audio transcription did not come from OpenAI, the script also does a cheap text-only cleanup pass over the transcript. That cleanup is used for better clip selection and planning, while the rendered captions keep their original timings.
 
 The first local whisper.cpp run auto-downloads the configured model into `models/whisper.cpp/`.
 

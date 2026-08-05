@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
@@ -146,7 +146,7 @@ for (const blueprint of blueprints) {
       continue;
     }
 
-    const renderArgs = ['scripts/render-competitive-blueprint-ad.mjs', '--blueprint', blueprint];
+    const renderArgs = ['scripts/ebay/render-competitive-blueprint-ad.mjs', '--blueprint', blueprint];
     for (const key of renderOptions) pushOption(renderArgs, key);
     pushFlag(renderArgs, 'no-music');
     pushFlag(renderArgs, 'no-sfx');

@@ -348,26 +348,33 @@ export const researchPopCultureScenes = async ({
   }
 
   const maxCandidates = clamp(Number(candidatesPerSegment ?? 8), 5, 10);
-  const response = await client.responses.create({
-    model,
-    text: {
-      verbosity: 'medium',
-      format: {
-        type: 'json_schema',
-        name: 'pop_culture_scene_research',
-        strict: true,
-        schema: buildSchema(maxCandidates),
-      },
-    },
-    input: [
-      {
-        role: 'system',
-        content:
-          'You are a sharp short-form video editor and pop-culture reference researcher. For each transcript or B-roll cue, infer the emotional meaning, situation, visual metaphor, meme value, and cultural shorthand. Recommend famous movie, TV, cartoon, anime, reality TV, sports-doc, or viral TV scenes that viewers can understand visually in 1-3 seconds. Do not merely match literal keywords. Prefer mainstream recognizable scenes, memeable moments, underdog/comeback/villain-arc/chaos/luxury/focus metaphors, and scenes with obvious visual action. Do not recommend commercials, product ads, music videos, podcasts, influencer videos, or ordinary YouTube videos as best scene matches. This is query enrichment only: do not claim a public YouTube upload is cleared. Use conservative rights/status labels such as official clip, trailer clip, fan upload, unclear, or needs manual licensing review.',
-      },
-      {
-        role: 'user',
-        content: `Create pop-culture B-roll scene candidates for these planned insertions.
+
+  const jsonExample = `{
+  "segments": [
+    {
+      "segment": "Segment label",
+      "intent": "The emotional/metaphorical intent of this segment",
+      "bestSceneMatches": [
+        {
+          "rank": 1,
+          "sceneTitle": "Movie/Show: Episode or Scene Description",
+          "why": "Why this scene fits the emotional beat",
+          "memePotential": "high/medium/low with brief reason",
+          "searchTerms": ["youtube search query 1", "youtube search query 2"],
+          "rightsStatus": "official clip / trailer clip / fan upload / unclear / needs manual licensing review",
+          "confidence": 8
+        }
+      ],
+      "saferAlternatives": ["Alternative search approach 1", "Alternative search approach 2"],
+      "searchExpansionTerms": ["expansion term 1", "expansion term 2"],
+      "avoid": ["term to avoid 1", "term to avoid 2"]
+    }
+  ]
+}`;
+
+  const systemPrompt = 'You are a sharp short-form video editor and pop-culture reference researcher. For each transcript or B-roll cue, infer the emotional meaning, situation, visual metaphor, meme value, and cultural shorthand. Recommend famous movie, TV, cartoon, anime, reality TV, sports-doc, or viral TV scenes that viewers can understand visually in 1-3 seconds. Do not merely match literal keywords. Prefer mainstream recognizable scenes, memeable moments, underdog/comeback/villain-arc/chaos/luxury/focus metaphors, and scenes with obvious visual action. Do not recommend commercials, product ads, music videos, podcasts, influencer videos, or ordinary YouTube videos as best scene matches. This is query enrichment only: do not claim a public YouTube upload is cleared. Use conservative rights/status labels such as official clip, trailer clip, fan upload, unclear, or needs manual licensing review.\n\nReturn ONLY a valid JSON object with this structure:\n' + jsonExample;
+
+  const userPrompt = `Create pop-culture B-roll scene candidates for these planned insertions.
 
 Return ${maxCandidates} best scene matches per segment when possible.
 
@@ -401,12 +408,26 @@ Existing search queries: ${segment.searchQueries.join(' | ')}
 Keywords: ${segment.keywords.join(', ') || 'n/a'}
 Avoid terms: ${segment.avoidTerms.join(', ') || 'n/a'}`,
   )
-  .join('\n\n')}`,
-      },
+  .join('\n\n')}`;
+
+  const response = await client.chat.completions.create({
+    model,
+    messages: [
+      {role: 'system', content: systemPrompt},
+      {role: 'user', content: userPrompt},
     ],
+    response_format: {type: 'json_object'},
+    temperature: 0.7,
   });
 
-  const parsed = normalizeResearch(JSON.parse(response.output_text), segments);
+  const rawText = response.choices?.[0]?.message?.content ?? '';
+  const jsonText = rawText
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/, '')
+    .replace(/```\s*$/, '')
+    .trim();
+
+  const parsed = normalizeResearch(JSON.parse(jsonText), segments);
   const files = writePopCultureResearchFiles({
     research: parsed,
     outputPath,

@@ -7,7 +7,7 @@ This project can be published as code, but generated media should stay local.
 Recommended commit scope:
 
 ```bash
-git add README.md package.json package-lock.json .gitignore RUN.command BROLL.command bin .github scripts docs examples styles tests projects/.gitkeep outputs/.gitkeep .env.example custom-scenes-library/README.md
+git add README.md package.json package-lock.json .gitignore RUN.command BROLL.command bin .github scripts docs examples styles tests projects/.gitkeep outputs/.gitkeep .env.example CLAUDE.md
 git commit -m "Organize ClipCaptionAI workflow toolkit"
 ```
 

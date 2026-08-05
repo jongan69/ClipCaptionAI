@@ -2,9 +2,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync, spawnSync} from 'node:child_process';
-import {ensureDir, parseArgs, outputsRoot, projectRoot} from './lib.mjs';
-import {slugify, timestampSlug} from './clipkit-lib.mjs';
-import {commandExists} from './command-utils.mjs';
+import {ensureDir, parseArgs, outputsRoot, projectRoot} from '../lib.mjs';
+import {slugify, timestampSlug} from '../clipkit-lib.mjs';
+import {commandExists} from '../command-utils.mjs';
 
 const usage = `
 Usage:

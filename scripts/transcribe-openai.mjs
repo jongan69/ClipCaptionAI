@@ -8,6 +8,7 @@ import {OpenAI} from 'openai';
 import {openAiWhisperApiToCaptions} from '@remotion/openai-whisper';
 import {ensureDir, loadEnv, parseArgs, projectRoot, requireArg} from './lib.mjs';
 import {commandExists} from './command-utils.mjs';
+import {resolveProvider, createClient, resolveModel} from './ai-provider.mjs';
 
 const usage = `
 Usage:
@@ -19,7 +20,7 @@ Options:
   --local-model ID        whisper.cpp model alias or full path. Default: small.en
   --text-analysis-model ID OpenAI text model for transcript cleanup. Default: gpt-4.1-mini
   --disable-text-enhance  Skip transcript cleanup on top of the raw transcription
-  --force-text-enhance    Require transcript cleanup if an OpenAI API key is available
+  --force-text-enhance    Require transcript cleanup if an AI provider API key is available
   --retries N             Retry transient OpenAI failures. Default: 5
   --audio-bitrate RATE    Temporary MP3 bitrate. Default: 48k
   --chunk-seconds N       Split longer audio into chunks. Default: 180
@@ -739,8 +740,11 @@ const buildTranscriptCleanupInput = (chunks) =>
     .join('\n');
 
 const enhanceTranscriptText = async ({captions, provider}) => {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is required for transcript text enhancement.');
+  const resolved = resolveProvider();
+  if (!resolved.config) {
+    throw new Error(
+      'DEEPSEEK_API_KEY or OPENAI_API_KEY is required for transcript text enhancement.',
+    );
   }
 
   const chunks = buildTextEnhancementChunks(captions);
@@ -758,36 +762,29 @@ const enhanceTranscriptText = async ({captions, provider}) => {
     };
   }
 
-  const openai = new OpenAI({maxRetries: 1});
+  const client = createClient(resolved, {maxRetries: 1});
+  const enhancementModel = resolveModel({
+    resolved,
+    model: textAnalysisModel,
+  });
   const correctedByIndex = new Map();
-  const cleanupSchema = {
-    type: 'object',
-    additionalProperties: false,
-    required: ['chunks'],
-    properties: {
-      chunks: {
-        type: 'array',
-        items: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['index', 'text'],
-          properties: {
-            index: {type: 'integer'},
-            text: {type: 'string'},
-          },
-        },
-      },
-    },
-  };
+
+  const jsonExample = `{
+  "chunks": [
+    {"index": 0, "text": "corrected transcript text here"}
+  ]
+}`;
+
+  const systemPrompt =
+    'You clean up raw speech-to-text transcript chunks for downstream editorial analysis. Keep the same order, meaning, and near-literal wording. Fix only obvious ASR mistakes, casing, punctuation, and proper nouns strongly implied by context. Do not summarize. Do not embellish. Do not add facts. Return one corrected text string per chunk index.';
 
   for (const batch of batchItems(chunks, 12)) {
-    const response = await openai.responses.create({
-      model: textAnalysisModel,
-      input: [
+    const response = await client.chat.completions.create({
+      model: enhancementModel,
+      messages: [
         {
           role: 'system',
-          content:
-            'You clean up raw speech-to-text transcript chunks for downstream editorial analysis. Keep the same order, meaning, and near-literal wording. Fix only obvious ASR mistakes, casing, punctuation, and proper nouns strongly implied by context. Do not summarize. Do not embellish. Do not add facts. Return one corrected text string per chunk index.',
+          content: `${systemPrompt}\n\nReturn ONLY a valid JSON object with this exact structure:\n${jsonExample}`,
         },
         {
           role: 'user',
@@ -800,18 +797,18 @@ Return corrected text for each chunk index below.
 ${buildTranscriptCleanupInput(batch)}`,
         },
       ],
-      text: {
-        verbosity: 'medium',
-        format: {
-          type: 'json_schema',
-          name: 'transcript_cleanup',
-          strict: true,
-          schema: cleanupSchema,
-        },
-      },
+      response_format: {type: 'json_object'},
+      temperature: 0.3,
     });
 
-    const parsed = JSON.parse(response.output_text);
+    const rawText = response.choices?.[0]?.message?.content ?? '';
+    const jsonText = rawText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/, '')
+      .replace(/```\s*$/, '')
+      .trim();
+
+    const parsed = JSON.parse(jsonText);
     for (const item of parsed.chunks ?? []) {
       correctedByIndex.set(Number(item.index), String(item.text ?? '').trim());
     }
@@ -834,7 +831,7 @@ ${buildTranscriptCleanupInput(batch)}`,
   return {
     attempted: true,
     enabled: true,
-    model: textAnalysisModel,
+    model: enhancementModel,
     sourceProvider: provider,
     chunkCount: normalizedChunks.length,
     changeCount,
@@ -961,14 +958,15 @@ try {
   }
 
   let analysis = null;
+  const aiProviderAvailable = Boolean(process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY);
   const wantsTextEnhancement = Boolean(args['force-text-enhance']) || (
     !args['disable-text-enhance'] &&
     result.provider !== 'openai' &&
-    Boolean(process.env.OPENAI_API_KEY)
+    aiProviderAvailable
   );
 
-  if (args['force-text-enhance'] && !process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is required when --force-text-enhance is used.');
+  if (args['force-text-enhance'] && !aiProviderAvailable) {
+    throw new Error('DEEPSEEK_API_KEY or OPENAI_API_KEY is required when --force-text-enhance is used.');
   }
 
   if (wantsTextEnhancement) {

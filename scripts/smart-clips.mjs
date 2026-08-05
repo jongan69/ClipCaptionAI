@@ -2,7 +2,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import OpenAI from 'openai';
+import {
+  resolveProvider,
+  createClient,
+  resolveModel,
+  chatCompletion,
+} from './ai-provider.mjs';
 import {
   ensureDir,
   loadEnv,
@@ -513,13 +518,31 @@ ${chunks.join('\n')}`,
   },
 ];
 
-const client = process.env.OPENAI_API_KEY ? new OpenAI() : null;
+const resolved = resolveProvider();
+const client = resolved.config ? createClient(resolved) : null;
 const candidateModels = [
   args['selection-model'],
   process.env.OPENAI_SELECTION_MODEL,
-  'gpt-5.5',
+  resolved.provider === 'deepseek' ? 'deepseek-v4-pro' : null,
   'gpt-4.1',
 ].filter(Boolean);
+
+// Embed schema in system prompt for cross-provider JSON mode
+const jsonSchemaHint = `Return ONLY a valid JSON object with this exact structure:
+{
+  "clips": [
+    {
+      "title": "Short clip title",
+      "startSeconds": 0.0,
+      "endSeconds": 55.0,
+      "score": 85,
+      "reason": "Why this clip was selected",
+      "hook": "Opening hook line",
+      "highlightWords": ["word1", "word2"]
+    }
+  ]
+}`;
+const systemMessage = input[0].content + '\n\n' + jsonSchemaHint;
 
 let selection;
 let usedModel;
@@ -533,21 +556,24 @@ if (fs.existsSync(selectionPath) && !args.reselect) {
   if (client) {
     for (const model of candidateModels) {
       try {
-        const response = await client.responses.create({
+        const response = await client.chat.completions.create({
           model,
-          input,
-          text: {
-            verbosity: 'medium',
-            format: {
-              type: 'json_schema',
-              name: 'viral_clip_selection',
-              strict: true,
-              schema,
-            },
-          },
+          messages: [
+            {role: 'system', content: systemMessage},
+            {role: 'user', content: input[1].content},
+          ],
+          response_format: {type: 'json_object'},
+          temperature: 0.7,
         });
 
-        selection = JSON.parse(response.output_text);
+        const rawText = response.choices?.[0]?.message?.content ?? '';
+        const jsonText = rawText
+          .replace(/^```json\s*/i, '')
+          .replace(/^```\s*/, '')
+          .replace(/```\s*$/, '')
+          .trim();
+
+        selection = JSON.parse(jsonText);
         usedModel = model;
         break;
       } catch (error) {

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
@@ -157,7 +157,7 @@ const run = (step) => {
 };
 
 const architectArgs = [
-  'scripts/competitive-listing-video-architect.mjs',
+  'scripts/ebay/competitive-listing-video-architect.mjs',
   'plan',
   '--project-dir',
   projectDir,
@@ -182,7 +182,7 @@ try {
   });
 
   const loopArgs = [
-    'scripts/run-competitive-video-control-loop.mjs',
+    'scripts/ebay/run-competitive-video-control-loop.mjs',
     '--blueprints-dir',
     blueprintOutDir,
     '--credit-budget',

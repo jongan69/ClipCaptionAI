@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
@@ -148,7 +148,7 @@ const run = (step) => {
 try {
   if (!startingPreviewManifest) {
     const renderArgs = [
-      'scripts/render-competitive-blueprint-batch.mjs',
+      'scripts/ebay/render-competitive-blueprint-batch.mjs',
       '--blueprints-dir',
       blueprintsDir,
       '--out-manifest',
@@ -162,12 +162,12 @@ try {
 
   run({
     name: 'qa_previews',
-    commandArgs: ['scripts/qa-competitive-videos.mjs', '--preview-manifest', previewManifest],
+    commandArgs: ['scripts/ebay/qa-competitive-videos.mjs', '--preview-manifest', previewManifest],
     expectedFiles: [qaReport],
   });
 
   const prepArgs = [
-    'scripts/prepare-competitive-premium-renders.mjs',
+    'scripts/ebay/prepare-competitive-premium-renders.mjs',
     '--preview-manifest',
     previewManifest,
     '--out-dir',
@@ -182,14 +182,14 @@ try {
   if (args['skip-handoff'] !== true) {
     run({
       name: 'export_render_handoff',
-      commandArgs: ['scripts/export-competitive-render-handoff.mjs', '--premium-plan', premiumPlan, '--out-dir', handoffDir],
+      commandArgs: ['scripts/ebay/export-competitive-render-handoff.mjs', '--premium-plan', premiumPlan, '--out-dir', handoffDir],
       expectedFiles: [handoffManifest],
     });
   }
 
   if (args['run-higgsfield-renders'] === true) {
     const renderProviderArgs = [
-      'scripts/run-competitive-higgsfield-renders.mjs',
+      'scripts/ebay/run-competitive-higgsfield-renders.mjs',
       '--premium-plan',
       premiumPlan,
       '--out-dir',
@@ -206,7 +206,7 @@ try {
     run({name: 'render_higgsfield_jobs', commandArgs: renderProviderArgs, expectedFiles: [higgsRenderManifest, higgsRenderUrlMap]});
   }
 
-  const collectArgs = ['scripts/collect-competitive-premium-renders.mjs', '--premium-plan', premiumPlan];
+  const collectArgs = ['scripts/ebay/collect-competitive-premium-renders.mjs', '--premium-plan', premiumPlan];
   if (args['url-map']) {
     pushOption(collectArgs, 'url-map');
   } else if (args['run-higgsfield-renders'] === true) {
@@ -214,15 +214,15 @@ try {
   }
   run({name: 'collect_generated_clips', commandArgs: collectArgs, expectedFiles: [collectManifest]});
 
-  const finalizeArgs = ['scripts/finalize-competitive-premium-ads.mjs', '--premium-plan', premiumPlan];
+  const finalizeArgs = ['scripts/ebay/finalize-competitive-premium-ads.mjs', '--premium-plan', premiumPlan];
   if (args['attempt-finalize'] !== true) finalizeArgs.push('--dry-run');
   run({name: args['attempt-finalize'] === true ? 'finalize_ready_ads' : 'finalize_readiness', commandArgs: finalizeArgs, expectedFiles: [finalizeManifest]});
 
-  run({name: 'audit_status', commandArgs: ['scripts/audit-competitive-video-pipeline.mjs', '--premium-plan', premiumPlan], expectedFiles: [statusReport]});
+  run({name: 'audit_status', commandArgs: ['scripts/ebay/audit-competitive-video-pipeline.mjs', '--premium-plan', premiumPlan], expectedFiles: [statusReport]});
 
-  run({name: 'export_creative_packets', commandArgs: ['scripts/export-competitive-creative-packets.mjs', '--status', statusReport], expectedFiles: [creativePacketsManifest]});
+  run({name: 'export_creative_packets', commandArgs: ['scripts/ebay/export-competitive-creative-packets.mjs', '--status', statusReport], expectedFiles: [creativePacketsManifest]});
 
-  run({name: 'build_review_board', commandArgs: ['scripts/build-competitive-review-board.mjs', '--status', statusReport], expectedFiles: [reviewBoard]});
+  run({name: 'build_review_board', commandArgs: ['scripts/ebay/build-competitive-review-board.mjs', '--status', statusReport], expectedFiles: [reviewBoard]});
 } catch (error) {
   if (error?.step) steps.push(error.step);
   const failedManifest = {

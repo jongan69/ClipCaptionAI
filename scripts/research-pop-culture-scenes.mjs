@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import OpenAI from 'openai';
+import {
+  resolveProvider,
+  createClient,
+  resolveModel,
+} from './ai-provider.mjs';
 import {
   loadEnv,
   parseArgs,
@@ -19,7 +23,8 @@ Options:
   --scene-plan FILE    Existing *.scene-plan.json to research.
   --captions FILE      Captions file. Defaults to captionsPath inside the scene plan.
   --out FILE           Output JSON path. Default: next to scene plan as *.pop-culture-scenes.json.
-  --model ID           OpenAI model. Default: gpt-4.1.
+  --model ID           Model for pop-culture research. Auto-detected from provider.
+  --provider ID        AI provider: deepseek or openai. Default: auto-detect.
   --candidates N       Candidate scenes per segment, 5-10. Default: 8.
   --json-only          Do not write the companion Markdown report.
 `;
@@ -32,8 +37,11 @@ if (args.help || args.h) {
 
 loadEnv();
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY is required. Add it to .env or your shell.');
+const resolved = resolveProvider({provider: args.provider});
+if (!resolved.config) {
+  throw new Error(
+    'DEEPSEEK_API_KEY or OPENAI_API_KEY is required. Add one to .env or your shell.',
+  );
 }
 
 const scenePlanPath = path.resolve(requireArg(args, 'scene-plan', usage));
@@ -45,7 +53,9 @@ const captionsPath = args.captions
     : null;
 
 if (!captionsPath || !fs.existsSync(captionsPath)) {
-  throw new Error('A captions file is required. Pass --captions or use a scene plan with captionsPath.');
+  throw new Error(
+    'A captions file is required. Pass --captions or use a scene plan with captionsPath.',
+  );
 }
 
 const insertions = Array.isArray(scenePlan.insertions) ? scenePlan.insertions : [];
@@ -57,13 +67,19 @@ const outputPath = args.out
   ? path.resolve(String(args.out))
   : scenePlanPath.replace(/\.scene-plan\.json$/i, '.pop-culture-scenes.json');
 
-const sourceVideo = scenePlan.sourceVideo && fs.existsSync(scenePlan.sourceVideo)
-  ? scenePlan.sourceVideo
-  : null;
+const sourceVideo =
+  scenePlan.sourceVideo && fs.existsSync(scenePlan.sourceVideo)
+    ? scenePlan.sourceVideo
+    : null;
+
+const model = resolveModel({
+  resolved,
+  model: args.model ?? 'gpt-4.1',
+});
 
 const result = await researchPopCultureScenes({
-  client: new OpenAI(),
-  model: String(args.model ?? 'gpt-4.1'),
+  client: createClient(resolved),
+  model,
   insertions,
   captions: readCaptions(captionsPath),
   selectionClip: scenePlan.selectionClip ?? null,

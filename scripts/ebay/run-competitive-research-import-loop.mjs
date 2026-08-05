@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
@@ -120,7 +120,7 @@ const processOutDir = path.join(outDir, 'process');
 ensureDir(outDir);
 
 const importArgs = [
-  'scripts/import-competitive-research-results.mjs',
+  'scripts/ebay/import-competitive-research-results.mjs',
   '--queue',
   queuePath,
   '--results',
@@ -132,7 +132,7 @@ pushFlag(importArgs, 'replace');
 if (args['dry-run'] === true) importArgs.push('--dry-run');
 
 const processArgs = [
-  'scripts/process-competitive-research-queue.mjs',
+  'scripts/ebay/process-competitive-research-queue.mjs',
   '--queue',
   queuePath,
   '--out-dir',

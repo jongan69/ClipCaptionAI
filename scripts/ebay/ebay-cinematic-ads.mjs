@@ -3,9 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
-import {ebayCinematicAdsOutputRoot} from './lib.mjs';
-import {slugify, timestampSlug} from './clipkit-lib.mjs';
+import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
+import {ebayCinematicAdsOutputRoot} from '../lib.mjs';
+import {slugify, timestampSlug} from '../clipkit-lib.mjs';
 
 const defaultMcpUrl = 'https://shopping-deals-mcp.jonathang132298.workers.dev/mcp';
 const scriptName = path.basename(fileURLToPath(import.meta.url));

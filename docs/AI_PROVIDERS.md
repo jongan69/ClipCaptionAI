@@ -1,12 +1,60 @@
-# Local AI Provider Workflows
+# AI Providers
 
-ClipCaptionAI keeps paid-provider calls in local Node scripts. They are not part of the Electron renderer, and their secrets stay in `.env`. Configuration and dry-run support do not prove a live provider transaction; retain the request ID and downloaded artifact in the run evidence when a live call is made.
+ClipCaptionAI uses a shared provider abstraction (`scripts/ai-provider.mjs`) so any script that calls an LLM works with DeepSeek or OpenAI automatically.
 
-Provider status and evidence boundaries are summarized in [the production support matrix](PRODUCTION_SUPPORT.md).
+## Provider selection
 
-## ElevenLabs narration
+Set one or both in `.env`:
 
-Set `ELEVENLABS_API_KEY` and optionally `ELEVENLABS_VOICE_ID` in `.env`, then generate a narration file from reviewed copy:
+```
+DEEPSEEK_API_KEY=sk-your-deepseek-key
+OPENAI_API_KEY=sk-your-openai-key
+```
+
+If both keys are present, **DeepSeek is preferred** for chat/analysis. Override per-run with `--provider openai` or `--provider deepseek`.
+
+## What each provider supports
+
+| Capability | DeepSeek | OpenAI |
+|---|---|---|
+| Chat completions (text generation) | ✅ `deepseek-v4-pro` / `deepseek-v4-flash` | ✅ `gpt-4.1-mini` |
+| JSON mode (`response_format: json_object`) | ✅ | ✅ |
+| Strict JSON schema | ❌ | ✅ |
+| Streaming | ✅ | ✅ |
+| Whisper transcription | ❌ | ✅ `whisper-1` |
+| Responses API | ❌ | ✅ |
+
+## Transcription
+
+Transcription is **independent of the chat provider**. It uses its own provider chain:
+
+1. **local whisper.cpp** (`whisper-cli` binary, models in `models/whisper.cpp/`) — default
+2. **OpenAI Whisper** (`whisper-1`) — requires `OPENAI_API_KEY`
+3. **YouTube subtitles** — fallback for YouTube-sourced files
+
+Set `TRANSCRIBE_PROVIDER` in `.env` to override: `local-whispercpp`, `openai`, or `youtube`.
+
+## Default models
+
+| Provider | Model | Env override |
+|---|---|---|
+| DeepSeek | `deepseek-v4-pro` | — |
+| DeepSeek (fast) | `deepseek-v4-flash` | — |
+| OpenAI | `gpt-4.1-mini` | `OPENAI_TEXT_ANALYSIS_MODEL` |
+| OpenAI (selection) | `gpt-4.1` | `OPENAI_SELECTION_MODEL` |
+| OpenAI (Whisper) | `whisper-1` | `--model` flag |
+
+Pass `--chapter-model`, `--selection-model`, or `--model` to override per-script.
+
+## Other providers
+
+| Provider | Env var | Scripts |
+|---|---|---|
+| ElevenLabs (voiceover) | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` | `generate-elevenlabs-voiceover.mjs` |
+| fal.ai (image/video gen) | `FAL_KEY` | `fal-image-edit.mjs`, `fal-reference-video.mjs` |
+| Higgsfield (product video gen) | External CLI via MCP | eBay competitive pipeline |
+
+### ElevenLabs narration
 
 ```bash
 npm run voiceover:elevenlabs -- \
@@ -15,40 +63,28 @@ npm run voiceover:elevenlabs -- \
   --output outputs/demo/narration.mp3
 ```
 
-The command writes MP3 audio and a sibling generation manifest containing the voice/model IDs, text hash, response request ID, and audio hash. It never writes the key or narration text into that manifest.
+Writes MP3 audio and a generation manifest with voice/model IDs, text hash, and request ID. Never writes the key or narration text into the manifest.
 
-For the demo, review the exact narration before generation and make sure it clearly explains how Codex and GPT-5.6 were used.
-
-## fal reviewed marketing assets
-
-Set `FAL_KEY` in `.env`. Both fal commands require an explicit acknowledgement because their outputs are generated marketing/B-roll assets, never eBay source-of-truth/main listing photos or evidence of product condition.
-
-Create a GPT Image 2 edit:
+### fal reviewed marketing assets
 
 ```bash
 npm run fal:image-edit -- \
   --image approved-source.jpg \
   --prompt "Replace only the background with a clean studio sweep" \
   --approved-for-generated-marketing
-```
 
-Create a muted five-second Veo 3.1 proof from up to three approved reference images:
-
-```bash
 npm run fal:reference-video -- \
   --image approved-product.jpg \
-  --prompt "Slow orbit around the exact supplied item; preserve labels, finish, and included accessories" \
+  --prompt "Slow orbit around the exact supplied item" \
   --duration 5 \
   --resolution 1080p \
   --approved-for-generated-marketing
 ```
 
-Each command stores a manifest with the input file hashes, request ID, output hash, prompt, and `pending_human_review` status. Review every output for product truth before adding it to a video. Do not run a fal hero shot and a Higgsfield hero shot for the same planned beat.
-
-Veo 3.1 output carries Google's invisible SynthID watermark; it is intentionally a generated marketing asset, not source evidence.
+Each command stores a manifest with input file hashes, request ID, output hash, prompt, and `pending_human_review` status. Review every output before adding it to a video.
 
 ## External operator tools
 
-- **Cursorful:** record the real app flow at 1080p with readable UI and cursor-follow zooms; then feed the recording into the existing caption/render workflow.
-- **Shotcut:** optional manual trim/audio-repair fallback only. It is not a ClipCaptionAI runtime dependency.
+- **Cursorful:** record the real app flow at 1080p with readable UI; feed the recording into the caption/render workflow.
+- **Shotcut:** optional manual trim/audio-repair fallback. Not a ClipCaptionAI runtime dependency.
 - **HyperFrames:** intentionally not integrated; Remotion remains the deterministic programmatic-rendering source of truth.

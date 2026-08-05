@@ -3,7 +3,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import OpenAI from 'openai';
+import {
+  resolveProvider,
+  createClient,
+  resolveModel,
+} from './ai-provider.mjs';
 import {
   ensureDir,
   loadEnv,
@@ -1174,8 +1178,8 @@ if (!sceneLibraryDir) {
 
 ensureDir(sceneLibraryDir);
 
-if (!process.env.OPENAI_API_KEY) {
-  console.warn('OPENAI_API_KEY missing, so context scene planning is disabled for this render.');
+if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
+  console.warn('No AI provider API key found (DEEPSEEK_API_KEY or OPENAI_API_KEY), so context scene planning is disabled for this render.');
   copyVideo(video, outPath);
   process.exit(0);
 }
@@ -1325,7 +1329,14 @@ const metadata = probeVideo(video);
 const transcriptChunks =
   readEnhancedTranscriptChunks(captionsPath) ??
   buildTranscriptChunks(captions, config.transcriptChunkWords);
-const client = new OpenAI();
+
+const resolved = resolveProvider();
+const client = createClient(resolved);
+const planningModel = resolveModel({
+  resolved,
+  model: contextScenes.planningModel ?? 'gpt-4.1-mini',
+});
+
 const targetInsertionCount = Math.min(
   config.maxInsertionsPerClip,
   Math.max(
@@ -1340,90 +1351,35 @@ const targetInsertionCount = Math.min(
   ),
 );
 
-const response = await client.responses.create({
-  model: String(contextScenes.planningModel ?? 'gpt-4.1-mini'),
-  text: {
-    verbosity: 'medium',
-    format: {
-      type: 'json_schema',
-      name: 'context_scene_insertions',
-      strict: true,
-      schema: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['insertions'],
-        properties: {
-          insertions: {
-            type: 'array',
-            minItems: targetInsertionCount,
-            maxItems: config.maxInsertionsPerClip,
-            items: {
-              type: 'object',
-              additionalProperties: false,
-              required: [
-                'startSeconds',
-                'endSeconds',
-                'query',
-                'reason',
-                'visualBrief',
-                'searchQueries',
-                'keywords',
-                'avoidTerms',
-              ],
-              properties: {
-                startSeconds: {type: 'number'},
-                endSeconds: {type: 'number'},
-                query: {type: 'string'},
-                reason: {type: 'string'},
-                visualBrief: {
-                  type: 'object',
-                  additionalProperties: false,
-                  required: ['emotion', 'visualMetaphor', 'energy', 'idealShot', 'motion'],
-                  properties: {
-                    emotion: {type: 'string'},
-                    visualMetaphor: {type: 'string'},
-                    energy: {type: 'string'},
-                    idealShot: {type: 'string'},
-                    motion: {type: 'string'},
-                  },
-                },
-                searchQueries: {
-                  type: 'array',
-                  minItems: 3,
-                  maxItems: config.youtubeIngest.queryStyle.queriesPerInsertion,
-                  items: {type: 'string'},
-                },
-                keywords: {
-                  type: 'array',
-                  minItems: 1,
-                  maxItems: 8,
-                  items: {type: 'string'},
-                },
-                avoidTerms: {
-                  type: 'array',
-                  minItems: 1,
-                  maxItems: 8,
-                  items: {type: 'string'},
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  input: [
+const jsonExample = `{
+  "insertions": [
     {
-      role: 'system',
-      content: `You are planning high-energy cinematic cutaway inserts for a vertical short-form clip. Keep retention high with frequent visual changes. Pick moments where cutting away to an evocative scene would strengthen emotion, tension, irony, aspiration, power, fear, urgency, discipline, money, status, spirituality, grit, or transformation. Prefer short punchy ${config.minInsertionSeconds.toFixed(1)}-${config.maxInsertionSeconds.toFixed(1)} second windows, aim for a fresh visual beat every 2-4 seconds when justified, and favor scenes that are instantly readable in under a second. Target about ${(config.targetCoverageRatio * 100).toFixed(0)}% of the finished clip as B-roll/cutaway footage while keeping the original speaker visible for the strongest personal lines. Do not cover the entire clip.
+      "startSeconds": 10.5,
+      "endSeconds": 14.0,
+      "query": "descriptive search query",
+      "reason": "why this moment benefits from a cutaway",
+      "visualBrief": {
+        "emotion": "inspiration",
+        "visualMetaphor": "sunrise over mountains",
+        "energy": "building anticipation",
+        "idealShot": "drone rising above clouds at golden hour",
+        "motion": "slow upward reveal"
+      },
+      "searchQueries": ["cinematic sunrise drone shot", "golden hour mountain aerial"],
+      "keywords": ["sunrise", "aerial", "inspiration"],
+      "avoidTerms": ["tutorial", "vlog"]
+    }
+  ]
+}`;
+
+const systemPrompt = `You are planning high-energy cinematic cutaway inserts for a vertical short-form clip. Keep retention high with frequent visual changes. Pick moments where cutting away to an evocative scene would strengthen emotion, tension, irony, aspiration, power, fear, urgency, discipline, money, status, spirituality, grit, or transformation. Prefer short punchy ${config.minInsertionSeconds.toFixed(1)}-${config.maxInsertionSeconds.toFixed(1)} second windows, aim for a fresh visual beat every 2-4 seconds when justified, and favor scenes that are instantly readable in under a second. Target about ${(config.targetCoverageRatio * 100).toFixed(0)}% of the finished clip as B-roll/cutaway footage while keeping the original speaker visible for the strongest personal lines. Do not cover the entire clip.
 
 For each insertion, first think in terms of a visual brief: emotion, visual metaphor, energy, ideal shot, and motion. Then write ${config.youtubeIngest.queryStyle.queriesPerInsertion} distinct YouTube search queries that could find better B-roll. ${config.youtubeIngest.queryStyle.preferMovieScenes ? 'Prioritize recognizable, high-quality movie and TV scene searches: official clips, specific scene names, film/show scene wording, and instantly readable cinematic moments. Avoid stock-footage phrasing unless the transcript is asking for literal location or object coverage.' : 'Mix literal, cinematic, metaphorical, aspirational, spiritual/motivational, and high-motion angles.'} Prefer search phrases with visible actions and objects instead of abstract words. ${config.youtubeIngest.queryStyle.preferCinematic ? `Use style language like ${config.youtubeIngest.queryStyle.styleModifiers.slice(0, 8).join(', ')} when it helps.` : ''} ${config.youtubeIngest.queryStyle.preferMotion ? 'Prefer clips with movement, camera motion, closeups, and instantly readable visual events.' : ''} ${config.youtubeIngest.queryStyle.avoidTalkingHeads ? `Avoid talking heads, podcasts, reactions, slideshows, lyric videos, news, lectures, and low-motion screen recordings.` : ''}
 
-Return exact clip-relative timings.`,
-    },
-    {
-      role: 'user',
-      content: `Clip duration: ${metadata.durationSeconds.toFixed(2)} seconds
+Return ONLY a valid JSON object with this exact structure:
+${jsonExample}`;
+
+const userPrompt = `Clip duration: ${metadata.durationSeconds.toFixed(2)} seconds
 Max insertions: ${config.maxInsertionsPerClip}
 Target insertions: ${targetInsertionCount}
 Insertion length: ${config.minInsertionSeconds.toFixed(1)}-${config.maxInsertionSeconds.toFixed(1)} seconds
@@ -1446,12 +1402,26 @@ ${transcriptChunks
     (chunk) =>
       `[${chunk.startSeconds.toFixed(1)}-${chunk.endSeconds.toFixed(1)}] ${chunk.text}`,
   )
-  .join('\n')}`,
-    },
+  .join('\n')}`;
+
+const response = await client.chat.completions.create({
+  model: planningModel,
+  messages: [
+    {role: 'system', content: systemPrompt},
+    {role: 'user', content: userPrompt},
   ],
+  response_format: {type: 'json_object'},
+  temperature: 0.7,
 });
 
-const planned = JSON.parse(response.output_text);
+const rawText = response.choices?.[0]?.message?.content ?? '';
+const jsonText = rawText
+  .replace(/^```json\s*/i, '')
+  .replace(/^```\s*/, '')
+  .replace(/```\s*$/, '')
+  .trim();
+
+const planned = JSON.parse(jsonText);
 let insertions = normalizeInsertions(
   Array.isArray(planned.insertions) ? planned.insertions : [],
   metadata.durationSeconds,

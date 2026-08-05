@@ -98,7 +98,7 @@ test('moments review helper exposes the standalone report command', () => {
 });
 
 test('eBay cinematic ads exposes the batch competitive-plan command', () => {
-  const result = spawnSync('node', ['scripts/ebay-cinematic-ads.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/ebay-cinematic-ads.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -112,7 +112,7 @@ test('eBay cinematic ads exposes the batch competitive-plan command', () => {
 });
 
 test('eBay traffic optimizer exposes help', () => {
-  const result = spawnSync('node', ['scripts/optimize-ebay-traffic-report.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/optimize-ebay-traffic-report.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -123,7 +123,7 @@ test('eBay traffic optimizer exposes help', () => {
 });
 
 test('competitive blueprint preview renderer exposes help', () => {
-  const result = spawnSync('node', ['scripts/render-competitive-blueprint-ad.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/render-competitive-blueprint-ad.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -134,7 +134,7 @@ test('competitive blueprint preview renderer exposes help', () => {
 });
 
 test('competitive blueprint batch preview renderer exposes help', () => {
-  const result = spawnSync('node', ['scripts/render-competitive-blueprint-batch.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/render-competitive-blueprint-batch.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -146,7 +146,7 @@ test('competitive blueprint batch preview renderer exposes help', () => {
 });
 
 test('competitive premium render prep exposes help', () => {
-  const result = spawnSync('node', ['scripts/prepare-competitive-premium-renders.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/prepare-competitive-premium-renders.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -158,7 +158,7 @@ test('competitive premium render prep exposes help', () => {
 });
 
 test('competitive premium finalizer exposes help', () => {
-  const result = spawnSync('node', ['scripts/finalize-competitive-premium-ads.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/finalize-competitive-premium-ads.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -170,7 +170,7 @@ test('competitive premium finalizer exposes help', () => {
 });
 
 test('competitive premium render collector exposes help', () => {
-  const result = spawnSync('node', ['scripts/collect-competitive-premium-renders.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/collect-competitive-premium-renders.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -182,7 +182,7 @@ test('competitive premium render collector exposes help', () => {
 });
 
 test('competitive video pipeline auditor exposes help', () => {
-  const result = spawnSync('node', ['scripts/audit-competitive-video-pipeline.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/audit-competitive-video-pipeline.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -194,7 +194,7 @@ test('competitive video pipeline auditor exposes help', () => {
 });
 
 test('competitive review board generator exposes help', () => {
-  const result = spawnSync('node', ['scripts/build-competitive-review-board.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/build-competitive-review-board.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -206,7 +206,7 @@ test('competitive review board generator exposes help', () => {
 });
 
 test('competitive video QA gate exposes help', () => {
-  const result = spawnSync('node', ['scripts/qa-competitive-videos.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/qa-competitive-videos.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -218,7 +218,7 @@ test('competitive video QA gate exposes help', () => {
 });
 
 test('competitive video control loop exposes help', () => {
-  const result = spawnSync('node', ['scripts/run-competitive-video-control-loop.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/run-competitive-video-control-loop.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -230,7 +230,7 @@ test('competitive video control loop exposes help', () => {
 });
 
 test('competitive render handoff exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/export-competitive-render-handoff.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/export-competitive-render-handoff.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -242,7 +242,7 @@ test('competitive render handoff exporter exposes help', () => {
 });
 
 test('competitive Higgsfield render runner exposes help', () => {
-  const result = spawnSync('node', ['scripts/run-competitive-higgsfield-renders.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/run-competitive-higgsfield-renders.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -254,7 +254,7 @@ test('competitive Higgsfield render runner exposes help', () => {
 });
 
 test('competitive creative packet exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/export-competitive-creative-packets.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/export-competitive-creative-packets.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -265,7 +265,7 @@ test('competitive creative packet exporter exposes help', () => {
 });
 
 test('competitive voiceover plan exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/export-competitive-voiceover-plan.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/export-competitive-voiceover-plan.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -288,7 +288,7 @@ test('local AI provider commands expose guarded help without requiring secrets',
 });
 
 test('eBay main photo candidate generator exposes help', () => {
-  const result = spawnSync('node', ['scripts/generate-ebay-main-photo-candidates.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/generate-ebay-main-photo-candidates.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -299,7 +299,7 @@ test('eBay main photo candidate generator exposes help', () => {
 });
 
 test('eBay main photo apply bundle exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/export-ebay-main-photo-apply-bundle.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/export-ebay-main-photo-apply-bundle.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -310,7 +310,7 @@ test('eBay main photo apply bundle exporter exposes help', () => {
 });
 
 test('competitive research rerun helper exposes help', () => {
-  const result = spawnSync('node', ['scripts/rerun-competitive-research-packet.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/rerun-competitive-research-packet.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -322,7 +322,7 @@ test('competitive research rerun helper exposes help', () => {
 });
 
 test('competitive research queue exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/export-competitive-research-queue.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/export-competitive-research-queue.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -334,7 +334,7 @@ test('competitive research queue exporter exposes help', () => {
 });
 
 test('competitive research queue processor exposes help', () => {
-  const result = spawnSync('node', ['scripts/process-competitive-research-queue.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/process-competitive-research-queue.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -346,7 +346,7 @@ test('competitive research queue processor exposes help', () => {
 });
 
 test('competitive research results importer exposes help', () => {
-  const result = spawnSync('node', ['scripts/import-competitive-research-results.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/import-competitive-research-results.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -358,7 +358,7 @@ test('competitive research results importer exposes help', () => {
 });
 
 test('competitive research import loop exposes help', () => {
-  const result = spawnSync('node', ['scripts/run-competitive-research-import-loop.mjs', '--help'], {
+  const result = spawnSync('node', ['scripts/ebay/run-competitive-research-import-loop.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -388,7 +388,7 @@ test('competitive blueprint batch preview renderer writes a dry-run manifest', (
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/render-competitive-blueprint-batch.mjs',
+    'scripts/ebay/render-competitive-blueprint-batch.mjs',
     '--blueprints-dir',
     blueprintsDir,
     '--dry-run',
@@ -472,7 +472,7 @@ test('competitive premium render prep writes credit-aware Higgsfield packets', (
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/prepare-competitive-premium-renders.mjs',
+    'scripts/ebay/prepare-competitive-premium-renders.mjs',
     '--preview-manifest',
     previewManifest,
     '--roi-plan',
@@ -608,7 +608,7 @@ test('competitive premium render prep converts blueprint beats into product-safe
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/prepare-competitive-premium-renders.mjs',
+    'scripts/ebay/prepare-competitive-premium-renders.mjs',
     '--preview-manifest',
     previewManifest,
     '--credit-budget',
@@ -694,7 +694,7 @@ test('competitive premium render prep holds weak fallback references for researc
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/prepare-competitive-premium-renders.mjs',
+    'scripts/ebay/prepare-competitive-premium-renders.mjs',
     '--preview-manifest',
     previewManifest,
     '--credit-budget',
@@ -716,7 +716,7 @@ test('competitive premium render prep holds weak fallback references for researc
   assert.ok(plan.held[0].reference_quality.issues.some((issue) => issue.includes('fallback-template')));
 
   const audit = spawnSync('node', [
-    'scripts/audit-competitive-video-pipeline.mjs',
+    'scripts/ebay/audit-competitive-video-pipeline.mjs',
     '--premium-plan',
     planPath,
   ], {
@@ -743,7 +743,7 @@ test('competitive premium finalizer reports missing generated clips without asse
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/finalize-competitive-premium-ads.mjs',
+    'scripts/ebay/finalize-competitive-premium-ads.mjs',
     '--premium-plan',
     premiumPlan,
     '--dry-run',
@@ -778,7 +778,7 @@ test('competitive premium render collector reports missing sources without faili
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/collect-competitive-premium-renders.mjs',
+    'scripts/ebay/collect-competitive-premium-renders.mjs',
     '--premium-plan',
     premiumPlan,
   ], {
@@ -891,7 +891,7 @@ test('competitive video pipeline auditor reports generated clip blockers', () =>
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/audit-competitive-video-pipeline.mjs',
+    'scripts/ebay/audit-competitive-video-pipeline.mjs',
     '--premium-plan',
     premiumPlan,
   ], {
@@ -1024,7 +1024,7 @@ test('competitive review board generator writes an HTML operator board', () => {
   fs.writeFileSync(path.join(tempRoot, 'render-url-map.template.json'), '{}\n');
 
   const result = spawnSync('node', [
-    'scripts/build-competitive-review-board.mjs',
+    'scripts/ebay/build-competitive-review-board.mjs',
     '--status',
     statusPath,
   ], {
@@ -1084,7 +1084,7 @@ test('competitive video QA gate writes a report for a vertical MP4', (t) => {
   }
 
   const result = spawnSync('node', [
-    'scripts/qa-competitive-videos.mjs',
+    'scripts/ebay/qa-competitive-videos.mjs',
     '--video',
     video,
     '--item-id',
@@ -1122,7 +1122,7 @@ test('competitive video control loop writes a dry-run manifest', () => {
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/run-competitive-video-control-loop.mjs',
+    'scripts/ebay/run-competitive-video-control-loop.mjs',
     '--preview-manifest',
     previewManifest,
     '--dry-run',
@@ -1200,7 +1200,7 @@ test('eBay competitive-plan can run from saved dashboard and workbench snapshots
   ].join('\n'));
 
   const result = spawnSync('node', [
-    'scripts/ebay-cinematic-ads.mjs',
+    'scripts/ebay/ebay-cinematic-ads.mjs',
     'competitive-plan',
     '--dashboard-file',
     dashboardPath,
@@ -1262,7 +1262,7 @@ test('eBay traffic optimizer writes immediate CTR and conversion worklists', () 
 
   const outDir = path.join(tempRoot, 'out');
   const result = spawnSync('node', [
-    'scripts/optimize-ebay-traffic-report.mjs',
+    'scripts/ebay/optimize-ebay-traffic-report.mjs',
     '--traffic-report',
     reportPath,
     '--out-dir',
@@ -1301,7 +1301,7 @@ test('eBay traffic optimizer can focus on dropship quantity listings', () => {
 
   const outDir = path.join(tempRoot, 'out');
   const result = spawnSync('node', [
-    'scripts/optimize-ebay-traffic-report.mjs',
+    'scripts/ebay/optimize-ebay-traffic-report.mjs',
     '--traffic-report',
     reportPath,
     '--out-dir',
@@ -1369,7 +1369,7 @@ test('competitive render handoff exporter writes queue and runbook', () => {
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/export-competitive-render-handoff.mjs',
+    'scripts/ebay/export-competitive-render-handoff.mjs',
     '--premium-plan',
     premiumPlan,
   ], {
@@ -1458,7 +1458,7 @@ test('competitive Higgsfield render runner plans Mini-compatible jobs and resume
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/run-competitive-higgsfield-renders.mjs',
+    'scripts/ebay/run-competitive-higgsfield-renders.mjs',
     '--premium-plan',
     premiumPlan,
     '--model',
@@ -1514,7 +1514,7 @@ test('competitive Higgsfield render runner does not exceed the first-job credit 
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/run-competitive-higgsfield-renders.mjs',
+    'scripts/ebay/run-competitive-higgsfield-renders.mjs',
     '--premium-plan',
     premiumPlan,
     '--credit-budget',
@@ -1596,7 +1596,7 @@ test('competitive creative packet exporter writes per-listing packet folders', (
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/export-competitive-creative-packets.mjs',
+    'scripts/ebay/export-competitive-creative-packets.mjs',
     '--status',
     statusPath,
   ], {
@@ -1681,7 +1681,7 @@ test('competitive research rerun helper infers project from packet breadcrumbs',
   ].join('\n'));
 
   const result = spawnSync('node', [
-    'scripts/rerun-competitive-research-packet.mjs',
+    'scripts/ebay/rerun-competitive-research-packet.mjs',
     '--packet-dir',
     packetDir,
     '--competitors',
@@ -1744,7 +1744,7 @@ test('competitive research queue exporter writes Automatio search queue', () => 
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/export-competitive-research-queue.mjs',
+    'scripts/ebay/export-competitive-research-queue.mjs',
     '--packets-manifest',
     packetsManifest,
     '--credit-budget',
@@ -1810,7 +1810,7 @@ test('competitive research results importer fans consolidated Automatio rows int
   ].join('\n'));
 
   const result = spawnSync('node', [
-    'scripts/import-competitive-research-results.mjs',
+    'scripts/ebay/import-competitive-research-results.mjs',
     '--queue',
     queuePath,
     '--results',
@@ -1882,7 +1882,7 @@ test('competitive research results importer routes rows by queued search query',
   ].join('\n'));
 
   const result = spawnSync('node', [
-    'scripts/import-competitive-research-results.mjs',
+    'scripts/ebay/import-competitive-research-results.mjs',
     '--queue',
     queuePath,
     '--results',
@@ -1928,7 +1928,7 @@ test('competitive research results importer flags low product-match rows', () =>
   ].join('\n'));
 
   const result = spawnSync('node', [
-    'scripts/import-competitive-research-results.mjs',
+    'scripts/ebay/import-competitive-research-results.mjs',
     '--queue',
     queuePath,
     '--results',
@@ -1972,7 +1972,7 @@ test('competitive research import loop imports rows and plans ready reruns', () 
   ].join('\n'));
 
   const result = spawnSync('node', [
-    'scripts/run-competitive-research-import-loop.mjs',
+    'scripts/ebay/run-competitive-research-import-loop.mjs',
     '--queue',
     queuePath,
     '--results',
@@ -2039,7 +2039,7 @@ test('competitive research queue processor selects filled templates', () => {
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/process-competitive-research-queue.mjs',
+    'scripts/ebay/process-competitive-research-queue.mjs',
     '--queue',
     queuePath,
     '--dry-run',
@@ -2081,7 +2081,7 @@ test('competitive research queue processor requires trend metrics by default', (
   }, null, 2));
 
   const blocked = spawnSync('node', [
-    'scripts/process-competitive-research-queue.mjs',
+    'scripts/ebay/process-competitive-research-queue.mjs',
     '--queue',
     queuePath,
     '--dry-run',
@@ -2096,7 +2096,7 @@ test('competitive research queue processor requires trend metrics by default', (
   assert.match(manifest.skipped[0].skip_reason, /no rows include trend metrics/);
 
   const override = spawnSync('node', [
-    'scripts/process-competitive-research-queue.mjs',
+    'scripts/ebay/process-competitive-research-queue.mjs',
     '--queue',
     queuePath,
     '--dry-run',
@@ -2131,7 +2131,7 @@ test('competitive research queue processor requires product match by default', (
   }, null, 2));
 
   const blocked = spawnSync('node', [
-    'scripts/process-competitive-research-queue.mjs',
+    'scripts/ebay/process-competitive-research-queue.mjs',
     '--queue',
     queuePath,
     '--dry-run',
@@ -2147,7 +2147,7 @@ test('competitive research queue processor requires product match by default', (
   assert.equal(manifest.evaluated[0].validation.max_product_match_score, 0);
 
   const override = spawnSync('node', [
-    'scripts/process-competitive-research-queue.mjs',
+    'scripts/ebay/process-competitive-research-queue.mjs',
     '--queue',
     queuePath,
     '--dry-run',
@@ -2182,7 +2182,7 @@ test('competitive research queue processor requires structure evidence by defaul
   }, null, 2));
 
   const blocked = spawnSync('node', [
-    'scripts/process-competitive-research-queue.mjs',
+    'scripts/ebay/process-competitive-research-queue.mjs',
     '--queue',
     queuePath,
     '--dry-run',
@@ -2198,7 +2198,7 @@ test('competitive research queue processor requires structure evidence by defaul
   assert.equal(manifest.evaluated[0].validation.structure_row_count, 0);
 
   const override = spawnSync('node', [
-    'scripts/process-competitive-research-queue.mjs',
+    'scripts/ebay/process-competitive-research-queue.mjs',
     '--queue',
     queuePath,
     '--dry-run',
@@ -2257,7 +2257,7 @@ test('competitive premium render collector imports a mapped local mp4', (t) => {
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/collect-competitive-premium-renders.mjs',
+    'scripts/ebay/collect-competitive-premium-renders.mjs',
     '--premium-plan',
     premiumPlan,
     '--url-map',
@@ -2300,7 +2300,7 @@ test('competitive listing video architect writes product-safe blueprints from co
   );
 
   const result = spawnSync('node', [
-    'scripts/competitive-listing-video-architect.mjs',
+    'scripts/ebay/competitive-listing-video-architect.mjs',
     'plan',
     '--project-dir',
     projectDir,
@@ -2364,7 +2364,7 @@ test('competitive listing video architect preserves Kalodata trend metrics', () 
   );
 
   const result = spawnSync('node', [
-    'scripts/competitive-listing-video-architect.mjs',
+    'scripts/ebay/competitive-listing-video-architect.mjs',
     'plan',
     '--project-dir',
     projectDir,
@@ -2426,7 +2426,7 @@ test('research-brief Kalodata export columns clear premium research gate', () =>
   );
 
   const intel = spawnSync('node', [
-    'scripts/competitive-listing-video-architect.mjs',
+    'scripts/ebay/competitive-listing-video-architect.mjs',
     'plan',
     '--project-dir',
     projectDir,
@@ -2472,7 +2472,7 @@ test('research-brief Kalodata export columns clear premium research gate', () =>
   }, null, 2));
 
   const prep = spawnSync('node', [
-    'scripts/prepare-competitive-premium-renders.mjs',
+    'scripts/ebay/prepare-competitive-premium-renders.mjs',
     '--preview-manifest',
     previewManifestPath,
     '--credit-budget',
@@ -2516,7 +2516,7 @@ test('competitive listing video architect favors product-matched references over
   );
 
   const result = spawnSync('node', [
-    'scripts/competitive-listing-video-architect.mjs',
+    'scripts/ebay/competitive-listing-video-architect.mjs',
     'plan',
     '--project-dir',
     projectDir,
@@ -2554,7 +2554,7 @@ test('competitive listing video architect keeps per-listing folders in projects-
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
 
   const result = spawnSync('node', [
-    'scripts/competitive-listing-video-architect.mjs',
+    'scripts/ebay/competitive-listing-video-architect.mjs',
     'plan',
     '--projects-dir',
     projectsDir,
@@ -2606,7 +2606,7 @@ test('competitive voiceover plan exporter writes seller-voice scripts and render
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/export-competitive-voiceover-plan.mjs',
+    'scripts/ebay/export-competitive-voiceover-plan.mjs',
     '--blueprints-dir',
     blueprintsDir,
     '--out-dir',
@@ -2661,7 +2661,7 @@ test('competitive voiceover plan exporter replaces generic marketplace narration
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/export-competitive-voiceover-plan.mjs',
+    'scripts/ebay/export-competitive-voiceover-plan.mjs',
     '--blueprints-dir',
     blueprintsDir,
     '--out-dir',
@@ -2719,7 +2719,7 @@ test('eBay main photo candidate generator writes buyer-safe image manifest', {sk
   }, null, 2));
 
   const result = spawnSync('node', [
-    'scripts/generate-ebay-main-photo-candidates.mjs',
+    'scripts/ebay/generate-ebay-main-photo-candidates.mjs',
     '--worklist',
     worklist,
     '--source-root',
@@ -2765,7 +2765,7 @@ test('eBay main photo apply bundle exporter writes no-price-change upload folder
   const outDir = path.join(tempRoot, 'apply-bundle');
 
   const result = spawnSync('node', [
-    'scripts/export-ebay-main-photo-apply-bundle.mjs',
+    'scripts/ebay/export-ebay-main-photo-apply-bundle.mjs',
     '--queue',
     queuePath,
     '--out-dir',
@@ -2785,4 +2785,89 @@ test('eBay main photo apply bundle exporter writes no-price-change upload folder
   const payload = JSON.parse(fs.readFileSync(manifest.entries[0].mcp_preview_payload, 'utf8'));
   assert.equal(payload.apply_immediately, false);
   assert.equal(payload.preserve_existing_policies, true);
+});
+
+// ── Chapter detection ─────────────────────────────────────────────────
+
+test('chapter:auto exposes help without requiring a video file', () => {
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/chapter-video.mjs', '--help'],
+    {cwd: projectRoot, encoding: 'utf8'},
+  );
+
+  assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
+  assert.ok(
+    result.stdout.includes('chapter:auto'),
+    'help should mention chapter:auto',
+  );
+  assert.ok(
+    result.stdout.includes('--video'),
+    'help should document --video',
+  );
+  assert.ok(
+    result.stdout.includes('--split'),
+    'help should document --split',
+  );
+  assert.ok(
+    result.stdout.includes('DEEPSEEK_API_KEY'),
+    'help should mention DEEPSEEK_API_KEY',
+  );
+});
+
+test('chapter:auto writes a time-fallback chapters.json when no AI key is configured', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cca-chapter-test-'));
+  const videoPath = path.join(dir, 'silent.mp4');
+  const outPath = path.join(dir, 'chapters.json');
+
+  // Generate a short silent test video
+  spawnSync(
+    'ffmpeg',
+    [
+      '-hide_banner', '-loglevel', 'error', '-y',
+      '-f', 'lavfi',
+      '-i', 'color=c=black:s=640x360:d=45',
+      '-f', 'lavfi',
+      '-i', 'anullsrc=r=16000:cl=mono',
+      '-shortest',
+      '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '35',
+      '-c:a', 'aac', '-b:a', '24k',
+      videoPath,
+    ],
+    {stdio: 'pipe'},
+  );
+
+  if (!fs.existsSync(videoPath)) {
+    fs.rmSync(dir, {recursive: true, force: true});
+    return; // skip — ffmpeg not available
+  }
+
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/chapter-video.mjs', '--video', videoPath, '--out', outPath],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+      env: {...process.env, OPENAI_API_KEY: '', DEEPSEEK_API_KEY: ''},
+    },
+  );
+
+  fs.rmSync(dir, {recursive: true, force: true});
+
+  // Should succeed with time-based fallback
+  assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
+});
+
+test('clipkit chapter command is registered', () => {
+  const result = spawnSync(
+    process.execPath,
+    ['bin/clipcaptionai.js', 'chapter', '--help'],
+    {cwd: projectRoot, encoding: 'utf8'},
+  );
+
+  assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
+  assert.ok(
+    result.stdout.includes('chapter') || result.stdout.includes('Chapter'),
+    'help should mention chapter',
+  );
 });
