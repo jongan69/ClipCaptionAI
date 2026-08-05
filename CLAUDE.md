@@ -20,6 +20,7 @@ scripts/
 ├── transcribe-openai.mjs     # Transcription: whisper.cpp → OpenAI Whisper → YouTube CC
 ├── smart-clips.mjs           # AI clip selection from transcript
 ├── chapter-video.mjs         # AI chapter detection
+├── tighten-video.mjs         # AI filler/repetition detection + video tightening
 ├── caption-video.mjs         # Caption one existing video
 ├── enhance-video-with-broll.mjs  # Timed cutaways + captions
 ├── assemble-context-scenes.mjs   # B-roll cutaway planning + YouTube ingest
@@ -120,8 +121,8 @@ const parsed = JSON.parse(text);
 ## Testing
 
 ```bash
-npm test                    # 98 tests across 3 suites, all pass required
-node --test tests/cli-smoke.test.mjs        # 68 CLI smoke/integration tests
+npm test                    # 100 tests across 3 suites, all pass required
+node --test tests/cli-smoke.test.mjs        # 70 CLI smoke/integration tests
 node --test tests/clipkit-lib.test.mjs      # 8 unit tests
 node --test tests/ai-provider.test.mjs      # 22 provider abstraction tests
 ```

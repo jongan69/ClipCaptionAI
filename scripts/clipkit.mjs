@@ -708,6 +708,7 @@ const interactiveMenu = async () => {
         {value: 'broll-captions', label: 'B-roll-heavy labeled workflow', hint: 'local custom scenes + captions'},
         {value: 'caption', label: 'Caption one existing video', hint: 'keep the base edit intact'},
         {value: 'chapter', label: 'Auto-chapter a conversation video', hint: 'detect topics, split into titled sections'},
+        {value: 'tighten', label: 'Tighten a conversation — remove filler and repetition', hint: 'AI finds dead air, repetition, tangents to cut'},
         {value: 'enhance', label: 'Enhance an existing edit with B-roll', hint: 'timed cutaways + captions'},
         {value: 'broll', label: 'Find standalone B-roll from prompts', hint: 'no final render'},
         {value: 'rerender', label: 'Rerender or list a generated clip', hint: 'fix text or style and rerender'},
@@ -926,6 +927,33 @@ const interactiveMenu = async () => {
     }
     return;
   }
+  if (choice === 'tighten') {
+    const video = await askForVideo('Conversation');
+    if (video) {
+      const aggressiveness = unwrapPrompt(
+        await select({
+          message: 'How aggressively should we tighten?',
+          options: [
+            {value: 'light', label: 'Light', hint: 'only clear filler words and dead air'},
+            {value: 'medium', label: 'Medium (recommended)', hint: 'filler, repetition, obvious tangents'},
+            {value: 'heavy', label: 'Heavy', hint: 'tight edit — any non-essential content removed'},
+          ],
+        }),
+      );
+      const produce = unwrapPrompt(
+        await confirm({
+          message: 'Generate the tightened video file?',
+          initialValue: true,
+        }),
+      );
+      const tighten = produce === true || produce === 'true';
+      const tightenArgs = ['--video', video, '--aggressiveness', aggressiveness];
+      if (tighten) tightenArgs.push('--tighten');
+      npmRun('tighten:auto', tightenArgs);
+      outro('Tighten analysis finished.');
+    }
+    return;
+  }
   if (choice === 'caption') {
     const video = await askForVideo('Existing');
     if (video) {
@@ -1077,6 +1105,7 @@ Examples:
   configurePassthroughCommand(program, 'broll-captions', 'Run the B-roll-heavy labeled workflow.', runBrollCaptions, ['heavy']);
   configurePassthroughCommand(program, 'caption', 'Caption any existing video with the current caption style.', (args) => npmRun('caption:auto', args));
   configurePassthroughCommand(program, 'chapter', 'Auto-detect chapters in a conversation video with topic descriptions.', (args) => npmRun('chapter:auto', args));
+  configurePassthroughCommand(program, 'tighten', 'Analyze a conversation video for filler, repetition, and tangents to cut.', (args) => npmRun('tighten:auto', args));
   configurePassthroughCommand(program, 'enhance', 'Add contextual B-roll and captions to an existing edit.', (args) => npmRun('broll:enhance', args));
   configurePassthroughCommand(program, 'broll', 'Find reusable B-roll clips from a text prompt file.', runBroll, ['finder']);
   configurePassthroughCommand(program, 'video', 'Plan, render, inspect, and QA model-directed videos.', (args) => run('node', ['scripts/video.mjs', ...args]));

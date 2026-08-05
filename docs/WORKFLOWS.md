@@ -86,6 +86,32 @@ Options:
 
 Output: `outputs/chapters/<name>.chapters.json` with title, start/end timestamps, and description per chapter. With `--split`, individual `01-title.mp4` files.
 
+## Tighten a Conversation Video
+
+Use this when you have a long conversation and want AI to find filler words, repetitive sections, and tangents that can be cut to produce a tighter edit.
+
+```bash
+npm run tighten:auto -- --video "/path/to/conversation.mp4"
+```
+
+With video generation:
+
+```bash
+npm run tighten:auto -- --video "/path/to/conversation.mp4" --tighten
+```
+
+Options:
+
+- `--tighten` — generate a tightened video with cuts removed
+- `--aggressiveness light|medium|heavy` — how aggressively to cut (default: medium)
+  - `light`: only clear filler words and dead air
+  - `medium`: filler, repetition, and obvious tangents
+  - `heavy`: any non-essential content, tight edit for short-form
+- `--min-gap-seconds N` — minimum silence/filler gap to flag (default: 2.0)
+- `--provider deepseek|openai` — override auto-detected AI provider
+
+Output: `outputs/tighten/<name>.cuts.json` with per-cut timestamps, reasons (filler/repetition/tangent/wordiness), and descriptions. With `--tighten`, produces `<name>.tightened.mp4`.
+
 ## Clean Up Generated Files
 
 Use this when the project folder is getting too heavy.

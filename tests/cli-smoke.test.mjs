@@ -2871,3 +2871,37 @@ test('clipkit chapter command is registered', () => {
     'help should mention chapter',
   );
 });
+
+// ── Tighten detection ─────────────────────────────────────────────────
+
+test('tighten:auto exposes help without requiring a video file', () => {
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/tighten-video.mjs', '--help'],
+    {cwd: projectRoot, encoding: 'utf8'},
+  );
+
+  assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
+  assert.ok(
+    result.stdout.includes('tighten:auto'),
+    'help should mention tighten:auto',
+  );
+  assert.ok(
+    result.stdout.includes('--aggressiveness'),
+    'help should document --aggressiveness',
+  );
+});
+
+test('clipkit tighten command is registered', () => {
+  const result = spawnSync(
+    process.execPath,
+    ['bin/clipcaptionai.js', 'tighten', '--help'],
+    {cwd: projectRoot, encoding: 'utf8'},
+  );
+
+  assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
+  assert.ok(
+    result.stdout.includes('tighten') || result.stdout.includes('Tighten'),
+    'help should mention tighten',
+  );
+});
