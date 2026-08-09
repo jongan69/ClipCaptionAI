@@ -1,0 +1,31 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.git/
+.github/
+dist-desktop/
+desktop/dist-renderer/
+release/
+node_modules/
+outputs/
+projects/
+public/
+tests/
+*.log
+
+# Repository-only product work that is not part of the ClipCaptionAI CLI beta.
+assets/logos/listingos/
+listingos-deck-animations.html
+scripts/ebay/
+scripts/logo/
+src/listingos-deck-scenes.tsx
+src/logo/
+
+# Local launchers and contributor-only notes.
+BROLL.command
+CLAUDE.md
+RUN.command
+docs/GITHUB.md
+docs/LOGO_ANIMATION_PIPELINE.md
+docs/ROTATO-INTEGRATION.md

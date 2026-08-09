@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {execFileSync, spawnSync} from 'node:child_process';
-import {outputsRoot, ensureDir, projectRoot} from './lib.mjs';
+import {outputsRoot, ensureDir, projectRoot, workspaceRoot} from './lib.mjs';
 
 export const VIDEO_RUN_SCHEMA_VERSION = 1;
 export const videoRunsRoot = path.join(outputsRoot, 'video-runs');
@@ -35,7 +35,7 @@ export const runIdFrom = (value) => String(value || '')
   .slice(0, 64) || `run-${new Date().toISOString().replace(/[:.]/g, '-')}`;
 
 export const resolveRunDir = (run) => {
-  const candidate = path.resolve(run);
+  const candidate = path.resolve(workspaceRoot, String(run));
   if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) return candidate;
   return path.join(videoRunsRoot, runIdFrom(run));
 };

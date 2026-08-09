@@ -42,6 +42,12 @@ npm run clipkit -- video run \
   --run-id first-video
 ```
 
+When installed from the v0.1.0 release tarball, the equivalent clean first-run command is:
+
+```bash
+clipcaptionai video run --example --run-id first-video
+```
+
 ### 4. Verify the result
 
 ```bash

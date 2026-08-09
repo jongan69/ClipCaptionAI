@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import {parseArgs, ensureDir, projectRoot, run, videoToSrc} from './lib.mjs';
+import {parseArgs, ensureDir, projectRoot, publicMediaRoot, run, videoToSrc, workspaceRoot} from './lib.mjs';
 import {
   VIDEO_RUN_SCHEMA_VERSION, collectMedia, createRunDir, describeAsset, emitResult,
   hashText, manifestPathFor, probeArtifact, requireManifest,
@@ -14,6 +14,7 @@ Usage:
   clipcaptionai video plan --brief-file brief.txt [--assets-dir ./assets] [--audio music.mp3] [--run-id NAME]
   clipcaptionai video render --run outputs/video-runs/NAME [--dry-run]
   clipcaptionai video run --brief-file brief.txt [--assets-dir ./assets]
+  clipcaptionai video run --example [--run-id first-video]
   clipcaptionai video inspect --run NAME [--json]
   clipcaptionai video qa --run NAME [--json]
 
@@ -33,9 +34,11 @@ const fail = (error, code = 2) => {
 };
 
 const readBrief = () => {
-  const briefFile = args['brief-file'] || args.brief;
-  if (!briefFile) throw new Error('Missing --brief-file.\n' + usage);
-  const resolved = path.resolve(String(briefFile));
+  const briefFile = args.example
+    ? path.join(projectRoot, 'examples', 'brief.example.txt')
+    : args['brief-file'] || args.brief;
+  if (!briefFile) throw new Error('Missing --brief-file (or pass --example).\n' + usage);
+  const resolved = path.resolve(workspaceRoot, String(briefFile));
   if (!fs.existsSync(resolved)) throw new Error(`Brief file not found: ${resolved}`);
   const brief = fs.readFileSync(resolved, 'utf8').trim();
   if (!brief) throw new Error(`Brief file is empty: ${resolved}`);
@@ -56,10 +59,10 @@ const makeShots = (brief) => {
 
 const plan = () => {
   const brief = readBrief();
-  const assetsDir = path.resolve(String(args['assets-dir'] || path.dirname(brief.path)));
+  const assetsDir = path.resolve(workspaceRoot, String(args['assets-dir'] || path.dirname(brief.path)));
   const runDir = createRunDir(args['run-id'] || path.basename(brief.path, path.extname(brief.path)));
   const assets = collectMedia(assetsDir).map((file) => describeAsset(file, projectRoot));
-  const audioPath = args.audio ? path.resolve(String(args.audio)) : null;
+  const audioPath = args.audio ? path.resolve(workspaceRoot, String(args.audio)) : null;
   if (audioPath && !fs.existsSync(audioPath)) throw new Error(`Audio file not found: ${audioPath}`);
   const imageAssets = assets.filter((asset) => asset.type === 'image');
   const shots = makeShots(brief.text).map((shot, index) => ({
@@ -100,7 +103,7 @@ const render = () => {
   if (manifest.artifact?.path && fs.existsSync(manifest.artifact.path) && !args.force) {
     return {ok: true, resumed: true, runDir, manifestPath, artifact: manifest.artifact, message: `Reusing existing artifact ${manifest.artifact.path}`};
   }
-  const output = path.resolve(String(args.output || path.join(runDir, 'final', `${manifest.runId}.mp4`)));
+  const output = path.resolve(workspaceRoot, String(args.output || path.join(runDir, 'final', `${manifest.runId}.mp4`)));
   ensureDir(path.dirname(output));
   if (args['dry-run']) {
     return {ok: true, dryRun: true, runDir, manifestPath, plannedOutput: output, message: `Dry run: would render ${output}`};
@@ -118,7 +121,15 @@ const render = () => {
   };
   fs.writeFileSync(propsPath, JSON.stringify(props));
   try {
-    run('npx', ['remotion', 'render', 'src/index.tsx', 'PromptVideo', output, `--props=${propsPath}`, '--codec=h264'], {
+    const renderArgs = [
+      'remotion', 'render', 'src/index.tsx', 'PromptVideo', output,
+      `--props=${propsPath}`,
+      '--codec=h264',
+      '--concurrency=1',
+      `--public-dir=${path.dirname(publicMediaRoot)}`,
+    ];
+    if (!manifest.audio) renderArgs.push('--muted');
+    run('npx', renderArgs, {
       stdio: json ? ['ignore', 'ignore', 'inherit'] : 'inherit',
     });
   } finally {

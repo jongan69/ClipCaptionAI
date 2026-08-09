@@ -2,7 +2,10 @@
   "name": "clipcaptionai",
   "version": "0.1.0",
   "description": "CLI-first local AI video editor and model harness for planning, rendering, captioning, and QA of production video assets.",
-  "main": "desktop/main.mjs",
+  "author": {
+    "name": "Jonathan Gan",
+    "url": "https://github.com/jongan69"
+  },
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -32,6 +35,32 @@
   "engines": {
     "node": ">=20"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    ".env.example",
+    "assets/icon.png",
+    "assets/icon.svg",
+    "bin/",
+    "caption-style.json",
+    "docs/AGENT_GUIDE.md",
+    "docs/AI_PROVIDERS.md",
+    "docs/PRODUCTION_SUPPORT.md",
+    "docs/RELEASE.md",
+    "docs/WORKFLOWS.md",
+    "examples/",
+    "remotion.config.ts",
+    "scripts/*.mjs",
+    "scripts/*.mts",
+    "src/captioned-clip.tsx",
+    "src/index.tsx",
+    "src/prompt-video.tsx",
+    "src/root.tsx",
+    "src/types.ts",
+    "styles/",
+    "tsconfig.json"
+  ],
   "scripts": {
     "menu": "node scripts/clipkit.mjs",
     "clipkit": "node scripts/clipkit.mjs",
@@ -126,14 +155,15 @@
     "@remotion/openai-whisper": "4.0.481",
     "commander": "^15.0.0",
     "dotenv": "16.4.7",
-    "openai": "5.7.0",
+    "openai": "6.49.0",
     "picocolors": "^1.1.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
     "remotion": "4.0.481",
     "tsx": "4.20.3",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.14",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -151,6 +181,7 @@
     "appId": "com.clipcaptionai.desktop",
     "productName": "ClipCaptionAI",
     "copyright": "Copyright © 2026",
+    "artifactName": "ClipCaptionAI-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist-desktop"
     },
@@ -185,14 +216,21 @@
     ],
     "mac": {
       "category": "public.app-category.video",
+      "icon": "assets/icon.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "desktop/entitlements.mac.plist",
+      "entitlementsInherit": "desktop/entitlements.mac.plist",
       "target": "dmg"
     },
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         "nsis"
       ]
     },
     "linux": {
+      "icon": "assets/icon.png",
       "target": [
         "AppImage",
         "deb"

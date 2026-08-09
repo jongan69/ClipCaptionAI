@@ -1,2 +1,3 @@
 #!/usr/bin/env node
-import '../scripts/clipkit.mjs';
+process.env.CCA_WORKSPACE_ROOT ||= process.cwd();
+await import('../scripts/clipkit.mjs');

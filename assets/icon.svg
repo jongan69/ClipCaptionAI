@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">ClipCaptionAI application icon</title>
+  <desc id="desc">A white play symbol and caption bars on a violet and cyan rounded-square field.</desc>
+  <defs>
+    <linearGradient id="background" x1="104" y1="80" x2="920" y2="944" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5b35ff"/>
+      <stop offset="0.52" stop-color="#7a2de2"/>
+      <stop offset="1" stop-color="#00b9d6"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="250" y1="144" x2="764" y2="824" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="30" stdDeviation="30" flood-color="#17104b" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="224" fill="url(#background)"/>
+  <path d="M118 368C196 182 378 103 566 128c137 19 259 94 340 212v-52c0-98-80-178-178-178H296c-98 0-178 80-178 178z" fill="url(#shine)"/>
+  <g filter="url(#shadow)">
+    <rect x="212" y="218" width="600" height="588" rx="142" fill="#141032" fill-opacity="0.32" stroke="#fff" stroke-opacity="0.3" stroke-width="12"/>
+    <path d="M435 342c0-25 27-41 49-28l187 112c21 13 21 44 0 57L484 595c-22 13-49-3-49-28z" fill="#fff"/>
+    <rect x="326" y="648" width="372" height="42" rx="21" fill="#fff"/>
+    <rect x="380" y="718" width="264" height="34" rx="17" fill="#fff" fill-opacity="0.76"/>
+  </g>
+</svg>

@@ -12,9 +12,10 @@ import dotenv from 'dotenv';
 const baseRoot = path.resolve(new URL('..', import.meta.url).pathname);
 
 export const projectRoot = process.env.CCA_PROJECT_ROOT || baseRoot;
-export const outputsRoot = process.env.CCA_OUTPUTS_ROOT || path.join(projectRoot, 'outputs');
+export const workspaceRoot = process.env.CCA_WORKSPACE_ROOT || process.cwd();
+export const outputsRoot = process.env.CCA_OUTPUTS_ROOT || path.join(workspaceRoot, 'outputs');
 export const outputWorkRoot = path.join(outputsRoot, 'work');
-export const publicMediaRoot = process.env.CCA_PUBLIC_MEDIA_ROOT || path.join(projectRoot, 'public', 'media');
+export const publicMediaRoot = process.env.CCA_PUBLIC_MEDIA_ROOT || path.join(outputsRoot, '.public', 'media');
 export const ebayCinematicAdsOutputRoot = path.join(outputsRoot, 'ebay-cinematic-ads');
 
 export const isElectron = () => !!process.env.CCA_ELECTRON;

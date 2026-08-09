@@ -27,7 +27,7 @@ const outRoot = arg('--out', path.join('outputs', 'logo-animations'));
 // Ask Remotion for the composition list rather than duplicating the registry here.
 const raw = execFileSync(
   'npx',
-  ['remotion', 'compositions', 'src/index.tsx', '--quiet'],
+  ['remotion', 'compositions', 'src/showcase-index.tsx', '--quiet'],
   {encoding: 'utf8'}
 );
 
@@ -56,7 +56,7 @@ for (const id of ids) {
       [
         'remotion',
         'render',
-        'src/index.tsx',
+        'src/showcase-index.tsx',
         id,
         out,
         ...(format === 'webm' ? ['--codec', 'vp8', '--pixel-format', 'yuva420p'] : []),

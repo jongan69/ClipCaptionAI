@@ -7,6 +7,7 @@ import {
   parseArgs,
   probeVideo,
   projectRoot,
+  publicMediaRoot,
   readCaptionStyleConfig,
   readCaptions,
   requireArg,
@@ -118,6 +119,7 @@ const renderArgs = [
   out,
   `--props=${propsPath}`,
   '--codec=h264',
+  `--public-dir=${path.dirname(publicMediaRoot)}`,
 ];
 
 if (args.frames) {
