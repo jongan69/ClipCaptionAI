@@ -189,15 +189,18 @@ const extractYoutubeId = (value) => {
 
   try {
     const url = new URL(text);
-    if (url.hostname.includes('youtu.be')) {
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    const hostname = url.hostname.toLowerCase().replace(/\.$/, '');
+    if (hostname === 'youtu.be' || hostname === 'www.youtu.be') {
       return url.pathname.replace(/^\/+/, '').slice(0, 11);
     }
-    if (url.hostname.includes('youtube.com')) {
+    if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com')) {
       const id = url.searchParams.get('v');
       if (id) {
         return id.slice(0, 11);
       }
     }
+    return null;
   } catch {
     // Not a URL; continue with filename heuristics.
   }
@@ -233,13 +236,37 @@ const combineTranscriptions = (parts, durationSeconds) => {
   };
 };
 
+const HTML_ENTITIES = new Map([
+  ['amp', '&'],
+  ['lt', '<'],
+  ['gt', '>'],
+  ['quot', '"'],
+  ['#39', "'"],
+]);
+
 const decodeHtml = (value) =>
-  String(value ?? '')
-    .replaceAll('&amp;', '&')
-    .replaceAll('&lt;', '<')
-    .replaceAll('&gt;', '>')
-    .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'");
+  String(value ?? '').replace(/&(amp|lt|gt|quot|#39);/g, (entity, name) =>
+    HTML_ENTITIES.get(name) ?? entity,
+  );
+
+const safeProviderErrorLabel = (error) => {
+  const status = Number(error?.status ?? error?.response?.status ?? 0);
+  if (Number.isInteger(status) && status >= 400 && status <= 599) {
+    return `HTTP ${status}`;
+  }
+  switch (error?.code ?? error?.cause?.code) {
+    case 'ECONNRESET':
+      return 'connection reset';
+    case 'ETIMEDOUT':
+      return 'request timed out';
+    case 'EAI_AGAIN':
+      return 'temporary DNS failure';
+    case 'ENOTFOUND':
+      return 'host not found';
+    default:
+      return 'provider error';
+  }
+};
 
 const parseTimestampSeconds = (value) => {
   const parts = String(value ?? '').trim().replace(',', '.').split(':').map(Number);
@@ -983,7 +1010,7 @@ try {
         throw error;
       }
       console.warn(
-        `Transcript text cleanup failed with ${error?.code ?? error?.status ?? 'unknown error'}. Continuing with raw transcription.`,
+        `Transcript text cleanup failed with ${safeProviderErrorLabel(error)}. Continuing with raw transcription.`,
       );
       analysis = {
         textEnhancement: {
@@ -992,7 +1019,7 @@ try {
           model: textAnalysisModel,
           sourceProvider: result.provider,
           reason: 'error',
-          error: String(error?.code ?? error?.status ?? 'unknown'),
+          error: safeProviderErrorLabel(error),
         },
       };
     }

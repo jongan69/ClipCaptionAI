@@ -8,6 +8,7 @@
   },
   "license": "MIT",
   "type": "module",
+  "packageManager": "bun@1.3.14",
   "bin": {
     "clipcaptionai": "./bin/clipcaptionai.js",
     "cca": "./bin/clipcaptionai.js"
@@ -67,7 +68,7 @@
     "doctor": "node scripts/clipkit.mjs doctor",
     "rotato": "node scripts/rotato-cli.mjs",
     "test": "node --test",
-    "check": "npm run typecheck && npm test",
+    "check": "bun run typecheck && bun run test",
     "cleanup": "node scripts/cleanup.mjs",
     "studio": "remotion studio src/index.tsx",
     "logo:vectorize": "node scripts/logo/vectorize.mjs",
@@ -141,11 +142,11 @@
     "desktop": "node desktop/check-environment.mjs && electron ./desktop/main.mjs",
     "desktop:dev": "CCA_DESKTOP_DEV=1 node desktop/check-environment.mjs && electron ./desktop/main.mjs",
     "desktop:dev:ui": "vite build --watch --config desktop/vite.config.ts",
-    "desktop:package": "npm run desktop:build && node desktop/check-environment.mjs && electron-builder --publish never",
-    "desktop:package:mac": "npm run desktop:build && node desktop/check-environment.mjs && electron-builder --mac --publish never",
-    "desktop:package:win": "npm run desktop:build && node desktop/check-environment.mjs && electron-builder --win --publish never",
-    "desktop:package:linux": "npm run desktop:build && node desktop/check-environment.mjs && electron-builder --linux --publish never",
-    "desktop:package:all": "npm run desktop:package:mac && npm run desktop:package:win && npm run desktop:package:linux"
+    "desktop:package": "bun run desktop:build && node desktop/check-environment.mjs && electron-builder --publish never",
+    "desktop:package:mac": "bun run desktop:build && node desktop/check-environment.mjs && electron-builder --mac --publish never",
+    "desktop:package:win": "bun run desktop:build && node desktop/check-environment.mjs && electron-builder --win --publish never",
+    "desktop:package:linux": "bun run desktop:build && node desktop/check-environment.mjs && electron-builder --linux --publish never",
+    "desktop:package:all": "bun run desktop:package:mac && bun run desktop:package:win && bun run desktop:package:linux"
   },
   "dependencies": {
     "@clack/prompts": "^1.7.0",
