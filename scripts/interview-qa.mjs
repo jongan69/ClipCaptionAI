@@ -365,8 +365,8 @@ if (isDirectRun) {
     dryRun: !!args["dry-run"],
   })
     .then(() => process.exit(0))
-    .catch((err) => {
-      console.error(err.message);
+    .catch(() => {
+      console.error('Interview analysis failed. Review the redacted job log for details.');
       process.exit(1);
     });
 }

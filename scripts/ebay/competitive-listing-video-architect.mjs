@@ -893,10 +893,24 @@ const parseVttTimestamp = (value) => {
   return Number(value) || 0;
 };
 
+const stripVttMarkup = (value) => {
+  let text = '';
+  let inTag = false;
+  for (const character of String(value ?? '')) {
+    if (character === '<') {
+      inTag = true;
+    } else if (character === '>' && inTag) {
+      inTag = false;
+    } else if (!inTag) {
+      text += character;
+    }
+  }
+  return text;
+};
+
 const cleanVttText = (value) =>
-  String(value ?? '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
+  stripVttMarkup(value)
+    .replaceAll('&amp;', '&')
     .replace(/\s+/g, ' ')
     .trim();
 

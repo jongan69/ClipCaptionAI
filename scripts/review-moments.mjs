@@ -39,6 +39,12 @@ const formatSeconds = (value) => {
   return `${String(minutes).padStart(2, '0')}:${seconds}`;
 };
 
+const escapeMarkdownTableCell = (value) =>
+  String(value)
+    .replaceAll('\\', '\\\\')
+    .replaceAll('|', '\\|')
+    .replace(/\r?\n/g, ' ');
+
 const latestRunDir = () => {
   if (!fs.existsSync(outputsRoot)) {
     return null;
@@ -211,7 +217,7 @@ const buildMarkdownReport = () => {
 
   for (const item of limitedItems) {
     lines.push(
-      `| ${item.overallScore}/100 | \`${item.videoSlug}\` | \`${formatSeconds(item.startSeconds)}-${formatSeconds(item.endSeconds)}\` | ${item.title.replace(/\|/g, '\\|')} | ${item.viralScorecard.strongestSignals.join(', ')} |`,
+      `| ${item.overallScore}/100 | \`${item.videoSlug}\` | \`${formatSeconds(item.startSeconds)}-${formatSeconds(item.endSeconds)}\` | ${escapeMarkdownTableCell(item.title)} | ${escapeMarkdownTableCell(item.viralScorecard.strongestSignals.join(', '))} |`,
     );
   }
 

@@ -45,7 +45,20 @@ if (!svgPath) {
 // often contains literal tag text like <g>, which would otherwise corrupt the
 // nesting-depth count used to find top-level layers.
 const svgRaw = fs.readFileSync(svgPath, 'utf8');
-const svg = svgRaw.replace(/<!--[\s\S]*?-->/g, '');
+const stripXmlComments = (value) => {
+  let output = '';
+  let cursor = 0;
+  while (cursor < value.length) {
+    const start = value.indexOf('<!--', cursor);
+    if (start === -1) return output + value.slice(cursor);
+    output += value.slice(cursor, start);
+    const end = value.indexOf('-->', start + 4);
+    if (end === -1) return output;
+    cursor = end + 3;
+  }
+  return output;
+};
+const svg = stripXmlComments(svgRaw);
 
 const brandPath = path.join(dir, 'brand.json');
 const brand = fs.existsSync(brandPath)
