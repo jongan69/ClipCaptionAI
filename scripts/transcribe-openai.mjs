@@ -189,6 +189,7 @@ const extractYoutubeId = (value) => {
 
   try {
     const url = new URL(text);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
     const hostname = url.hostname.toLowerCase().replace(/\.$/, '');
     if (hostname === 'youtu.be' || hostname === 'www.youtu.be') {
       return url.pathname.replace(/^\/+/, '').slice(0, 11);
@@ -199,6 +200,7 @@ const extractYoutubeId = (value) => {
         return id.slice(0, 11);
       }
     }
+    return null;
   } catch {
     // Not a URL; continue with filename heuristics.
   }

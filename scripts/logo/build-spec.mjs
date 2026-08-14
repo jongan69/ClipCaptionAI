@@ -53,7 +53,9 @@ const stripXmlComments = (value) => {
     if (start === -1) return output + value.slice(cursor);
     output += value.slice(cursor, start);
     const end = value.indexOf('-->', start + 4);
-    if (end === -1) return output;
+    if (end === -1) {
+      throw new Error('SVG contains an unterminated XML comment.');
+    }
     cursor = end + 3;
   }
   return output;

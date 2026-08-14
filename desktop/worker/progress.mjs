@@ -11,10 +11,14 @@ import { format } from "node:util";
 const STDOUT_FD = 1;
 const STDERR_FD = 2;
 
-const sanitizeLogText = (value) =>
+export const sanitizeLogText = (value) =>
   String(value)
     .replace(/\bsk-[A-Za-z0-9_-]{16,}\b/g, "[redacted-api-key]")
     .replace(/\bBearer\s+[A-Za-z0-9._~+/-]{16,}\b/gi, "Bearer [redacted]")
+    .replace(
+      /(["']?(?:api[_-]?key|token|secret|password)["']?\s*[:=]\s*)(["'])[^"'\r\n]*\2/gi,
+      "$1$2[redacted]$2",
+    )
     .replace(
       /((?:api[_-]?key|token|secret|password)\s*[:=]\s*)[^\s,;]+/gi,
       "$1[redacted]",

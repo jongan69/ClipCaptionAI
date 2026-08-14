@@ -45,6 +45,9 @@ const escapeMarkdownTableCell = (value) =>
     .replaceAll('|', '\\|')
     .replace(/\r?\n/g, ' ');
 
+const escapeMarkdownInlineCode = (value) =>
+  escapeMarkdownTableCell(value).replaceAll('`', '\\`');
+
 const latestRunDir = () => {
   if (!fs.existsSync(outputsRoot)) {
     return null;
@@ -217,7 +220,7 @@ const buildMarkdownReport = () => {
 
   for (const item of limitedItems) {
     lines.push(
-      `| ${item.overallScore}/100 | \`${item.videoSlug}\` | \`${formatSeconds(item.startSeconds)}-${formatSeconds(item.endSeconds)}\` | ${escapeMarkdownTableCell(item.title)} | ${escapeMarkdownTableCell(item.viralScorecard.strongestSignals.join(', '))} |`,
+      `| ${item.overallScore}/100 | \`${escapeMarkdownInlineCode(item.videoSlug)}\` | \`${formatSeconds(item.startSeconds)}-${formatSeconds(item.endSeconds)}\` | ${escapeMarkdownTableCell(item.title)} | ${escapeMarkdownTableCell(item.viralScorecard.strongestSignals.join(', '))} |`,
     );
   }
 
