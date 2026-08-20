@@ -64,8 +64,27 @@ const saveRun = (directory, run, patch = {}) => {
 
 const currentCapabilities = async () => {
   const catalog = await serializeCatalog();
-  const toolHelp = ['rotato', 'higgsfield', 'higgs'].map((name) => {
-    const executable = commandPath(name);
+  const tools = [
+    {
+      name: 'rotato',
+      executable:
+        commandPath('rotato') ||
+        (fs.existsSync('/usr/local/bin/rotato') ? '/usr/local/bin/rotato' : null),
+    },
+    {
+      name: 'higgsfield',
+      executable:
+        process.env.CCA_HIGGSFIELD_BIN ||
+        commandPath('higgsfield') ||
+        commandPath('higgs') ||
+        [
+          path.join(projectRoot, 'node_modules', '.bin', 'higgs'),
+          path.join(projectRoot, 'node_modules', '.bin', 'higgsfield'),
+          path.join(projectRoot, 'bin', 'higgsfield'),
+        ].find((candidate) => fs.existsSync(candidate)),
+    },
+  ];
+  const toolHelp = tools.map(({name, executable}) => {
     if (!executable) return {name, available: false};
     const result = spawnSync(executable, ['--help'], {encoding: 'utf8', shell: false});
     return {
