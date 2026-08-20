@@ -1003,7 +1003,7 @@ try {
   // NOTE: no process.exit here — returning normally lets the finally block
   // below clean up temp audio, and the script already exits 0 on success.
 } catch (error) {
-  console.error(`Transcription failed: ${error?.message ?? error}`);
+  console.error(`Transcription failed: ${safeProviderErrorLabel(error)}.`);
   process.exitCode = 1;
 } finally {
   fs.rmSync(tempAudio, {force: true});
