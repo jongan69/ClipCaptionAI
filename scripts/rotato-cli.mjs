@@ -5,10 +5,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import {commandPath} from './command-utils.mjs';
-import {ensureDir, projectRoot} from './lib.mjs';
+import {ensureDir, loadEnv, projectRoot} from './lib.mjs';
 import {hashValue} from './platform/catalog.mjs';
 
 const argv = process.argv.slice(2);
+loadEnv();
 const help = `ClipCaptionAI Rotato adapter
 
 Usage:
@@ -56,7 +57,7 @@ const inspect = (executable, scene) => {
 const takePair = (items, index, flag) => {
   const first = items[index + 1];
   const second = items[index + 2];
-  if (!first || !second) throw new Error(`Missing values for ${flag}`);
+  if (first === undefined || second === undefined) throw new Error(`Missing values for ${flag}`);
   return [first, second];
 };
 
@@ -199,30 +200,35 @@ const main = () => {
     compiled.forward,
     wantsJson ? {} : {stdio: 'inherit'},
   );
-  if (output && fs.existsSync(output)) {
+  if (wantsJson && output && fs.existsSync(output)) {
     const media = spawnSync(
       'ffprobe',
       ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', output],
       {encoding: 'utf8'},
     );
+    let mediaInfo = null;
+    if (media.status === 0)
+      try {
+        mediaInfo = JSON.parse(media.stdout);
+      } catch {
+        mediaInfo = null;
+      }
     const artifact = {
       path: output,
       hash: sha256(fs.readFileSync(output)),
-      media: media.status === 0 ? JSON.parse(media.stdout) : null,
+      media: mediaInfo,
       templateValidated: true,
       capabilityFingerprint: compiled.capability.fingerprint,
       inspectFingerprint: compiled.inspected.fingerprint,
     };
-    if (wantsJson) {
-      const lastLine = result.stdout.trim().split('\n').filter(Boolean).at(-1);
-      let rotato;
-      try {
-        rotato = lastLine ? JSON.parse(lastLine) : null;
-      } catch {
-        rotato = {stdout: result.stdout};
-      }
-      console.log(JSON.stringify({artifact, rotato}));
+    const lastLine = result.stdout.trim().split('\n').filter(Boolean).at(-1);
+    let rotato;
+    try {
+      rotato = lastLine ? JSON.parse(lastLine) : null;
+    } catch {
+      rotato = {stdout: result.stdout};
     }
+    console.log(JSON.stringify({artifact, rotato}));
   } else if (wantsJson) process.stdout.write(result.stdout);
 };
 

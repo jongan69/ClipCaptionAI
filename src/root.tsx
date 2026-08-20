@@ -7,6 +7,7 @@ import {warnOnMissingFonts} from './fonts';
 import {
   MarketingTimeline,
   marketingTimelineDefaultProps,
+  scheduledFrames,
   type MarketingTimelineProps,
 } from './marketing-timeline';
 
@@ -86,12 +87,23 @@ export const Root = () => {
         height={1920}
         durationInFrames={450}
         defaultProps={marketingTimelineDefaultProps}
-        calculateMetadata={({props}: {props: MarketingTimelineProps}) => ({
-          fps: props.fps,
-          width: props.width,
-          height: props.height,
-          durationInFrames: Math.max(1, Math.round(props.durationSeconds * props.fps)),
-        })}
+        calculateMetadata={({props}: {props: MarketingTimelineProps}) => {
+          const scheduledEnd = Math.max(
+            0,
+            ...props.timeline.map((entry) => scheduledFrames(entry, props.fps).end),
+            ...(props.overlays ?? []).map((entry) => scheduledFrames(entry, props.fps).end),
+          );
+          return {
+            fps: props.fps,
+            width: props.width,
+            height: props.height,
+            durationInFrames: Math.max(
+              1,
+              Math.round(props.durationSeconds * props.fps),
+              scheduledEnd,
+            ),
+          };
+        }}
       />
     </>
   );

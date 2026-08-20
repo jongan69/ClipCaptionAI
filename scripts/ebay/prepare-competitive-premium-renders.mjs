@@ -357,6 +357,7 @@ const writePerListingArtifacts = ({packet}) => {
   const estimateScript = [
     '#!/usr/bin/env bash',
     'set -euo pipefail',
+    'command -v higgs >/dev/null 2>&1 || { echo "Install the Higgsfield CLI (higgs) and retry." >&2; exit 1; }',
     `cd ${shellQuote(projectRoot)}`,
     `echo ${shellQuote(`Estimating competitive premium renders for ${packet.item_id} - ${packet.title}`)}`,
     ...packet.jobs.flatMap((job) => [
@@ -369,6 +370,7 @@ const writePerListingArtifacts = ({packet}) => {
   const renderScript = [
     '#!/usr/bin/env bash',
     'set -euo pipefail',
+    'command -v higgs >/dev/null 2>&1 || { echo "Install the Higgsfield CLI (higgs) and retry." >&2; exit 1; }',
     `cd ${shellQuote(projectRoot)}`,
     `mkdir -p ${shellQuote(path.join(packet.project_dir, 'higgsfield-renders'))}`,
     `echo ${shellQuote(`Rendering competitive premium shots for ${packet.item_id} - ${packet.title}`)}`,

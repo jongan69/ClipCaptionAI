@@ -6,7 +6,7 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 
 import {commandPath} from './command-utils.mjs';
-import {ensureDir, parseArgs, projectRoot, requireArg} from './lib.mjs';
+import {ensureDir, loadEnv, parseArgs, projectRoot, requireArg} from './lib.mjs';
 import {hashValue, serializeCatalog} from './platform/catalog.mjs';
 import {writeJsonAtomic} from './platform/jobs.mjs';
 import {
@@ -20,6 +20,7 @@ import {
 
 const action = process.argv[2];
 const args = parseArgs(process.argv.slice(3));
+loadEnv();
 const campaignsRoot = path.resolve(
   process.env.CCA_CAMPAIGNS_ROOT || path.join(projectRoot, 'campaigns'),
 );
@@ -343,7 +344,9 @@ const executeCampaign = async () => {
     throw new Error('No paid generation intents exist in this plan.');
   const assets = [...state.assets];
   const providerJobs = {...state.run.providerJobs};
-  let spentCredits = 0;
+  const spentKeys = new Set(Object.keys(providerJobs));
+  const spentCredits = () =>
+    [...spentKeys].reduce((sum, key) => sum + (state.run.estimates[key] ?? 0), 0);
   for (const variant of state.plan.variants) {
     for (const intent of variant.intents) {
       if (intent.type === 'generation') {
@@ -376,7 +379,7 @@ const executeCampaign = async () => {
               '--estimated-credits',
               String(approvedCredits),
               '--total-spent-credits',
-              String(spentCredits),
+              String(spentCredits()),
               '--live-execution',
               ...intent.argv,
             ],
@@ -398,7 +401,7 @@ const executeCampaign = async () => {
             providerJob: providerJobs[key],
           });
         }
-        spentCredits += approvedCredits;
+        spentKeys.add(key);
         const generatedPath =
           intent.output || providerJobs[key].output || providerJobs[key].result_path;
         if (generatedPath && fs.existsSync(generatedPath))
@@ -410,6 +413,7 @@ const executeCampaign = async () => {
         continue;
       }
       if (intent.type === 'capture') {
+        if (!intent.flow) throw new Error('Capture intents require a flow id.');
         const result = spawnSync(
           process.execPath,
           [
@@ -530,7 +534,9 @@ const mediaChecks = (variant, asset) => {
     });
     checks.push({
       name: 'aspect-ratio',
-      passed: video && Math.abs(video.width / video.height - variant.width / variant.height) < 0.01,
+      passed: Boolean(
+        video && Math.abs(video.width / video.height - variant.width / variant.height) < 0.01,
+      ),
       detail: 'Compared probed and planned aspect ratios.',
     });
     checks.push({

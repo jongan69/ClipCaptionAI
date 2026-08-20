@@ -3,10 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
+import {ensureDir, loadEnv, parseArgs, projectRoot} from '../lib.mjs';
 import {commandPath} from '../command-utils.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
+loadEnv();
 const args = parseArgs(process.argv.slice(2));
 
 const usage = `
@@ -117,6 +118,14 @@ const runHiggs = (commandArgs) => {
     maxBuffer: 1024 * 1024 * 20,
     shell: false,
   });
+  if (result.error)
+    return {
+      ok: false,
+      status: result.status ?? 127,
+      stdout: '',
+      stderr: String(result.error.message ?? result.error),
+      parsed: null,
+    };
   return {
     ok: result.status === 0,
     status: result.status,

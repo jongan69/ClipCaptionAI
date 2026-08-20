@@ -5,10 +5,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import {commandPath} from './command-utils.mjs';
-import {parseArgs, projectRoot, requireArg} from './lib.mjs';
+import {loadEnv, parseArgs, projectRoot, requireArg} from './lib.mjs';
 import {hashValue} from './platform/catalog.mjs';
 
 const argv = process.argv.slice(2);
+loadEnv();
 const action = argv[0];
 const args = parseArgs(argv.slice(1));
 const candidates = [
@@ -80,6 +81,7 @@ if (!action || action === '--help') {
   const intentKey = requireArg(args, 'intent-key');
   const estimated = Number(requireArg(args, 'estimated-credits'));
   const spent = Number(args['total-spent-credits'] || 0);
+  const budget = Number(approval?.budgetCredits);
   if (
     !approval ||
     approval.planHash !== planHash ||
@@ -91,10 +93,11 @@ if (!action || action === '--help') {
   if (
     !Number.isFinite(estimated) ||
     !Number.isFinite(spent) ||
+    !Number.isFinite(budget) ||
     estimated < 0 ||
     spent < 0 ||
-    estimated > approval.budgetCredits ||
-    estimated + spent > approval.budgetCredits
+    estimated > budget ||
+    estimated + spent > budget
   )
     throw new Error('BUDGET_EXCEEDED');
   if (argv.includes('--dry-run'))

@@ -19,6 +19,7 @@ import {
 import {buildBrollCaptionArgs, mergeStyleConfig, slugify, timestampSlug} from './clipkit-lib.mjs';
 import {commandExists} from './command-utils.mjs';
 import {runPlatformCli} from './platform/cli.mjs';
+loadEnv();
 const require = createRequire(import.meta.url);
 const packageJson = require('../package.json');
 const defaultFramePath =
@@ -1367,7 +1368,7 @@ Examples:
     program,
     'video',
     'Plan, render, inspect, and QA model-directed videos.',
-    (args) => run('node', ['scripts/video.mjs', ...args]),
+    (args) => run('bun', ['scripts/video.mjs', ...args]),
   );
   configurePassthroughCommand(
     program,

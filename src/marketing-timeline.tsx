@@ -38,6 +38,15 @@ export const marketingTimelineDefaultProps: MarketingTimelineProps = {
   captions: [],
 };
 
+export const scheduledFrames = (
+  entry: {startSeconds: number; durationSeconds: number},
+  fps: number,
+) => {
+  const start = Math.round(entry.startSeconds * fps);
+  const end = Math.max(start + 1, Math.round((entry.startSeconds + entry.durationSeconds) * fps));
+  return {start, end, duration: end - start};
+};
+
 const TimelineEntry: React.FC<{entry: MarketingTimelineProps['timeline'][number]}> = ({entry}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -99,8 +108,8 @@ export const MarketingTimeline: React.FC<MarketingTimelineProps> = ({
       {timeline.map((entry, index) => (
         <Sequence
           key={`${entry.startSeconds}-${index}`}
-          from={Math.round(entry.startSeconds * fps)}
-          durationInFrames={Math.round(entry.durationSeconds * fps)}
+          from={scheduledFrames(entry, fps).start}
+          durationInFrames={scheduledFrames(entry, fps).duration}
         >
           <TimelineEntry entry={entry} />
         </Sequence>
@@ -108,8 +117,8 @@ export const MarketingTimeline: React.FC<MarketingTimelineProps> = ({
       {overlays.map((entry, index) => (
         <Sequence
           key={`${entry.src}-${index}`}
-          from={Math.round(entry.startSeconds * fps)}
-          durationInFrames={Math.round(entry.durationSeconds * fps)}
+          from={scheduledFrames(entry, fps).start}
+          durationInFrames={scheduledFrames(entry, fps).duration}
         >
           <Img src={entry.src} style={{width: '100%', height: '100%', objectFit: 'contain'}} />
         </Sequence>

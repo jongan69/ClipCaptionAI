@@ -31,14 +31,29 @@ const intent = z.object({
   output: z.string().optional(),
 });
 
-const timelineEntry = z.object({
-  type: z.enum(['video', 'image', 'text', 'end-card']),
-  startSeconds: z.number().nonnegative(),
-  durationSeconds: z.number().positive(),
-  src: z.string().optional(),
-  text: z.string().optional(),
-  transition: z.enum(['cut', 'fade']).default('cut'),
-});
+const timelineEntry = z
+  .object({
+    type: z.enum(['video', 'image', 'text', 'end-card']),
+    startSeconds: z.number().nonnegative(),
+    durationSeconds: z.number().positive(),
+    src: z.string().optional(),
+    text: z.string().optional(),
+    transition: z.enum(['cut', 'fade']).default('cut'),
+  })
+  .superRefine((entry, context) => {
+    if (['video', 'image'].includes(entry.type) && !entry.src)
+      context.addIssue({
+        code: 'custom',
+        path: ['src'],
+        message: `${entry.type} entries require src.`,
+      });
+    if (['text', 'end-card'].includes(entry.type) && !entry.text)
+      context.addIssue({
+        code: 'custom',
+        path: ['text'],
+        message: `${entry.type} entries require text.`,
+      });
+  });
 
 const variant = z.object({
   id: z.string().min(1),
@@ -84,7 +99,16 @@ export const CreativePlan = z.object({
 export const CampaignRun = z.object({
   schemaVersion: z.literal(1),
   id: z.string(),
-  status: z.string(),
+  status: z.enum([
+    'planned',
+    'estimated',
+    'approved',
+    'awaiting-assets',
+    'executed',
+    'dry-run-complete',
+    'qa-complete',
+    'exported',
+  ]),
   planHash: z.string(),
   capabilityFingerprint: z.string(),
   createdAt: z.string(),
@@ -103,10 +127,10 @@ export const CampaignRun = z.object({
     .optional(),
   providerJobs: z.record(z.string(), z.record(z.string(), z.unknown())).default({}),
   reviews: z.object({
-    technical: z.string(),
-    contentClaims: z.string(),
-    visualHuman: z.string(),
-    publication: z.string(),
+    technical: z.enum(['pending', 'passed', 'failed']),
+    contentClaims: z.enum(['pending', 'approved', 'rejected']),
+    visualHuman: z.enum(['pending', 'approved', 'rejected']),
+    publication: z.enum(['blocked', 'approved', 'rejected']),
   }),
 });
 

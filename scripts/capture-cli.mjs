@@ -22,8 +22,10 @@ const readManifest = () => {
   return ProductManifest.parse(yaml.load(fs.readFileSync(file, 'utf8')));
 };
 
-if (!action || action === '--help')
-  console.log('Usage: clipcaptionai capture doctor|run --manifest <file> --flow <id>');
+if (!action || action === '--help' || action === '-h')
+  console.log(
+    'Usage: clipcaptionai capture doctor|run (--manifest <file>|--plan <file>) --flow <id> [--profile <id>] [--record <file>] [--timeout <ms>]',
+  );
 else if (action === 'doctor') console.log(JSON.stringify({ok: true, mode: 'command'}));
 else if (action === 'run') {
   const manifest = readManifest();
@@ -31,7 +33,15 @@ else if (action === 'run') {
   const flow = manifest.captureFlows[flowId];
   if (!flow) throw new Error(`Unknown capture flow: ${flowId}`);
   const cwd = path.resolve(flow.cwd || manifest.repositoryRoot || process.cwd());
-  const result = spawnSync(flow.argv[0], flow.argv.slice(1), {cwd, encoding: 'utf8', shell: false});
+  const timeout = Number(args.timeout ?? 600_000);
+  if (!Number.isFinite(timeout) || timeout <= 0)
+    throw new Error('Capture timeout must be a positive number of milliseconds.');
+  const result = spawnSync(flow.argv[0], flow.argv.slice(1), {
+    cwd,
+    encoding: 'utf8',
+    shell: false,
+    timeout,
+  });
   if (result.error || result.status !== 0)
     throw new Error(result.stderr || result.error?.message || 'Capture failed.');
   let repositoryCommit = manifest.repositoryCommit || null;

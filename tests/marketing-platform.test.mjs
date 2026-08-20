@@ -46,7 +46,7 @@ else if(args[0]==='render'){const i=args.indexOf('--output'); if(i>=0)fs.writeFi
     `
 const fs=require('fs'); const args=process.argv.slice(2);
 if(args[0]==='--help') console.log(fs.readFileSync(${JSON.stringify(helpFile)},'utf8'));
-else if(args.includes('cost')) console.log(JSON.stringify({credits:3}));
+else if(args.includes('cost')) console.log(JSON.stringify({credits:args.includes('fake-two')?2:3}));
 else {const i=args.indexOf('--output'); if(i>=0)fs.writeFileSync(args[i+1],'generated'); if(process.env.HIGGS_CALLS)fs.appendFileSync(process.env.HIGGS_CALLS,args.join(' ')+'\\n'); console.log(JSON.stringify({id:'fake-job',status:'complete'}));}
 `,
   );
@@ -71,10 +71,10 @@ else {const i=args.indexOf('--output'); if(i>=0)fs.writeFileSync(args[i+1],'gene
 test('marketing tools are catalog-driven for CLI and desktop consumers', async () => {
   const catalog = await serializeCatalog({root});
   assert.deepEqual(
-    ['capture', 'higgsfield', 'marketing', 'rotato'],
     catalog
       .map((adapter) => adapter.id)
       .filter((id) => ['capture', 'higgsfield', 'marketing', 'rotato'].includes(id)),
+    ['capture', 'higgsfield', 'marketing', 'rotato'],
   );
   assert.deepEqual(
     catalog.find((adapter) => adapter.id === 'marketing').actions.map((action) => action.id),
@@ -165,10 +165,20 @@ test(
 
 test(
   'live generation is budget-gated and idempotent across resumed execution',
-  {timeout: 60_000},
+  {timeout: 120_000},
   (t) => {
     const fx = fixture(t);
     const generated = path.join(fx.directory, 'generated.mp4');
+    const generatedTwo = path.join(fx.directory, 'generated-two.mp4');
+    const sharedIntent = {
+      type: 'generation',
+      provider: 'higgsfield',
+      model: 'fake',
+      estimateCredits: 3,
+      estimateArgv: ['generate', 'cost', 'fake'],
+      argv: ['generate', 'create', '--output', generated],
+      output: generated,
+    };
     const product = path.join(fx.directory, 'product.yaml');
     fs.writeFileSync(product, yaml.dump({id: 'demo', name: 'Demo'}));
     const campaign = path.join(fx.directory, 'campaign.yaml');
@@ -183,15 +193,23 @@ test(
             id: 'v',
             durationSeconds: 5,
             cta: 'Go',
+            intents: [sharedIntent],
+            timeline: [{type: 'end-card', startSeconds: 4, durationSeconds: 1, text: 'Go'}],
+          },
+          {
+            id: 'v2',
+            durationSeconds: 5,
+            cta: 'Go',
             intents: [
+              sharedIntent,
               {
                 type: 'generation',
                 provider: 'higgsfield',
-                model: 'fake',
-                estimateCredits: 3,
-                estimateArgv: ['generate', 'cost', 'fake'],
-                argv: ['generate', 'create', '--output', generated],
-                output: generated,
+                model: 'fake-two',
+                estimateCredits: 2,
+                estimateArgv: ['generate', 'cost', 'fake-two'],
+                argv: ['generate', 'create', '--output', generatedTwo],
+                output: generatedTwo,
               },
             ],
             timeline: [{type: 'end-card', startSeconds: 4, durationSeconds: 1, text: 'Go'}],
@@ -210,7 +228,7 @@ test(
     );
     parseChildJson(
       runCli(
-        ['marketing', 'approve', '--run', 'paid-run', '--budget-credits', '3', '--json'],
+        ['marketing', 'approve', '--run', 'paid-run', '--budget-credits', '5', '--json'],
         fx.env,
       ),
     );
@@ -221,15 +239,15 @@ test(
           fx.env,
         ),
       );
-    assert.equal(fs.readFileSync(fx.env.HIGGS_CALLS, 'utf8').trim().split('\n').length, 1);
+    assert.equal(fs.readFileSync(fx.env.HIGGS_CALLS, 'utf8').trim().split('\n').length, 2);
     const runRecord = JSON.parse(
       fs.readFileSync(path.join(fx.campaigns, 'paid-run', 'run.json'), 'utf8'),
     );
-    assert.equal(Object.keys(runRecord.providerJobs).length, 1);
+    assert.equal(Object.keys(runRecord.providerJobs).length, 2);
     const assets = JSON.parse(
       fs.readFileSync(path.join(fx.campaigns, 'paid-run', 'assets', 'index.json'), 'utf8'),
     );
-    assert.equal(assets.length, 1);
+    assert.equal(assets.length, 3);
     assert.equal(assets[0].provenance.adapter, 'higgsfield');
   },
 );
@@ -336,6 +354,15 @@ test('Rotato templates compile semantic slots and reject drift or screen conflic
   );
   assert.equal(rendered.status, 0, rendered.stderr);
   assert.ok(fs.existsSync(output));
+  const brokerOutput = path.join(fx.directory, 'broker-render.mp4');
+  const brokerResult = runCli(
+    ['rotato', 'render', '--template', 'phone', '--output', brokerOutput, '--wait', '--json'],
+    env,
+  );
+  assert.equal(brokerResult.status, 0, brokerResult.stderr);
+  const brokerArtifact = JSON.parse(brokerResult.stdout).data.result.artifact;
+  assert.equal(brokerArtifact.templateValidated, true);
+  assert.equal(brokerArtifact.capabilityFingerprint.length, 64);
   const conflict = run(
     process.execPath,
     [
@@ -419,6 +446,23 @@ test('Higgsfield submission enforces live approval and budgets', (t) => {
       },
     }),
   );
+  const missingBudget = JSON.parse(fs.readFileSync(approvalFile, 'utf8'));
+  delete missingBudget.approval.budgetCredits;
+  fs.writeFileSync(approvalFile, JSON.stringify(missingBudget));
+  const malformed = run(process.execPath, [...base, '--dry-run', 'generate', 'create'], fx.env);
+  assert.match(malformed.stderr, /BUDGET_EXCEEDED/);
+  fs.writeFileSync(
+    approvalFile,
+    JSON.stringify({
+      estimates,
+      approval: {
+        planHash: 'plan',
+        capabilityFingerprint: 'cap',
+        estimateHash: hashValue(estimates),
+        budgetCredits: 5,
+      },
+    }),
+  );
   const noLive = run(process.execPath, [...base, 'generate', 'create'], fx.env);
   assert.match(noLive.stderr, /LIVE_EXECUTION_REQUIRED/);
   const over = run(
@@ -468,4 +512,19 @@ test('command capture records reproducible provenance', (t) => {
   assert.equal(record.seedVersion, '7');
   assert.equal(record.platformProfile, 'desktop');
   assert.equal(record.artifacts[0].hash.length, 64);
+  const invalidTimeout = run(
+    process.execPath,
+    [
+      path.join(root, 'scripts', 'capture-cli.mjs'),
+      'run',
+      '--manifest',
+      manifest,
+      '--flow',
+      'hero',
+      '--timeout',
+      '0',
+    ],
+    fx.env,
+  );
+  assert.match(invalidTimeout.stderr, /positive number/);
 });

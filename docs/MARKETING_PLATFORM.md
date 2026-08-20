@@ -1,6 +1,6 @@
 # Marketing platform
 
-Campaign commands use the shared adapter catalog and filesystem job broker:
+Campaign commands use the shared adapter catalog and filesystem job broker. The examples assume an installed package; from a repository checkout replace `clipcaptionai` with `bun run clipkit --`.
 
 ```sh
 clipcaptionai marketing plan --campaign examples/marketing/campaign.example.yaml --wait
