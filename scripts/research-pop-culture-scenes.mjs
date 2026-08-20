@@ -1,18 +1,8 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  resolveProvider,
-  createClient,
-  resolveModel,
-} from './ai-provider.mjs';
-import {
-  loadEnv,
-  parseArgs,
-  probeVideo,
-  readCaptions,
-  requireArg,
-} from './lib.mjs';
+import {resolveProvider, createClient, resolveModel} from './ai-provider.mjs';
+import {loadEnv, parseArgs, probeVideo, readCaptions, requireArg} from './lib.mjs';
 import {researchPopCultureScenes} from './lib-pop-culture-scenes.mjs';
 
 const usage = `
@@ -39,9 +29,7 @@ loadEnv();
 
 const resolved = resolveProvider({provider: args.provider});
 if (!resolved.config) {
-  throw new Error(
-    'DEEPSEEK_API_KEY or OPENAI_API_KEY is required. Add one to .env or your shell.',
-  );
+  throw new Error('DEEPSEEK_API_KEY or OPENAI_API_KEY is required. Add one to .env or your shell.');
 }
 
 const scenePlanPath = path.resolve(requireArg(args, 'scene-plan', usage));
@@ -68,9 +56,7 @@ const outputPath = args.out
   : scenePlanPath.replace(/\.scene-plan\.json$/i, '.pop-culture-scenes.json');
 
 const sourceVideo =
-  scenePlan.sourceVideo && fs.existsSync(scenePlan.sourceVideo)
-    ? scenePlan.sourceVideo
-    : null;
+  scenePlan.sourceVideo && fs.existsSync(scenePlan.sourceVideo) ? scenePlan.sourceVideo : null;
 
 const model = resolveModel({
   resolved,

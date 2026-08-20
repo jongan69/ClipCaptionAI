@@ -108,7 +108,9 @@ const main = () => {
   }
 
   if (!commandExists('rotato')) {
-    throw new Error('Rotato CLI is not installed or not on PATH. Run "clipcaptionai rotato doctor" first.');
+    throw new Error(
+      'Rotato CLI is not installed or not on PATH. Run "clipcaptionai rotato doctor" first.',
+    );
   }
 
   const mode = args[0];

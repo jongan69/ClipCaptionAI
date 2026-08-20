@@ -4,7 +4,7 @@ Optional local integration (the CLI remains usable without Rotato):
 
 - Rotato desktop app exists at `/Applications/Rotato.app`.
 - Rotato CLI exists at `/usr/local/bin/rotato`.
-- `VideoAssets` currently exists at `/Users/jonathangan/LocalCode/VideoAssets`, but the folder is empty right now.
+- The local `VideoAssets` folder (see `scripts/rotato-cli.mjs` defaults) is currently empty — mockup renders land under `outputs/`.
 
 ## What We Added
 

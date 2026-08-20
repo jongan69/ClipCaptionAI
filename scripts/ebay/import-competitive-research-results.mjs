@@ -98,15 +98,25 @@ const readRows = (file) => {
   if (!text) return {headers: [], rows: []};
   if (/\.csv$/i.test(file)) return parseCsv(text);
   if (/\.ndjson$/i.test(file) || text.split(/\r?\n/).every((line) => line.trim().startsWith('{'))) {
-    const rows = text.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+    const rows = text
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
     return {headers: Array.from(new Set(rows.flatMap((row) => Object.keys(row)))), rows};
   }
   const rows = extractRowsFromJson(JSON.parse(text));
   return {headers: Array.from(new Set(rows.flatMap((row) => Object.keys(row)))), rows};
 };
 
-const normalizeKey = (value) => String(value ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
-const normalizeSearchQuery = (value) => String(value ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+const normalizeKey = (value) =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+const normalizeSearchQuery = (value) =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 const stopWords = new Set([
   'the',
   'and',
@@ -145,13 +155,29 @@ const firstValue = (row, keys) => {
 };
 
 const routeKeyForRow = (row) => {
-  const itemId = firstValue(row, ['Item ID', 'item_id', 'Listing ID', 'Listing Item ID', 'eBay Item ID']);
+  const itemId = firstValue(row, [
+    'Item ID',
+    'item_id',
+    'Listing ID',
+    'Listing Item ID',
+    'eBay Item ID',
+  ]);
   if (itemId) return {type: 'item_id', value: itemId};
-  const template = firstValue(row, ['Competitor Import Template', 'competitor_import_template', 'Template Path']);
+  const template = firstValue(row, [
+    'Competitor Import Template',
+    'competitor_import_template',
+    'Template Path',
+  ]);
   if (template) return {type: 'template', value: path.resolve(template)};
   const packetDir = firstValue(row, ['Packet Dir', 'packet_dir']);
   if (packetDir) return {type: 'packet_dir', value: path.resolve(packetDir)};
-  const searchQuery = firstValue(row, ['Search Query', 'search_query', 'Query', 'Keyword', 'Search Term']);
+  const searchQuery = firstValue(row, [
+    'Search Query',
+    'search_query',
+    'Query',
+    'Keyword',
+    'Search Term',
+  ]);
   if (searchQuery) return {type: 'search_query', value: normalizeSearchQuery(searchQuery)};
   return {type: 'missing', value: ''};
 };
@@ -204,7 +230,9 @@ const productMatchReview = ({listing, row}) => {
     row.Caption,
     row.Hook,
     row['Product Category'],
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
   const competitorTerms = Array.from(new Set(titleTokens(competitorText)));
   const shared = listingTerms.filter((term) => competitorTerms.includes(term));
   const denominator = Math.max(1, Math.min(listingTerms.length, competitorTerms.length));
@@ -221,160 +249,193 @@ const productMatchReview = ({listing, row}) => {
   };
 };
 
-const queuePath = requireArg('queue');
-const resultsPath = requireArg('results');
-if (!fs.existsSync(queuePath)) throw new Error(`Competitive research queue not found: ${queuePath}`);
-if (!fs.existsSync(resultsPath)) throw new Error(`Results export not found: ${resultsPath}`);
+const main = async () => {
+  const queuePath = requireArg('queue');
+  const resultsPath = requireArg('results');
+  if (!fs.existsSync(queuePath))
+    throw new Error(`Competitive research queue not found: ${queuePath}`);
+  if (!fs.existsSync(resultsPath)) throw new Error(`Results export not found: ${resultsPath}`);
 
-const queue = readJson(queuePath);
-const defaultOutDir = path.basename(path.dirname(queuePath)) === 'competitive-research-queue'
-  ? path.join(path.dirname(queuePath), '..', 'competitive-research-import')
-  : path.join(path.dirname(queuePath), 'competitive-research-import');
-const outDir = path.resolve(String(args['out-dir'] ?? defaultOutDir));
-ensureDir(outDir);
+  const queue = readJson(queuePath);
+  const defaultOutDir =
+    path.basename(path.dirname(queuePath)) === 'competitive-research-queue'
+      ? path.join(path.dirname(queuePath), '..', 'competitive-research-import')
+      : path.join(path.dirname(queuePath), 'competitive-research-import');
+  const outDir = path.resolve(String(args['out-dir'] ?? defaultOutDir));
+  ensureDir(outDir);
 
-const listings = queue.listings ?? [];
-const byItemId = new Map(listings.map((listing) => [String(listing.item_id), listing]));
-const byTemplate = new Map(listings.map((listing) => [path.resolve(String(listing.competitor_import_template)), listing]));
-const byPacketDir = new Map(listings.map((listing) => [path.resolve(String(listing.packet_dir)), listing]));
-const bySearchQuery = new Map();
-for (const row of queue.rows ?? []) {
-  const query = normalizeSearchQuery(row.search_query ?? row['Search Query']);
-  const listing = byItemId.get(String(row.item_id ?? row['Item ID']));
-  if (!query || !listing) continue;
-  if (bySearchQuery.has(query) && bySearchQuery.get(query)?.item_id !== listing.item_id) {
-    bySearchQuery.set(query, null);
-  } else {
-    bySearchQuery.set(query, listing);
+  const listings = queue.listings ?? [];
+  const byItemId = new Map(listings.map((listing) => [String(listing.item_id), listing]));
+  const byTemplate = new Map(
+    listings.map((listing) => [path.resolve(String(listing.competitor_import_template)), listing]),
+  );
+  const byPacketDir = new Map(
+    listings.map((listing) => [path.resolve(String(listing.packet_dir)), listing]),
+  );
+  const bySearchQuery = new Map();
+  for (const row of queue.rows ?? []) {
+    const query = normalizeSearchQuery(row.search_query ?? row['Search Query']);
+    const listing = byItemId.get(String(row.item_id ?? row['Item ID']));
+    if (!query || !listing) continue;
+    if (bySearchQuery.has(query) && bySearchQuery.get(query)?.item_id !== listing.item_id) {
+      bySearchQuery.set(query, null);
+    } else {
+      bySearchQuery.set(query, listing);
+    }
   }
-}
-const {headers: resultHeaders, rows} = readRows(resultsPath);
+  const {headers: resultHeaders, rows} = readRows(resultsPath);
 
-const grouped = new Map();
-const skipped = [];
+  const grouped = new Map();
+  const skipped = [];
 
-for (const [index, row] of rows.entries()) {
-  const route = routeKeyForRow(row);
-  let listing = null;
-  if (route.type === 'item_id') listing = byItemId.get(route.value);
-  if (route.type === 'template') listing = byTemplate.get(route.value);
-  if (route.type === 'packet_dir') listing = byPacketDir.get(route.value);
-  if (route.type === 'search_query') {
-    if (bySearchQuery.has(route.value) && bySearchQuery.get(route.value) === null) {
-      skipped.push({row_index: index + 1, route, reason: 'ambiguous search query matched multiple queued listings'});
+  for (const [index, row] of rows.entries()) {
+    const route = routeKeyForRow(row);
+    let listing = null;
+    if (route.type === 'item_id') listing = byItemId.get(route.value);
+    if (route.type === 'template') listing = byTemplate.get(route.value);
+    if (route.type === 'packet_dir') listing = byPacketDir.get(route.value);
+    if (route.type === 'search_query') {
+      if (bySearchQuery.has(route.value) && bySearchQuery.get(route.value) === null) {
+        skipped.push({
+          row_index: index + 1,
+          route,
+          reason: 'ambiguous search query matched multiple queued listings',
+        });
+        continue;
+      }
+      listing = bySearchQuery.get(route.value);
+    }
+    if (!listing && listings.length === 1 && route.type === 'missing') listing = listings[0];
+    if (!listing) {
+      skipped.push({
+        row_index: index + 1,
+        route,
+        reason: 'could not match row to a queued listing',
+      });
       continue;
     }
-    listing = bySearchQuery.get(route.value);
+    const target = String(listing.item_id);
+    if (!grouped.has(target)) grouped.set(target, {listing, rows: []});
+    grouped.get(target).rows.push(row);
   }
-  if (!listing && listings.length === 1 && route.type === 'missing') listing = listings[0];
-  if (!listing) {
-    skipped.push({row_index: index + 1, route, reason: 'could not match row to a queued listing'});
-    continue;
-  }
-  const target = String(listing.item_id);
-  if (!grouped.has(target)) grouped.set(target, {listing, rows: []});
-  grouped.get(target).rows.push(row);
-}
 
-const writes = [];
-for (const {listing, rows: listingRows} of grouped.values()) {
-  const template = path.resolve(String(listing.competitor_import_template));
-  const columns = templateColumns(listing);
-  const existing = fs.existsSync(template) && args.replace !== true ? parseCsv(fs.readFileSync(template, 'utf8')).rows : [];
-  const existingSignatures = new Set(existing.map(signatureForRow).filter((signature) => signature !== '::'));
-  const mappedRows = [];
-  const duplicateRows = [];
-  for (const row of listingRows.map((candidate) => mapRowToTemplate(candidate, columns))) {
-    const signature = signatureForRow(row);
-    if (signature !== '::' && existingSignatures.has(signature)) {
-      duplicateRows.push(row);
-      continue;
+  const writes = [];
+  for (const {listing, rows: listingRows} of grouped.values()) {
+    const template = path.resolve(String(listing.competitor_import_template));
+    const columns = templateColumns(listing);
+    const existing =
+      fs.existsSync(template) && args.replace !== true
+        ? parseCsv(fs.readFileSync(template, 'utf8')).rows
+        : [];
+    const existingSignatures = new Set(
+      existing.map(signatureForRow).filter((signature) => signature !== '::'),
+    );
+    const mappedRows = [];
+    const duplicateRows = [];
+    for (const row of listingRows.map((candidate) => mapRowToTemplate(candidate, columns))) {
+      const signature = signatureForRow(row);
+      if (signature !== '::' && existingSignatures.has(signature)) {
+        duplicateRows.push(row);
+        continue;
+      }
+      if (signature !== '::') existingSignatures.add(signature);
+      mappedRows.push(row);
     }
-    if (signature !== '::') existingSignatures.add(signature);
-    mappedRows.push(row);
+    const nextRows = args.replace === true ? mappedRows : [...existing, ...mappedRows];
+    const csv = `${[
+      columns.map(csvCell).join(','),
+      ...nextRows.map((row) => columns.map((column) => csvCell(row[column])).join(',')),
+    ].join('\n')}\n`;
+    if (args['dry-run'] !== true) {
+      ensureDir(path.dirname(template));
+      fs.writeFileSync(template, csv);
+    }
+    writes.push({
+      item_id: String(listing.item_id),
+      title: listing.title,
+      competitor_import_template: template,
+      columns,
+      incoming_rows: listingRows.length,
+      imported_rows: mappedRows.length,
+      duplicate_rows: duplicateRows.length,
+      existing_rows: existing.length,
+      final_rows: nextRows.length,
+      low_match_rows: mappedRows.filter((row) => productMatchReview({listing, row}).score < 0.2)
+        .length,
+      imported_preview_rows: mappedRows.slice(0, 10).map((row) => ({
+        ...row,
+        _review: {
+          product_match: productMatchReview({listing, row}),
+        },
+      })),
+      dry_run: args['dry-run'] === true,
+    });
   }
-  const nextRows = args.replace === true ? mappedRows : [...existing, ...mappedRows];
-  const csv = `${[
-    columns.map(csvCell).join(','),
-    ...nextRows.map((row) => columns.map((column) => csvCell(row[column])).join(',')),
-  ].join('\n')}\n`;
-  if (args['dry-run'] !== true) {
-    ensureDir(path.dirname(template));
-    fs.writeFileSync(template, csv);
-  }
-  writes.push({
-    item_id: String(listing.item_id),
-    title: listing.title,
-    competitor_import_template: template,
-    columns,
-    incoming_rows: listingRows.length,
-    imported_rows: mappedRows.length,
-    duplicate_rows: duplicateRows.length,
-    existing_rows: existing.length,
-    final_rows: nextRows.length,
-    low_match_rows: mappedRows.filter((row) => productMatchReview({listing, row}).score < 0.2).length,
-    imported_preview_rows: mappedRows.slice(0, 10).map((row) => ({
-      ...row,
-      _review: {
-        product_match: productMatchReview({listing, row}),
-      },
-    })),
+
+  const manifest = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
     dry_run: args['dry-run'] === true,
-  });
-}
+    replace: args.replace === true,
+    source_queue: queuePath,
+    source_results: resultsPath,
+    result_headers: resultHeaders,
+    route_sources: ['Item ID', 'Competitor Import Template', 'Packet Dir', 'Search Query'],
+    result_rows: rows.length,
+    matched_listing_count: writes.length,
+    imported_rows: writes.reduce((sum, write) => sum + write.imported_rows, 0),
+    duplicate_rows: writes.reduce((sum, write) => sum + write.duplicate_rows, 0),
+    low_match_rows: writes.reduce((sum, write) => sum + write.low_match_rows, 0),
+    skipped_rows: skipped.length,
+    writes,
+    skipped,
+    next_command: `npm run ebay:competitive-research-process -- --queue "${queuePath}" --dry-run`,
+  };
 
-const manifest = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  dry_run: args['dry-run'] === true,
-  replace: args.replace === true,
-  source_queue: queuePath,
-  source_results: resultsPath,
-  result_headers: resultHeaders,
-  route_sources: ['Item ID', 'Competitor Import Template', 'Packet Dir', 'Search Query'],
-  result_rows: rows.length,
-  matched_listing_count: writes.length,
-  imported_rows: writes.reduce((sum, write) => sum + write.imported_rows, 0),
-  duplicate_rows: writes.reduce((sum, write) => sum + write.duplicate_rows, 0),
-  low_match_rows: writes.reduce((sum, write) => sum + write.low_match_rows, 0),
-  skipped_rows: skipped.length,
-  writes,
-  skipped,
-  next_command: `npm run ebay:competitive-research-process -- --queue "${queuePath}" --dry-run`,
+  const manifestPath = path.join(outDir, 'competitive-research-import-manifest.json');
+  const markdownPath = path.join(outDir, 'competitive-research-import-manifest.md');
+  writeJson(manifestPath, manifest);
+  fs.writeFileSync(
+    markdownPath,
+    `${[
+      '# Competitive Research Results Import',
+      '',
+      `Dry run: ${manifest.dry_run}`,
+      `Replace existing rows: ${manifest.replace}`,
+      `Source queue: ${queuePath}`,
+      `Source results: ${resultsPath}`,
+      `Rows in results: ${manifest.result_rows}`,
+      `Imported rows: ${manifest.imported_rows}`,
+      `Duplicate rows skipped: ${manifest.duplicate_rows}`,
+      `Unmatched rows: ${manifest.skipped_rows}`,
+      '',
+      '## Writes',
+      '',
+      ...writes.map(
+        (write) =>
+          `- ${write.item_id} ${write.title}: imported ${write.imported_rows}/${write.incoming_rows} rows into ${write.competitor_import_template}`,
+      ),
+      '',
+      '## Skipped',
+      '',
+      ...skipped.map((row) => `- Row ${row.row_index}: ${row.reason}`),
+      '',
+      '## Next',
+      '',
+      '```bash',
+      manifest.next_command,
+      '```',
+      '',
+    ].join('\n')}\n`,
+  );
+
+  console.log(`Competitive research import manifest: ${manifestPath}`);
+  console.log(`Matched listings: ${writes.length}`);
+  console.log(`Imported rows: ${manifest.imported_rows}`);
+  console.log(`Skipped rows: ${manifest.skipped_rows}`);
 };
 
-const manifestPath = path.join(outDir, 'competitive-research-import-manifest.json');
-const markdownPath = path.join(outDir, 'competitive-research-import-manifest.md');
-writeJson(manifestPath, manifest);
-fs.writeFileSync(markdownPath, `${[
-  '# Competitive Research Results Import',
-  '',
-  `Dry run: ${manifest.dry_run}`,
-  `Replace existing rows: ${manifest.replace}`,
-  `Source queue: ${queuePath}`,
-  `Source results: ${resultsPath}`,
-  `Rows in results: ${manifest.result_rows}`,
-  `Imported rows: ${manifest.imported_rows}`,
-  `Duplicate rows skipped: ${manifest.duplicate_rows}`,
-  `Unmatched rows: ${manifest.skipped_rows}`,
-  '',
-  '## Writes',
-  '',
-  ...writes.map((write) => `- ${write.item_id} ${write.title}: imported ${write.imported_rows}/${write.incoming_rows} rows into ${write.competitor_import_template}`),
-  '',
-  '## Skipped',
-  '',
-  ...skipped.map((row) => `- Row ${row.row_index}: ${row.reason}`),
-  '',
-  '## Next',
-  '',
-  '```bash',
-  manifest.next_command,
-  '```',
-  '',
-].join('\n')}\n`);
-
-console.log(`Competitive research import manifest: ${manifestPath}`);
-console.log(`Matched listings: ${writes.length}`);
-console.log(`Imported rows: ${manifest.imported_rows}`);
-console.log(`Skipped rows: ${manifest.skipped_rows}`);
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

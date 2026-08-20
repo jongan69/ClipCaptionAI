@@ -36,8 +36,78 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run typecheck
+      - name: Install ffmpeg (smoke tests render real MP4s)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick
+
+      - name: Run typecheck (Remotion src/)
         run: bun run typecheck
+
+      - name: Run typecheck (desktop renderer)
+        run: bun run typecheck:desktop
+
+      - name: Run lint
+        run: bun run lint
 
       - name: Run tests
         run: bun run test
+
+  package-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify published tarball ships everything the CLI advertises
+        run: |
+          bun pm pack --dry-run >/dev/null
+          bun pm pack --destination .pack >/dev/null
+          tar -tzf .pack/clipcaptionai-*.tgz > pack-report.txt
+          node - <<'EOF'
+          const files = require('node:fs').readFileSync('pack-report.txt', 'utf8').trim().split('\n');
+          const required = ['scripts/ebay/', 'scripts/logo/', 'bin/clipcaptionai.js', 'docs/WORKFLOWS.md'];
+          const missing = required.filter((p) => !files.some((f) => f.includes(p)));
+          if (missing.length > 0) {
+            console.error('Tarball is missing advertised files:', missing);
+            process.exit(1);
+          }
+          console.log('Tarball OK:', files.length, 'entries packed');
+          EOF
+
+  desktop-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build renderer + package unpacked app (catches main-entry/preload/asar regressions)
+        run: bun run desktop:build && bunx electron-builder --linux --dir --publish never

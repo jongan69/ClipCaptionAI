@@ -46,14 +46,20 @@ const resolveMaybePath = (value) => {
 };
 
 const enabled = args['disable-sfx'] ? false : Boolean(soundConfig.enabled ?? true);
-const libraryDir = resolveMaybePath(args['sfx-library'] ?? soundConfig.libraryDir ?? './sfx-library');
+const libraryDir = resolveMaybePath(
+  args['sfx-library'] ?? soundConfig.libraryDir ?? './sfx-library',
+);
 const baseVolume = clamp(Number(soundConfig.volume ?? 0.065), 0, 0.4);
 const originalAudioVolume = clamp(Number(soundConfig.originalAudioVolume ?? 1), 0, 1.5);
 const maxEffectsPerClip = Math.max(0, Number(soundConfig.maxEffectsPerClip ?? 8));
 const minGapSeconds = Math.max(0, Number(soundConfig.minGapSeconds ?? 2.2));
 const edgeBufferSeconds = Math.max(0, Number(soundConfig.edgeBufferSeconds ?? 0.45));
 const maxSfxDurationSeconds = Math.max(0.08, Number(soundConfig.maxSfxDurationSeconds ?? 1.2));
-const transitionVolumeMultiplier = clamp(Number(soundConfig.transitionVolumeMultiplier ?? 0.78), 0, 2);
+const transitionVolumeMultiplier = clamp(
+  Number(soundConfig.transitionVolumeMultiplier ?? 0.78),
+  0,
+  2,
+);
 const keywordVolumeMultiplier = clamp(Number(soundConfig.keywordVolumeMultiplier ?? 1), 0, 2);
 const sceneTransitionSfxEnabled = soundConfig.sceneTransitionSfxEnabled !== false;
 const captionKeywordSfxEnabled = soundConfig.captionKeywordSfxEnabled !== false;
@@ -76,15 +82,81 @@ const defaultKeywordMap = {
   alert: ['correct', 'yes', 'win', 'works', 'key', 'idea', 'signal', 'important', 'first'],
   camera: ['camera', 'record', 'video', 'clip', 'content', 'screenshot', 'watch'],
   click: ['click', 'button', 'select', 'menu', 'account', 'link'],
-  glitch: ['ai', 'algorithm', 'data', 'digital', 'system', 'hack', 'code', 'error', 'loading', 'reboot'],
-  impact: ['power', 'serious', 'locked', 'changed', 'transform', 'discipline', 'focus', 'hard', 'excuses', 'boom'],
-  money: ['money', 'cash', 'coin', 'coins', 'sale', 'sales', 'profit', 'revenue', 'dollar', 'dollars', 'paid', 'buy', 'purchase', 'shopify', 'rich', 'wealth', 'rolex', 'corvette', 'order', 'customer'],
+  glitch: [
+    'ai',
+    'algorithm',
+    'data',
+    'digital',
+    'system',
+    'hack',
+    'code',
+    'error',
+    'loading',
+    'reboot',
+  ],
+  impact: [
+    'power',
+    'serious',
+    'locked',
+    'changed',
+    'transform',
+    'discipline',
+    'focus',
+    'hard',
+    'excuses',
+    'boom',
+  ],
+  money: [
+    'money',
+    'cash',
+    'coin',
+    'coins',
+    'sale',
+    'sales',
+    'profit',
+    'revenue',
+    'dollar',
+    'dollars',
+    'paid',
+    'buy',
+    'purchase',
+    'shopify',
+    'rich',
+    'wealth',
+    'rolex',
+    'corvette',
+    'order',
+    'customer',
+  ],
   paper: ['paper', 'document', 'notes', 'copy', 'page', 'script', 'reviews'],
   pop: ['wow', 'cool', 'what', 'hook', 'attention', 'stop', 'new', 'wait'],
   spiritual: ['god', 'faith', 'bless', 'pray', 'prayer', 'spiritual', 'glory'],
-  suspense: ['broke', 'homeless', 'fail', 'failure', 'wrong', 'fear', 'problem', 'dark', 'nobody', 'hesitate'],
+  suspense: [
+    'broke',
+    'homeless',
+    'fail',
+    'failure',
+    'wrong',
+    'fear',
+    'problem',
+    'dark',
+    'nobody',
+    'hesitate',
+  ],
   typing: ['type', 'typing', 'write', 'writing', 'keyboard', 'search', 'claude', 'document'],
-  whoosh: ['fast', 'speed', 'viral', 'scroll', 'move', 'momentum', 'go', 'transition', 'flow', 'volume', 'post'],
+  whoosh: [
+    'fast',
+    'speed',
+    'viral',
+    'scroll',
+    'move',
+    'momentum',
+    'go',
+    'transition',
+    'flow',
+    'volume',
+    'post',
+  ],
 };
 
 const mergeKeywordMap = (customMap) => {
@@ -186,7 +258,9 @@ const hasAudioStream = (filePath) => {
 };
 
 const loadSelectionClip = () => {
-  const selectionPath = args['selection-path'] ? path.resolve(String(args['selection-path'])) : null;
+  const selectionPath = args['selection-path']
+    ? path.resolve(String(args['selection-path']))
+    : null;
   if (!selectionPath || !fs.existsSync(selectionPath)) {
     return null;
   }
@@ -271,7 +345,9 @@ const pickSound = (library, category, seed, usedSoundIds) => {
       ? sounds
       : sounds.filter((sound) => !usedSoundIds.has(String(sound.id)));
   const preferred = unused(library.filter((sound) => sound.category === category));
-  const fallback = unused(library.filter((sound) => ['whoosh', 'impact', 'pop', 'alert'].includes(sound.category)));
+  const fallback = unused(
+    library.filter((sound) => ['whoosh', 'impact', 'pop', 'alert'].includes(sound.category)),
+  );
   const anyUnused = unused(library);
   const candidates = preferred.length > 0 ? preferred : fallback.length > 0 ? fallback : anyUnused;
   if (candidates.length === 0) {
@@ -281,10 +357,15 @@ const pickSound = (library, category, seed, usedSoundIds) => {
 };
 
 const addEventIfAllowed = (events, event, durationSeconds) => {
-  if (event.startSeconds < edgeBufferSeconds || event.startSeconds > durationSeconds - edgeBufferSeconds) {
+  if (
+    event.startSeconds < edgeBufferSeconds ||
+    event.startSeconds > durationSeconds - edgeBufferSeconds
+  ) {
     return;
   }
-  if (events.some((existing) => Math.abs(existing.startSeconds - event.startSeconds) < minGapSeconds)) {
+  if (
+    events.some((existing) => Math.abs(existing.startSeconds - event.startSeconds) < minGapSeconds)
+  ) {
     return;
   }
   events.push(event);
@@ -313,7 +394,8 @@ const buildEvents = ({
         events,
         {
           startSeconds,
-          category: category === 'money' ? 'money' : category === 'spiritual' ? 'spiritual' : 'whoosh',
+          category:
+            category === 'money' ? 'money' : category === 'spiritual' ? 'spiritual' : 'whoosh',
           reason: `scene transition: ${String(insertion.query ?? '').slice(0, 90)}`,
           priority: 100,
           volumeMultiplier: transitionVolumeMultiplier,
@@ -380,7 +462,9 @@ const buildEvents = ({
       continue;
     }
     usedSoundIds.add(String(sound.id));
-    const soundDuration = Number(sound.durationSeconds ?? probeDurationSeconds(sound.filePath) ?? maxSfxDurationSeconds);
+    const soundDuration = Number(
+      sound.durationSeconds ?? probeDurationSeconds(sound.filePath) ?? maxSfxDurationSeconds,
+    );
     selected.push({
       ...event,
       soundId: sound.id,
@@ -449,7 +533,11 @@ fs.writeFileSync(
         allowReuseWithinClip: allowSfxReuseWithinClip,
       },
       selectionClip,
-      events: events.map(({soundPath, ...event}) => event),
+      events: events.map((event) => {
+        const rest = {...event};
+        delete rest.soundPath;
+        return rest;
+      }),
     },
     null,
     2,
@@ -475,7 +563,9 @@ const filters = [];
 if (sourceHasAudio) {
   filters.push(`[0:a]aformat=channel_layouts=stereo,volume=${originalAudioVolume}[base]`);
 } else {
-  filters.push(`anullsrc=channel_layout=stereo:sample_rate=48000,atrim=duration=${metadata.durationSeconds.toFixed(3)}[base]`);
+  filters.push(
+    `anullsrc=channel_layout=stereo:sample_rate=48000,atrim=duration=${metadata.durationSeconds.toFixed(3)}[base]`,
+  );
 }
 
 events.forEach((event, index) => {

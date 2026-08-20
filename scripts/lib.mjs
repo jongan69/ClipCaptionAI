@@ -15,7 +15,8 @@ export const projectRoot = process.env.CCA_PROJECT_ROOT || baseRoot;
 export const workspaceRoot = process.env.CCA_WORKSPACE_ROOT || process.cwd();
 export const outputsRoot = process.env.CCA_OUTPUTS_ROOT || path.join(workspaceRoot, 'outputs');
 export const outputWorkRoot = path.join(outputsRoot, 'work');
-export const publicMediaRoot = process.env.CCA_PUBLIC_MEDIA_ROOT || path.join(outputsRoot, '.public', 'media');
+export const publicMediaRoot =
+  process.env.CCA_PUBLIC_MEDIA_ROOT || path.join(outputsRoot, '.public', 'media');
 export const ebayCinematicAdsOutputRoot = path.join(outputsRoot, 'ebay-cinematic-ads');
 
 export const isElectron = () => !!process.env.CCA_ELECTRON;
@@ -73,7 +74,7 @@ export const parseArgs = (argv) => {
  * same logic regardless of whether they were invoked via CLI or IPC.
  */
 export const parseOptions = (options = {}) => {
-  const result = { ...options };
+  const result = {...options};
   // Coerce string "true"/"false" to boolean for checkbox fields
   for (const [key, value] of Object.entries(result)) {
     if (value === 'true') result[key] = true;
@@ -165,11 +166,8 @@ export const probeVideo = (videoPath) => {
     throw new Error(`No video stream found in ${videoPath}`);
   }
 
-  const [fpsNumerator, fpsDenominator] = String(stream.r_frame_rate)
-    .split('/')
-    .map(Number);
-  const fps =
-    fpsNumerator && fpsDenominator ? fpsNumerator / fpsDenominator : 30;
+  const [fpsNumerator, fpsDenominator] = String(stream.r_frame_rate).split('/').map(Number);
+  const fps = fpsNumerator && fpsDenominator ? fpsNumerator / fpsDenominator : 30;
   const durationSeconds = Number(metadata.format?.duration ?? 0);
 
   return {
@@ -211,8 +209,7 @@ export const normalizeCaptions = (raw) => {
         caption.timestampMs === undefined || caption.timestampMs === null
           ? Math.round((startMs + endMs) / 2)
           : Number(caption.timestampMs),
-      confidence:
-        caption.confidence === undefined ? null : caption.confidence,
+      confidence: caption.confidence === undefined ? null : caption.confidence,
     };
   });
 };
@@ -229,8 +226,18 @@ export const run = (command, args, options = {}) => {
     ...options,
   });
 
+  if (result.error) {
+    throw new Error(
+      `Failed to run "${command}": ${result.error.message}. Is it installed and on PATH?`,
+    );
+  }
+
   if (result.status !== 0) {
-    throw new Error(`${command} ${args.join(' ')} failed.`);
+    throw new Error(
+      `${command} ${args.join(' ')} failed (exit code ${result.status}${
+        result.signal ? `, signal ${result.signal}` : ''
+      }).`,
+    );
   }
 };
 
@@ -243,12 +250,7 @@ export const run = (command, args, options = {}) => {
 export const probeMedia = (mediaPath) => {
   const output = execFileSync(
     'ffprobe',
-    [
-      '-v', 'error',
-      '-show_entries', 'format=duration',
-      '-of', 'default=nw=1:nk=1',
-      mediaPath,
-    ],
+    ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', mediaPath],
     {encoding: 'utf8'},
   );
 
@@ -262,18 +264,29 @@ export const probeMedia = (mediaPath) => {
  * Extract audio from a video file to MP3 (default) or WAV.
  * Returns the path to the extracted audio file.
  */
-export const extractAudio = (videoPath, outputPath, {bitrate = '48k', sampleRate = '16000', channels = 1, format = 'mp3'} = {}) => {
+export const extractAudio = (
+  videoPath,
+  outputPath,
+  {bitrate = '48k', sampleRate = '16000', channels = 1, format = 'mp3'} = {},
+) => {
   const codec = format === 'wav' ? 'pcm_s16le' : 'libmp3lame';
-  const ext = format === 'wav' ? 'wav' : 'mp3';
 
   const args = [
-    '-hide_banner', '-loglevel', 'error', '-y',
-    '-i', videoPath,
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-i',
+    videoPath,
     '-vn',
-    '-acodec', codec,
-    '-b:a', bitrate,
-    '-ar', sampleRate,
-    '-ac', String(channels),
+    '-acodec',
+    codec,
+    '-b:a',
+    bitrate,
+    '-ar',
+    sampleRate,
+    '-ac',
+    String(channels),
   ];
 
   if (format === 'mp3') {
@@ -290,22 +303,42 @@ export const extractAudio = (videoPath, outputPath, {bitrate = '48k', sampleRate
  * Split a video segment by start time and duration.
  * Returns the path to the output segment.
  */
-export const splitVideoSegment = (videoPath, startSeconds, durationSeconds, outputPath, {width = 1280, fps = 30} = {}) => {
+export const splitVideoSegment = (
+  videoPath,
+  startSeconds,
+  durationSeconds,
+  outputPath,
+  {width = 1280} = {},
+) => {
   execFileSync(
     'ffmpeg',
     [
-      '-hide_banner', '-loglevel', 'error', '-y',
-      '-ss', String(startSeconds),
-      '-t', String(durationSeconds),
-      '-i', videoPath,
-      '-map', '0:v?',
-      '-map', '0:a?',
-      '-c:v', 'libx264',
-      '-vf', `scale='min(${width},iw)':-2`,
-      '-preset', 'veryfast',
-      '-crf', '18',
-      '-c:a', 'aac',
-      '-b:a', '192k',
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-y',
+      '-ss',
+      String(startSeconds),
+      '-t',
+      String(durationSeconds),
+      '-i',
+      videoPath,
+      '-map',
+      '0:v?',
+      '-map',
+      '0:a?',
+      '-c:v',
+      'libx264',
+      '-vf',
+      `scale='min(${width},iw)':-2`,
+      '-preset',
+      'veryfast',
+      '-crf',
+      '18',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '192k',
       outputPath,
     ],
     {stdio: 'inherit'},
@@ -323,6 +356,19 @@ export const formatTimestamp = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = Math.floor(totalSeconds % 60);
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
+/**
+ * Write a JSON result to stdout when --json mode is enabled.
+ *
+ * The project's machine-readable-output convention: scripts that support
+ * `--json` print ONLY the JSON result to stdout and route every human log
+ * to stderr (see scripts/video.mjs for the reference implementation).
+ */
+export const emitJsonResult = (result, enabled) => {
+  if (enabled) {
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+  }
 };
 
 /**

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, projectRoot, slugify as canonicalSlugify} from './lib.mjs';
 
 const usage = `
 Usage:
@@ -35,16 +35,31 @@ const supportedExtensions = new Set([
 
 const categoryRules = [
   ['money', /\b(cash|coin|register|purchase|racks|dollar|money|kaching|ting)\b/i],
-  ['whoosh', /\b(whoosh|woosh|swoosh|swish|swipe|swing|arrow|wind|transition|warp|slide|portal|incoming)\b/i],
-  ['impact', /\b(boom|hit|punch|slam|thud|drop|subsonic|crash|struck|core|brass|grand|metal|shot|bass|beating)\b/i],
-  ['glitch', /\b(glitch|error|access|denied|reboot|failure|dial|data|digits|loading|network|processing|transfer|download|switcher|intermodulation|scifi|sci-fi|terminal|electricity|static|futuristic)\b/i],
+  [
+    'whoosh',
+    /\b(whoosh|woosh|swoosh|swish|swipe|swing|arrow|wind|transition|warp|slide|portal|incoming)\b/i,
+  ],
+  [
+    'impact',
+    /\b(boom|hit|punch|slam|thud|drop|subsonic|crash|struck|core|brass|grand|metal|shot|bass|beating)\b/i,
+  ],
+  [
+    'glitch',
+    /\b(glitch|error|access|denied|reboot|failure|dial|data|digits|loading|network|processing|transfer|download|switcher|intermodulation|scifi|sci-fi|terminal|electricity|static|futuristic)\b/i,
+  ],
   ['click', /\b(click|mouse|select|menu|press|gun)\b/i],
   ['typing', /\b(keyboard|typing|typewriter|writing|pencil)\b/i],
   ['camera', /\b(camera|shutter|lens|flash|projector)\b/i],
   ['pop', /\b(pop|bloop|bubble|suction|cork|bottle)\b/i],
-  ['alert', /\b(ding|notification|iphone|discord|twitch|alert|correct|quick[- ]?win|apple|join|leave)\b/i],
+  [
+    'alert',
+    /\b(ding|notification|iphone|discord|twitch|alert|correct|quick[- ]?win|apple|join|leave)\b/i,
+  ],
   ['suspense', /\b(suspense|spooky|horror|awkward|hmmm|confused|nope|disappointed|wrong|dark)\b/i],
-  ['comedy', /\b(fart|goofy|meme|yeet|mario|minecraft|among|taco|duck|toy|cartoon|rizz|augg|faah|what|spider|illuminati|animal crossing|doraemon|kids|awww|eating|dog)\b/i],
+  [
+    'comedy',
+    /\b(fart|goofy|meme|yeet|mario|minecraft|among|taco|duck|toy|cartoon|rizz|augg|faah|what|spider|illuminati|animal crossing|doraemon|kids|awww|eating|dog)\b/i,
+  ],
   ['crowd', /\b(applause|crowd|party|boxing|bell)\b/i],
   ['paper', /\b(paper|crumpled|ripping|flip|page)\b/i],
   ['music', /\b(music|podcast|cinematic sounds|we own|trap|zay|purple|eyes)\b/i],
@@ -59,20 +74,16 @@ const stripNoise = (value) =>
     .replace(/\.[^.]+$/, '')
     .replace(/onlymp3\.to/gi, '')
     .replace(/\([^)]*(?:mp3|kbps|hd|copyright|no copyright|sound effect)[^)]*\)/gi, ' ')
-    .replace(/\b(?:sound|effect|effects|sfx|fx|hd|no copyright|non copyrighted|copyright free|free use|free stock|royalty free|most viewed video|mp3|wav|m4a|aiff|cbr|kbps|technical|producer|for editing)\b/gi, ' ')
+    .replace(
+      /\b(?:sound|effect|effects|sfx|fx|hd|no copyright|non copyrighted|copyright free|free use|free stock|royalty free|most viewed video|mp3|wav|m4a|aiff|cbr|kbps|technical|producer|for editing)\b/gi,
+      ' ',
+    )
     .replace(/[_-]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
-const slugify = (value) => {
-  const slug = String(value ?? '')
-    .toLowerCase()
-    .replace(/&/g, ' and ')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 54);
-  return slug || 'sound';
-};
+const slugify = (value) =>
+  canonicalSlugify(String(value ?? '').replace(/&/g, ' and '), 'sound').slice(0, 54);
 
 const inferCategory = (name) => {
   const source = String(name ?? '');
@@ -190,7 +201,8 @@ const plan = files.map((filePath) => {
     };
   }
 
-  const cleanTitle = stripNoise(originalName) || path.basename(originalName, path.extname(originalName));
+  const cleanTitle =
+    stripNoise(originalName) || path.basename(originalName, path.extname(originalName));
   const category = inferCategory(`${originalName} ${cleanTitle}`);
   const next = (categoryCounts.get(category) ?? 0) + 1;
   categoryCounts.set(category, next);

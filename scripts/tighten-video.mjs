@@ -11,15 +11,9 @@ import {
   probeVideo,
   requireArg,
   run,
-  slugify,
   splitVideoSegment,
 } from './lib.mjs';
-import {
-  resolveProvider,
-  createClient,
-  resolveModel,
-  chatCompletion,
-} from './ai-provider.mjs';
+import {resolveProvider, createClient, resolveModel, chatCompletion} from './ai-provider.mjs';
 
 const usage = `
 Usage:
@@ -94,11 +88,7 @@ const transcriptPath = path.join(workDir, `${safeBase}.transcript.json`);
 
 if (!fs.existsSync(transcriptPath)) {
   console.log('Transcribing video...');
-  const transcribeArgs = [
-    'run', 'transcribe', '--',
-    '--video', video,
-    '--out', transcriptPath,
-  ];
+  const transcribeArgs = ['run', 'transcribe', '--', '--video', video, '--out', transcriptPath];
   if (args.language) {
     transcribeArgs.push('--language', String(args.language));
   }
@@ -216,9 +206,7 @@ let rawCuts = [];
 let usedModel;
 
 if (!resolved.config) {
-  console.warn(
-    'No DEEPSEEK_API_KEY or OPENAI_API_KEY found. No cuts will be suggested.',
-  );
+  console.warn('No DEEPSEEK_API_KEY or OPENAI_API_KEY found. No cuts will be suggested.');
   usedModel = 'none';
 } else {
   const client = createClient(resolved);
@@ -260,8 +248,7 @@ const normalizeCut = (cut, index) => ({
   index: index + 1,
   startSeconds: Math.round(Number(cut.startSeconds) * 10) / 10,
   endSeconds: Math.round(Number(cut.endSeconds) * 10) / 10,
-  durationSeconds:
-    Math.round((Number(cut.endSeconds) - Number(cut.startSeconds)) * 10) / 10,
+  durationSeconds: Math.round((Number(cut.endSeconds) - Number(cut.startSeconds)) * 10) / 10,
   reason: ['filler', 'repetition', 'tangent', 'wordiness'].includes(
     String(cut.reason ?? '').toLowerCase(),
   )
@@ -280,8 +267,7 @@ for (const cut of cuts) {
   if (prev && cut.startSeconds < prev.endSeconds) {
     // Merge overlapping
     prev.endSeconds = Math.max(prev.endSeconds, cut.endSeconds);
-    prev.durationSeconds =
-      Math.round((prev.endSeconds - prev.startSeconds) * 10) / 10;
+    prev.durationSeconds = Math.round((prev.endSeconds - prev.startSeconds) * 10) / 10;
     prev.reason = prev.reason === cut.reason ? prev.reason : 'mixed';
     prev.description += '; ' + cut.description;
   } else {
@@ -300,8 +286,7 @@ for (const cut of cuts) {
     keptSegments.push({
       startSeconds: Math.round(cursor * 10) / 10,
       endSeconds: cut.startSeconds,
-      durationSeconds:
-        Math.round((cut.startSeconds - cursor) * 10) / 10,
+      durationSeconds: Math.round((cut.startSeconds - cursor) * 10) / 10,
     });
   }
   cursor = cut.endSeconds;
@@ -312,8 +297,7 @@ if (cursor < videoMeta.durationSeconds - 0.5) {
   keptSegments.push({
     startSeconds: Math.round(cursor * 10) / 10,
     endSeconds: Math.round(videoMeta.durationSeconds * 10) / 10,
-    durationSeconds:
-      Math.round((videoMeta.durationSeconds - cursor) * 10) / 10,
+    durationSeconds: Math.round((videoMeta.durationSeconds - cursor) * 10) / 10,
   });
 }
 
@@ -337,7 +321,9 @@ const output = {
 };
 
 fs.writeFileSync(outPath, `${JSON.stringify(output, null, 2)}\n`);
-console.log(`\nFound ${cuts.length} sections to cut (${formatTimestamp(totalCutSeconds)} removed, ${formatTimestamp(keptDuration)} kept)`);
+console.log(
+  `\nFound ${cuts.length} sections to cut (${formatTimestamp(totalCutSeconds)} removed, ${formatTimestamp(keptDuration)} kept)`,
+);
 console.log(`Cuts written to: ${outPath}`);
 
 if (cuts.length > 0) {
@@ -375,11 +361,18 @@ if (shouldTighten && keptSegments.length > 0) {
   execFileSync(
     'ffmpeg',
     [
-      '-hide_banner', '-loglevel', 'error', '-y',
-      '-f', 'concat',
-      '-safe', '0',
-      '-i', concatPath,
-      '-c', 'copy',
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-y',
+      '-f',
+      'concat',
+      '-safe',
+      '0',
+      '-i',
+      concatPath,
+      '-c',
+      'copy',
       tightenOut,
     ],
     {stdio: 'inherit'},

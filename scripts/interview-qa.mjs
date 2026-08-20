@@ -19,17 +19,11 @@ import {
   probeVideo,
   readCaptions,
   requireArg,
-  isElectron,
-} from "./lib.mjs";
-import { slugify } from "./clipkit-lib.mjs";
-import {
-  resolveProvider,
-  createClient,
-  resolveModel,
-  chatCompletion,
-} from "./ai-provider.mjs";
-import fs from "node:fs";
-import path from "node:path";
+} from './lib.mjs';
+import {slugify} from './clipkit-lib.mjs';
+import {resolveProvider, createClient, resolveModel, chatCompletion} from './ai-provider.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const usage = `
 Usage: node scripts/interview-qa.mjs --video <path> [options]
@@ -50,18 +44,14 @@ Options:
 
 function resolveTranscriptSource(videoPath, args) {
   if (args.captions && fs.existsSync(args.captions)) {
-    return { type: "provided", path: args.captions };
+    return {type: 'provided', path: args.captions};
   }
 
   // Auto-discover captions from standard output location
   const slug = slugify(path.parse(videoPath).name);
-  const standardPath = path.join(
-    outputsRoot,
-    "transcriptions",
-    `${slug}.captions.json`,
-  );
+  const standardPath = path.join(outputsRoot, 'transcriptions', `${slug}.captions.json`);
   if (fs.existsSync(standardPath)) {
-    return { type: "discovered", path: standardPath };
+    return {type: 'discovered', path: standardPath};
   }
 
   return null;
@@ -72,7 +62,7 @@ function resolveTranscriptSource(videoPath, args) {
 function buildQAPrompt(captions, durationSeconds, maxSegments) {
   const transcriptText = captions
     .map((c) => `[${formatTimestamp(c.startMs / 1000)}] ${c.text}`)
-    .join("\n");
+    .join('\n');
 
   return {
     systemPrompt: `You are an expert video editor specializing in interview content. Your task is to analyze interview transcripts and identify Question & Answer pairs suitable for short-form video clips.
@@ -122,14 +112,14 @@ Return ONLY the JSON object — no markdown, no explanation.`,
 function formatTimestamp(seconds) {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 // ── Validation ──────────────────────────────────────────────────
 
 function validateQASegments(parsed, durationSeconds, maxSegments) {
   if (!parsed || !Array.isArray(parsed.segments)) {
-    throw new Error("AI response missing segments array");
+    throw new Error('AI response missing segments array');
   }
 
   const segments = parsed.segments
@@ -138,15 +128,13 @@ function validateQASegments(parsed, durationSeconds, maxSegments) {
     .slice(0, maxSegments)
     .map((s, i) => ({
       index: i + 1,
-      question: String(s.question || "").trim(),
-      answer: String(s.answer || "").trim(),
-      speakerQ: String(s.speakerQ || "Interviewer").trim(),
-      speakerA: String(s.speakerA || "Guest").trim(),
+      question: String(s.question || '').trim(),
+      answer: String(s.answer || '').trim(),
+      speakerQ: String(s.speakerQ || 'Interviewer').trim(),
+      speakerA: String(s.speakerA || 'Guest').trim(),
       startSeconds: Number(s.startSeconds),
       endSeconds: Number(s.endSeconds),
-      durationSeconds: Number(
-        s.durationSeconds || s.endSeconds - s.startSeconds,
-      ),
+      durationSeconds: Number(s.durationSeconds || s.endSeconds - s.startSeconds),
       confidence: Number(s.confidence ?? 0.5),
     }));
 
@@ -154,12 +142,12 @@ function validateQASegments(parsed, durationSeconds, maxSegments) {
     // Fallback: time-based even splits
     const splitCount = Math.min(maxSegments, Math.floor(durationSeconds / 30));
     const splitDuration = durationSeconds / splitCount;
-    return Array.from({ length: splitCount }, (_, i) => ({
+    return Array.from({length: splitCount}, (_, i) => ({
       index: i + 1,
       question: `Segment ${i + 1}`,
       answer: `Content from ${formatTimestamp(i * splitDuration)} to ${formatTimestamp((i + 1) * splitDuration)}`,
-      speakerQ: "Speaker A",
-      speakerA: "Speaker B",
+      speakerQ: 'Speaker A',
+      speakerA: 'Speaker B',
       startSeconds: Math.round(i * splitDuration * 10) / 10,
       endSeconds: Math.round((i + 1) * splitDuration * 10) / 10,
       durationSeconds: Math.round(splitDuration * 10) / 10,
@@ -176,12 +164,12 @@ async function runInterviewQA(options = {}, context = {}) {
   const args = {
     video: options.video,
     captions: options.captions,
-    minSegmentSeconds: Number(options.minSegmentSeconds || options["min-segment-seconds"]) || 5,
-    maxSegments: Number(options.maxSegments || options["max-segments"]) || 20,
+    minSegmentSeconds: Number(options.minSegmentSeconds || options['min-segment-seconds']) || 5,
+    maxSegments: Number(options.maxSegments || options['max-segments']) || 20,
     out: options.out,
     provider: options.provider,
     model: options.model,
-    dryRun: options.dryRun || options["dry-run"],
+    dryRun: options.dryRun || options['dry-run'],
   };
 
   const videoPath = path.resolve(args.video);
@@ -191,19 +179,22 @@ async function runInterviewQA(options = {}, context = {}) {
 
   const videoName = path.parse(videoPath).name;
   const slug = slugify(videoName);
-  const outDir = path.join(outputsRoot, "interview-qa");
+  const outDir = path.join(outputsRoot, 'interview-qa');
   ensureDir(outDir);
 
-  const outPath =
-    args.out || path.join(outDir, `${slug}.qa-segments.json`);
+  const outPath = args.out || path.join(outDir, `${slug}.qa-segments.json`);
 
   // Probe video for duration
-  let durationSeconds = 0;
+  let durationSeconds;
   try {
     const probe = probeVideo(videoPath);
     durationSeconds = probe.durationSeconds;
     if (context.onProgress) {
-      context.onProgress({ stage: "Probe", percent: 5, message: `Video: ${Math.round(durationSeconds)}s` });
+      context.onProgress({
+        stage: 'Probe',
+        percent: 5,
+        message: `Video: ${Math.round(durationSeconds)}s`,
+      });
     }
   } catch {
     durationSeconds = 300; // Fallback assumption
@@ -213,7 +204,7 @@ async function runInterviewQA(options = {}, context = {}) {
   const transcriptSource = resolveTranscriptSource(videoPath, args);
   if (!transcriptSource) {
     throw new Error(
-      "No captions found. Transcribe the video first:\n" +
+      'No captions found. Transcribe the video first:\n' +
         `  node scripts/transcribe-openai.mjs --video "${videoPath}"`,
     );
   }
@@ -221,26 +212,26 @@ async function runInterviewQA(options = {}, context = {}) {
   const captions = readCaptions(transcriptSource.path);
   if (context.onProgress) {
     context.onProgress({
-      stage: "Transcript",
+      stage: 'Transcript',
       percent: 10,
       message: `Loaded ${captions.length} captions from ${transcriptSource.type}`,
     });
   }
 
   // Run AI analysis
-  const resolved = resolveProvider({ provider: args.provider });
+  const resolved = resolveProvider({provider: args.provider});
   if (!resolved.config) {
     // No AI provider available — generate time-based splits
-    console.log("No AI provider available. Using time-based splits.");
+    console.log('No AI provider available. Using time-based splits.');
     const splitCount = Math.min(args.maxSegments, Math.floor(durationSeconds / 25));
     const splitDuration = durationSeconds / splitCount;
 
-    const segments = Array.from({ length: splitCount }, (_, i) => ({
+    const segments = Array.from({length: splitCount}, (_, i) => ({
       index: i + 1,
       question: `Segment ${i + 1}`,
-      answer: "",
-      speakerQ: "Speaker A",
-      speakerA: "Speaker B",
+      answer: '',
+      speakerQ: 'Speaker A',
+      speakerA: 'Speaker B',
       startSeconds: Math.round(i * splitDuration * 10) / 10,
       endSeconds: Math.round((i + 1) * splitDuration * 10) / 10,
       durationSeconds: Math.round(splitDuration * 10) / 10,
@@ -251,35 +242,39 @@ async function runInterviewQA(options = {}, context = {}) {
       sourceVideo: videoPath,
       durationSeconds,
       segmentCount: segments.length,
-      provider: "time-based",
-      model: "none",
+      provider: 'time-based',
+      model: 'none',
       createdAt: new Date().toISOString(),
       segments,
     };
 
     if (!args.dryRun) {
-      fs.writeFileSync(outPath, JSON.stringify(output, null, 2), "utf8");
+      fs.writeFileSync(outPath, JSON.stringify(output, null, 2), 'utf8');
     }
 
     if (context.onProgress) {
-      context.onProgress({ stage: "Done", percent: 100, message: `${segments.length} segments (time-based)` });
+      context.onProgress({
+        stage: 'Done',
+        percent: 100,
+        message: `${segments.length} segments (time-based)`,
+      });
     }
 
     return output;
   }
 
   if (context.onProgress) {
-    context.onProgress({ stage: "AI Analysis", percent: 30, message: `Calling ${resolved.provider}...` });
+    context.onProgress({
+      stage: 'AI Analysis',
+      percent: 30,
+      message: `Calling ${resolved.provider}...`,
+    });
   }
 
   const client = createClient(resolved);
-  const model = resolveModel({ resolved, model: args.model });
+  const model = resolveModel({resolved, model: args.model});
 
-  const { systemPrompt, userPrompt } = buildQAPrompt(
-    captions,
-    durationSeconds,
-    args.maxSegments,
-  );
+  const {systemPrompt, userPrompt} = buildQAPrompt(captions, durationSeconds, args.maxSegments);
 
   const text = await chatCompletion(client, {
     model,
@@ -290,7 +285,7 @@ async function runInterviewQA(options = {}, context = {}) {
   });
 
   if (context.onProgress) {
-    context.onProgress({ stage: "Parse", percent: 80, message: "Parsing Q&A segments..." });
+    context.onProgress({stage: 'Parse', percent: 80, message: 'Parsing Q&A segments...'});
   }
 
   let parsed;
@@ -300,7 +295,7 @@ async function runInterviewQA(options = {}, context = {}) {
     // Try to extract JSON from markdown fences
     const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (match) parsed = JSON.parse(match[1]);
-    else throw new Error("Failed to parse AI response as JSON");
+    else throw new Error('Failed to parse AI response as JSON');
   }
 
   const segments = validateQASegments(parsed, durationSeconds, args.maxSegments);
@@ -317,7 +312,7 @@ async function runInterviewQA(options = {}, context = {}) {
   };
 
   if (!args.dryRun) {
-    fs.writeFileSync(outPath, JSON.stringify(output, null, 2), "utf8");
+    fs.writeFileSync(outPath, JSON.stringify(output, null, 2), 'utf8');
   }
 
   console.log(`✅ Detected ${segments.length} Q&A segments`);
@@ -330,7 +325,11 @@ async function runInterviewQA(options = {}, context = {}) {
   if (segments.length > 5) console.log(`   ... and ${segments.length - 5} more`);
 
   if (context.onProgress) {
-    context.onProgress({ stage: "Done", percent: 100, message: `${segments.length} Q&A segments detected` });
+    context.onProgress({
+      stage: 'Done',
+      percent: 100,
+      message: `${segments.length} Q&A segments detected`,
+    });
   }
 
   return output;
@@ -339,10 +338,7 @@ async function runInterviewQA(options = {}, context = {}) {
 // ── CLI Entry ────────────────────────────────────────────────────
 
 const isDirectRun =
-  process.argv[1] &&
-  import.meta.url.endsWith(
-    process.argv[1].replace(/^.*[\\/]/, ""),
-  );
+  process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*[\\/]/, ''));
 
 if (isDirectRun) {
   const args = parseArgs(process.argv.slice(2));
@@ -355,14 +351,14 @@ if (isDirectRun) {
   loadEnv();
 
   runInterviewQA({
-    video: requireArg(args, "video", "Missing --video <path>"),
+    video: requireArg(args, 'video', 'Missing --video <path>'),
     captions: args.captions,
-    "min-segment-seconds": args["min-segment-seconds"],
-    "max-segments": args["max-segments"],
+    'min-segment-seconds': args['min-segment-seconds'],
+    'max-segments': args['max-segments'],
     out: args.out,
     provider: args.provider,
     model: args.model,
-    dryRun: !!args["dry-run"],
+    dryRun: !!args['dry-run'],
   })
     .then(() => process.exit(0))
     .catch(() => {
@@ -371,4 +367,4 @@ if (isDirectRun) {
     });
 }
 
-export { runInterviewQA };
+export {runInterviewQA};

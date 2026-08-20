@@ -1,17 +1,17 @@
-import { useState, useCallback, useRef, type DragEvent, type ChangeEvent } from "react";
+import {useState, useCallback, useRef, type DragEvent, type ChangeEvent} from 'react';
 
 interface DragDropZoneProps {
   onVideoSelected: (filePath: string, fileName: string, fileSize: number) => void;
   disabled?: boolean;
-  acceptedFile?: { name: string; path: string; size: number } | null;
+  acceptedFile?: {name: string; path: string; size: number} | null;
 }
 
-export default function DragDropZone({ onVideoSelected, disabled, acceptedFile }: DragDropZoneProps) {
+export default function DragDropZone({onVideoSelected, disabled, acceptedFile}: DragDropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const VIDEO_EXTENSIONS = [".mp4", ".mov", ".m4v", ".webm", ".mkv", ".avi"];
+  const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.m4v', '.webm', '.mkv', '.avi'];
 
   const isValidVideo = (name: string) =>
     VIDEO_EXTENSIONS.some((ext) => name.toLowerCase().endsWith(ext));
@@ -20,7 +20,7 @@ export default function DragDropZone({ onVideoSelected, disabled, acceptedFile }
     async (file: File) => {
       setError(null);
       if (!isValidVideo(file.name)) {
-        setError(`Unsupported format. Use: ${VIDEO_EXTENSIONS.join(", ")}`);
+        setError(`Unsupported format. Use: ${VIDEO_EXTENSIONS.join(', ')}`);
         return;
       }
       // Get the real filesystem path via Electron's File.path
@@ -28,17 +28,20 @@ export default function DragDropZone({ onVideoSelected, disabled, acceptedFile }
       if (filePath) {
         onVideoSelected(filePath, file.name, file.size);
       } else {
-        setError("Could not resolve file path. Try browsing instead.");
+        setError('Could not resolve file path. Try browsing instead.');
       }
     },
-    [onVideoSelected]
+    [onVideoSelected],
   );
 
-  const handleDragOver = useCallback((e: DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!disabled) setIsDragOver(true);
-  }, [disabled]);
+  const handleDragOver = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!disabled) setIsDragOver(true);
+    },
+    [disabled],
+  );
 
   const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault();
@@ -60,31 +63,14 @@ export default function DragDropZone({ onVideoSelected, disabled, acceptedFile }
       if (videoFile) {
         await processFile(videoFile);
       } else {
-        setError("No video file found. Drop an MP4, MOV, or similar.");
+        setError('No video file found. Drop an MP4, MOV, or similar.');
       }
     },
-    [disabled, processFile]
+    [disabled, processFile],
   );
 
-  const handleBrowse = useCallback(async () => {
-    try {
-      const path = await (window as any).cca?.pickPath({
-        title: "Select interview video",
-        filters: [{ name: "Videos", extensions: ["mp4", "mov", "m4v", "webm", "mkv"] }],
-      });
-      if (path?.filePaths?.[0]) {
-        const fullPath = path.filePaths[0];
-        const name = fullPath.split("/").pop() || fullPath;
-        onVideoSelected(fullPath, name, 0);
-      }
-    } catch {
-      // Fallback to native input
-      inputRef.current?.click();
-    }
-  }, [onVideoSelected]);
-
   const formatSize = (bytes: number) => {
-    if (!bytes || bytes === 0) return "";
+    if (!bytes || bytes === 0) return '';
     if (bytes > 1e9) return `${(bytes / 1e9).toFixed(1)} GB`;
     if (bytes > 1e6) return `${(bytes / 1e6).toFixed(1)} MB`;
     return `${(bytes / 1e3).toFixed(0)} KB`;
@@ -93,7 +79,9 @@ export default function DragDropZone({ onVideoSelected, disabled, acceptedFile }
   // If a file is already accepted, show it
   if (acceptedFile) {
     return (
-      <div className={`glass-lg p-6 text-center border-2 border-accent-green/40 bg-accent-green/5 transition-all duration-300`}>
+      <div
+        className={`glass-lg p-6 text-center border-2 border-accent-green/40 bg-accent-green/5 transition-all duration-300`}
+      >
         <div className="text-3xl mb-2">✅</div>
         <div className="text-sm font-semibold text-text-main truncate">{acceptedFile.name}</div>
         <div className="text-xs text-text-dim mt-1">
@@ -119,11 +107,12 @@ export default function DragDropZone({ onVideoSelected, disabled, acceptedFile }
       onDrop={handleDrop}
       onClick={() => inputRef.current?.click()}
       className={`glass-lg p-8 text-center border-2 border-dashed cursor-pointer transition-all duration-300
-        ${isDragOver
-          ? "border-accent-cyan bg-accent-cyan/10 scale-[1.02]"
-          : "border-glass-border-strong hover:border-accent-blue/40 hover:bg-glass-bg-hover"
+        ${
+          isDragOver
+            ? 'border-accent-cyan bg-accent-cyan/10 scale-[1.02]'
+            : 'border-glass-border-strong hover:border-accent-blue/40 hover:bg-glass-bg-hover'
         }
-        ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       <input
         ref={inputRef}
@@ -133,16 +122,16 @@ export default function DragDropZone({ onVideoSelected, disabled, acceptedFile }
         onChange={async (e: ChangeEvent<HTMLInputElement>) => {
           const file = e.target.files?.[0];
           if (file) await processFile(file);
-          if (inputRef.current) inputRef.current.value = "";
+          if (inputRef.current) inputRef.current.value = '';
         }}
       />
 
       <div className="text-5xl mb-3">🎬</div>
       <div className="text-base font-semibold text-text-main mb-1">
-        {isDragOver ? "✨ Drop it!" : "Drag & Drop Interview Video"}
+        {isDragOver ? '✨ Drop it!' : 'Drag & Drop Interview Video'}
       </div>
       <div className="text-sm text-text-dim">
-        {isDragOver ? "Release to analyze" : "or click to browse"}
+        {isDragOver ? 'Release to analyze' : 'or click to browse'}
       </div>
       <div className="text-xs text-text-muted mt-2">
         MP4, MOV, M4V, WebM — 2-person interview format

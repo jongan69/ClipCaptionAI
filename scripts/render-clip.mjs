@@ -6,7 +6,6 @@ import {
   ensureDir,
   parseArgs,
   probeVideo,
-  projectRoot,
   publicMediaRoot,
   readCaptionStyleConfig,
   readCaptions,
@@ -62,9 +61,7 @@ const vertical =
   String(styleConfig.outputAspect ?? '') === '9:16';
 const width = Number(args.width ?? (vertical ? 1080 : metadata.width));
 const height = Number(args.height ?? (vertical ? 1920 : metadata.height));
-const fit = String(
-  args.fit ?? (verticalContain ? 'contain' : styleConfig.fit ?? 'cover'),
-);
+const fit = String(args.fit ?? (verticalContain ? 'contain' : (styleConfig.fit ?? 'cover')));
 const highlightedWords = args['highlight-words']
   ? String(args['highlight-words'])
       .split(',')
@@ -96,19 +93,14 @@ const props = {
     inactiveScale: Number(args['inactive-scale'] ?? styleConfig.inactiveScale ?? 0.62),
     uppercase: args.uppercase ? true : Boolean(styleConfig.uppercase),
     highlightedWords,
-    visibleTextLayerEnabled: args['no-captions']
-      ? false
-      : styleConfig.visibleTextLayerEnabled,
+    visibleTextLayerEnabled: args['no-captions'] ? false : styleConfig.visibleTextLayerEnabled,
     effectLayerEnabled: args['no-captions'] ? false : styleConfig.effectLayerEnabled,
   },
 };
 
 ensureDir(path.dirname(out));
 
-const propsPath = path.join(
-  os.tmpdir(),
-  `remotion-caption-props-${Date.now()}.json`,
-);
+const propsPath = path.join(os.tmpdir(), `remotion-caption-props-${Date.now()}.json`);
 fs.writeFileSync(propsPath, JSON.stringify(props, null, 2));
 
 const renderArgs = [

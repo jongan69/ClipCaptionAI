@@ -42,23 +42,23 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
           opacity: interpolate(progress, [0, 1], [0.85, 1]),
         }}
       >
-        {logo.layer('brackets') ? (
+        {logo.layer('frame') ? (
           <g
             style={{
               transform: `translate(${bracketDepth / 1.8}px, ${bracketDepth}px)`,
             }}
           >
-            <RawLayer logo={logo} id="brackets" />
+            <RawLayer logo={logo} id="frame" />
           </g>
         ) : null}
 
         <g
           style={{
             transform: `translate(${markDepth / 3}px, ${markDepth}px) scale(${markScale})`,
-            transformOrigin: originOf(logo, 'l-mark'),
+            transformOrigin: originOf(logo, 'mark'),
           }}
         >
-          <RawLayer logo={logo} id="l-mark" />
+          <RawLayer logo={logo} id="mark" />
         </g>
 
         <g
@@ -90,10 +90,10 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
         })}
         style={{
           transform: `scale(${settlePulse})`,
-          transformOrigin: originOf(logo, 'l-mark'),
+          transformOrigin: originOf(logo, 'mark'),
         }}
       >
-        {logo.layer('brackets') ? <RawLayer logo={logo} id="brackets" /> : null}
+        {logo.layer('frame') ? <RawLayer logo={logo} id="frame" /> : null}
       </g>
     </LogoSvg>
   );

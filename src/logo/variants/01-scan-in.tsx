@@ -15,18 +15,18 @@ export const meta = {
   name: 'Scan In',
   durationInFrames: 120,
   description:
-    'Corner brackets draw on like a scanner acquiring a target, the mark fades up inside them, wordmark rises last.',
+    'Corner frame draw on like a scanner acquiring a target, the mark fades up inside them, wordmark rises last.',
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
-  const brackets = logo.layer('brackets');
+  const frameLayer = logo.layer('frame');
   const wordmark = logo.layer('wordmark');
 
-  // --- brackets draw on, staggered per corner -------------------------------
-  const bracketPaths = [...(brackets?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map(
+  // --- frame draw on, staggered per corner -------------------------------
+  const framePaths = [...(frameLayer?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map(
     (m) => m[1]
   );
-  const dashLen = Math.max(...bracketPaths.map(approxPathLength), 100) * 1.4;
+  const dashLen = Math.max(...framePaths.map(approxPathLength), 100) * 1.4;
 
   // --- mark (L + card) fades and scales up ----------------------------------
   const markIn = spring({frame: frame - 18, fps, config: {damping: 200}});
@@ -50,15 +50,15 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
 
   return (
     <LogoSvg logo={logo}>
-      {brackets ? (
+      {frameLayer ? (
         <g
           fill="none"
-          stroke={brackets.stroke ?? logo.brand.palette.primary}
-          strokeWidth={brackets.strokeWidth ?? 15}
+          stroke={frameLayer.stroke ?? logo.brand.palette.primary}
+          strokeWidth={frameLayer.strokeWidth ?? 15}
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          {bracketPaths.map((d, i) => {
+          {framePaths.map((d, i) => {
             const draw = interpolate(frame, [i * 4, i * 4 + 20], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',
@@ -79,10 +79,10 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
         opacity={markOpacity}
         style={{
           transform: `scale(${markScale})`,
-          transformOrigin: originOf(logo, 'l-mark'),
+          transformOrigin: originOf(logo, 'mark'),
         }}
       >
-        <RawLayer logo={logo} id="l-mark" />
+        <RawLayer logo={logo} id="mark" />
         <RawLayer
           logo={logo}
           id="card"

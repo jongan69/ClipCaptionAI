@@ -1,6 +1,6 @@
-import { safeStorage } from "electron";
-import fs from "node:fs";
-import path from "node:path";
+import {safeStorage} from 'electron';
+import fs from 'node:fs';
+import path from 'node:path';
 
 /**
  * Secret vault for API keys.
@@ -23,10 +23,10 @@ export class SecretVault {
   load() {
     try {
       if (!fs.existsSync(this.#path)) return;
-      const raw = JSON.parse(fs.readFileSync(this.#path, "utf8"));
+      const raw = JSON.parse(fs.readFileSync(this.#path, 'utf8'));
       for (const [key, encrypted] of Object.entries(raw)) {
         if (safeStorage.isEncryptionAvailable()) {
-          this.#secrets[key] = safeStorage.decryptString(Buffer.from(encrypted, "base64"));
+          this.#secrets[key] = safeStorage.decryptString(Buffer.from(encrypted, 'base64'));
         } else {
           this.#secrets[key] = encrypted; // Plaintext fallback
         }
@@ -42,26 +42,33 @@ export class SecretVault {
    */
   save() {
     const dir = path.dirname(this.#path);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
 
     const encrypted = {};
     for (const [key, value] of Object.entries(this.#secrets)) {
       if (!value) continue;
       if (safeStorage.isEncryptionAvailable()) {
-        encrypted[key] = safeStorage.encryptString(value).toString("base64");
+        encrypted[key] = safeStorage.encryptString(value).toString('base64');
       } else {
         encrypted[key] = value; // Plaintext fallback
       }
     }
 
-    fs.writeFileSync(this.#path, JSON.stringify(encrypted, null, 2), { mode: 0o600 });
+    fs.writeFileSync(this.#path, JSON.stringify(encrypted, null, 2), {mode: 0o600});
   }
 
   /**
    * Get a single secret value (main process only).
    */
   get(key) {
-    return this.#secrets[key] || "";
+    return this.#secrets[key] || '';
+  }
+
+  /**
+   * Get a shallow copy of all secrets (main process only).
+   */
+  getAll() {
+    return {...this.#secrets};
   }
 
   /**
@@ -89,11 +96,11 @@ export class SecretVault {
    */
   getPresence() {
     return {
-      hasOpenAI: !!this.#secrets["OPENAI_API_KEY"],
-      hasDeepSeek: !!this.#secrets["DEEPSEEK_API_KEY"],
-      hasYouTube: !!this.#secrets["YOUTUBE_API_KEY"],
-      hasFal: !!this.#secrets["FAL_KEY"],
-      hasElevenLabs: !!this.#secrets["ELEVENLABS_API_KEY"],
+      hasOpenAI: !!this.#secrets['OPENAI_API_KEY'],
+      hasDeepSeek: !!this.#secrets['DEEPSEEK_API_KEY'],
+      hasYouTube: !!this.#secrets['YOUTUBE_API_KEY'],
+      hasFal: !!this.#secrets['FAL_KEY'],
+      hasElevenLabs: !!this.#secrets['ELEVENLABS_API_KEY'],
     };
   }
 

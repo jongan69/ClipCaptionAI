@@ -1,7 +1,7 @@
-import { type ButtonHTMLAttributes, type ReactNode } from "react";
+import {type ButtonHTMLAttributes, type ReactNode} from 'react';
 
-type Variant = "primary" | "secondary" | "danger" | "ghost";
-type Size = "sm" | "md" | "lg";
+type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type Size = 'sm' | 'md' | 'lg';
 
 interface GlassButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -13,28 +13,25 @@ interface GlassButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-gradient-to-r from-accent-cyan to-accent-blue text-surface-dark border-transparent font-semibold",
-  secondary:
-    "glass-strong text-text-main hover:bg-glass-bg-hover",
-  danger:
-    "border-accent-rose/40 text-accent-rose hover:bg-accent-rose/10",
-  ghost:
-    "border-transparent text-text-dim hover:text-text-main hover:bg-glass-bg",
+    'bg-gradient-to-r from-accent-cyan to-accent-blue text-surface-dark border-transparent font-semibold',
+  secondary: 'glass-strong text-text-main hover:bg-glass-bg-hover',
+  danger: 'border-accent-rose/40 text-accent-rose hover:bg-accent-rose/10',
+  ghost: 'border-transparent text-text-dim hover:text-text-main hover:bg-glass-bg',
 };
 
 const sizeStyles: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-xs rounded-[10px] gap-1.5",
-  md: "px-4 py-2 text-sm rounded-[10px] gap-2",
-  lg: "px-6 py-3 text-base rounded-[12px] gap-2.5",
+  sm: 'px-3 py-1.5 text-xs rounded-[10px] gap-1.5',
+  md: 'px-4 py-2 text-sm rounded-[10px] gap-2',
+  lg: 'px-6 py-3 text-base rounded-[12px] gap-2.5',
 };
 
 export default function GlassButton({
-  variant = "secondary",
-  size = "md",
+  variant = 'secondary',
+  size = 'md',
   loading,
   icon,
   children,
-  className = "",
+  className = '',
   disabled,
   ...props
 }: GlassButtonProps) {

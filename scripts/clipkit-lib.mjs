@@ -1,14 +1,7 @@
 import path from 'node:path';
-import {outputsRoot} from './lib.mjs';
+import {outputsRoot, slugify as canonicalSlugify} from './lib.mjs';
 
-export const slugify = (value, fallback = 'run') => {
-  const slug = String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 80);
-  return slug || fallback;
-};
+export const slugify = (value, fallback = 'run') => canonicalSlugify(value, fallback);
 
 export const timestampSlug = (date = new Date()) => {
   const pad = (value) => String(value).padStart(2, '0');
@@ -96,12 +89,9 @@ const normalizeToken = (value) =>
     .replace(/[^a-z0-9$]+/g, '')
     .replace(/(ing|ed|es|s)$/g, '');
 
-const countWords = (value) =>
-  normalizeThoughtText(value)
-    .split(/\s+/)
-    .filter(Boolean).length;
+const countWords = (value) => normalizeThoughtText(value).split(/\s+/).filter(Boolean).length;
 
-const tokenize = (value) =>
+export const tokenize = (value) =>
   normalizeThoughtText(value)
     .split(/[^a-zA-Z0-9$]+/)
     .map(normalizeToken)
@@ -109,11 +99,10 @@ const tokenize = (value) =>
 
 const hasTerminalPunctuation = (value) => /[.!?]["')\]]*$/.test(normalizeThoughtText(value));
 
-const buildThoughtUnitsFromSource = (entries, {
-  gapSeconds = 0.85,
-  maxDurationSeconds = 8.5,
-  maxWords = 18,
-} = {}) => {
+const buildThoughtUnitsFromSource = (
+  entries,
+  {gapSeconds = 0.85, maxDurationSeconds = 8.5, maxWords = 18} = {},
+) => {
   const units = [];
   let current = null;
 
@@ -135,12 +124,7 @@ const buildThoughtUnitsFromSource = (entries, {
       const endSeconds = toFiniteNumber(entry.endSeconds ?? entry.end);
       const text = normalizeThoughtText(entry.text ?? entry.correctedText ?? entry.rawText);
 
-      if (
-        startSeconds === null ||
-        endSeconds === null ||
-        endSeconds <= startSeconds ||
-        !text
-      ) {
+      if (startSeconds === null || endSeconds === null || endSeconds <= startSeconds || !text) {
         return null;
       }
 
@@ -354,86 +338,106 @@ export const buildViralScorecard = (clip = {}) => {
   if (/^(how|why|when|if|the|this)\b/i.test(title) || /^(how|why|when|if)\b/i.test(hook)) {
     hookStrength += 9;
   }
-  hookStrength += scoreFromKeywords(combinedText, [
-    'first',
-    'old identity',
-    'rock bottom',
-    'walmart',
-    'homeless',
-    'dream',
-    'lazy',
-    'empty',
-    'luck',
-  ], 6);
+  hookStrength += scoreFromKeywords(
+    combinedText,
+    [
+      'first',
+      'old identity',
+      'rock bottom',
+      'walmart',
+      'homeless',
+      'dream',
+      'lazy',
+      'empty',
+      'luck',
+    ],
+    6,
+  );
 
   let emotionalImpact = 42 + overall * 0.32;
-  emotionalImpact += scoreFromKeywords(combinedText, [
-    'homeless',
-    'rock bottom',
-    'empty',
-    'lazy',
-    'mother',
-    'family',
-    'dream',
-    'kill',
-    'old identity',
-    'broke',
-    'walmart',
-    'shit',
-    'scared',
-    'blessing',
-  ], 7);
+  emotionalImpact += scoreFromKeywords(
+    combinedText,
+    [
+      'homeless',
+      'rock bottom',
+      'empty',
+      'lazy',
+      'mother',
+      'family',
+      'dream',
+      'kill',
+      'old identity',
+      'broke',
+      'walmart',
+      'shit',
+      'scared',
+      'blessing',
+    ],
+    7,
+  );
 
   let practicalValue = 35 + overall * 0.22;
-  practicalValue += scoreFromKeywords(combinedText, [
-    'how',
-    'why',
-    'tip',
-    'strategy',
-    'post',
-    'product',
-    'sales',
-    'business',
-    'work',
-    'mentor',
-    'conviction',
-    'visualization',
-    'momentum',
-  ], 6);
+  practicalValue += scoreFromKeywords(
+    combinedText,
+    [
+      'how',
+      'why',
+      'tip',
+      'strategy',
+      'post',
+      'product',
+      'sales',
+      'business',
+      'work',
+      'mentor',
+      'conviction',
+      'visualization',
+      'momentum',
+    ],
+    6,
+  );
 
   let identityResonance = 40 + overall * 0.3;
-  identityResonance += scoreFromKeywords(combinedText, [
-    'identity',
-    'family',
-    'mother',
-    'god',
-    'faith',
-    'discipline',
-    'lock in',
-    'mindset',
-    'version',
-    'old',
-    'dream',
-    'manifestation',
-    'walmart',
-    'homeless',
-  ], 7);
+  identityResonance += scoreFromKeywords(
+    combinedText,
+    [
+      'identity',
+      'family',
+      'mother',
+      'god',
+      'faith',
+      'discipline',
+      'lock in',
+      'mindset',
+      'version',
+      'old',
+      'dream',
+      'manifestation',
+      'walmart',
+      'homeless',
+    ],
+    7,
+  );
 
   let visualPayoff = 32 + overall * 0.24;
-  visualPayoff += scoreFromKeywords(combinedText, [
-    'watch',
-    'car',
-    'walmart',
-    'benz',
-    'corvette',
-    'rolex',
-    'crib',
-    'travel',
-    'cali',
-    'house',
-    'luxury',
-    'gas station',
-  ], 7);
+  visualPayoff += scoreFromKeywords(
+    combinedText,
+    [
+      'watch',
+      'car',
+      'walmart',
+      'benz',
+      'corvette',
+      'rolex',
+      'crib',
+      'travel',
+      'cali',
+      'house',
+      'luxury',
+      'gas station',
+    ],
+    7,
+  );
   visualPayoff += clamp(highlightWords.length * 3, 0, 12);
 
   let thoughtCompleteness = clip.thoughtBoundaryAdjusted ? 92 : 76;
@@ -472,8 +476,7 @@ export const buildViralScorecard = (clip = {}) => {
     thought_completeness: 'thought completeness',
   };
 
-  const strongestSignals = topSignalNames(signalMap)
-    .map((key) => signalNames[key] ?? key);
+  const strongestSignals = topSignalNames(signalMap).map((key) => signalNames[key] ?? key);
 
   const explanation = `Flagged for ${strongestSignals.join(', ')}.`;
 

@@ -56,7 +56,7 @@ src/                          # Remotion compositions (TypeScript/TSX)
 |--------|-----------------|-------------|
 | `./lib.mjs` | `parseArgs`, `loadEnv`, `outputsRoot`, `run`, `probeVideo`, `ensureDir`, `readCaptions`, `normalizeCaptions`, `requireArg` | Every CLI script |
 | `./clipkit-lib.mjs` | `slugify`, `timestampSlug`, `mergeStyleConfig`, `buildThoughtUnits`, `buildViralScorecard`, `snapSelectionToThoughtBoundaries` | Scripts that process transcripts or name outputs |
-| `./ai-provider.mjs` | `resolveProvider`, `createClient`, `resolveModel`, `chatCompletion`, `structuredChatCompletion`, `runStructuredCompletion`, `providerSupports` | Any script that calls an LLM |
+| `./ai-provider.mjs` | `resolveProvider`, `createClient`, `resolveModel`, `chatCompletion`, `structuredChatCompletion` | Any script that calls an LLM |
 | `./command-utils.mjs` | `commandExists`, `commandPath` | Checking for system binaries |
 
 ## AI provider pattern
@@ -80,6 +80,8 @@ const text = await chatCompletion(client, {
 });
 const parsed = JSON.parse(text);
 ```
+
+For JSON workflows prefer `structuredChatCompletion(client, {model, systemPrompt, userPrompt})` — it adds `jsonMode`, strips fences, and retries once with a repair prompt when the model returns invalid JSON (network/API errors are NOT retried). Clients are created with a 180s default timeout (`createClient(resolved, {timeout, maxRetries})`) so a hung provider can't hang a pipeline. `resolveModel` returns `null` when no provider is configured — heuristic fallback paths rely on that; paths that require AI fail at `createClient`.
 
 **Do not** `import OpenAI from 'openai'` directly — use `ai-provider.mjs`. The only exception is `transcribe-openai.mjs` which needs the raw SDK for `audio.transcriptions.create` (Whisper — DeepSeek doesn't support this). That script imports both `openai` for transcription AND `ai-provider` for text enhancement.
 
@@ -106,7 +108,7 @@ const parsed = JSON.parse(text);
 - `--out <path>` → output file
 - `--provider <id>` → deepseek or openai (pass through to ai-provider)
 - `--dry-run` → plan without executing paid calls or renders
-- `--json` → machine-readable stdout, logs to stderr
+- `--json` → machine-readable stdout, logs to stderr. Use `emitJsonResult(obj, enabled)` from `lib.mjs` for the stdout half; adoption is per-script (video.mjs and compress-video.mjs are the references)
 - All timestamps in seconds (not milliseconds) in AI prompts and output JSON
 
 ## Configuration sources
@@ -121,13 +123,25 @@ const parsed = JSON.parse(text);
 ## Testing
 
 ```bash
-npm test                    # 100 tests across 3 suites, all pass required
-node --test tests/cli-smoke.test.mjs        # 70 CLI smoke/integration tests
+npm test                    # 107 tests across 6 suites, all pass required
+node --test tests/cli-smoke.test.mjs        # 73 CLI smoke/integration tests
 node --test tests/clipkit-lib.test.mjs      # 8 unit tests
-node --test tests/ai-provider.test.mjs      # 22 provider abstraction tests
+node --test tests/ai-provider.test.mjs      # 26 provider abstraction tests (incl. mocked network layer)
+npm run lint                # ESLint: scripts/, desktop/, tests/ — zero errors required
+npm run format              # Prettier (write) over the same scope
+npm run check               # typecheck + desktop typecheck + full test suite
 ```
 
-Tests use Node's built-in test runner. Integration tests create temp dirs, run the actual CLI, generate real MP4s, and clean up. They skip gracefully when ffmpeg/ImageMagick are absent.
+Tests use Node's built-in test runner. Integration tests create temp dirs, run the actual CLI, generate real MP4s, and clean up. They skip loudly (`t.skip`) when ffmpeg/ImageMagick are absent.
+
+## Desktop (Electron)
+
+- Entry: `desktop/main.mjs` (package.json `main`). Renderer: `desktop/src/` (React, strict TS via `desktop/tsconfig.json`, `npm run typecheck:desktop`).
+- Preload: `desktop/preload.cjs` — **CommonJS on purpose**: the window runs `sandbox: true`, and sandboxed preloads cannot be ESM.
+- IPC: `desktop/shared/protocol.mjs` is the single source of truth for channel names + validators (`validateSecretKey`, `validateRunRequest`). Every `ipcMain.handle` must call `assertTrustedSender(event)` (main-frame check). Renderer navigation is locked down in `createWindow` (`will-navigate` + `setWindowOpenHandler`) — keep both, the IPC bridge is privileged.
+- Packaged builds unpack `bin/ scripts/ src/` etc. from the asar (`asarUnpack` in package.json) because spawned `node` children can't read through an asar; `shared/paths.mjs` points at `app.asar.unpacked` when packaged.
+- Build: `npm run desktop:build` (injects CSP into `dist-renderer/index.html` via `desktop/lib/fix-crossorigin.mjs`). `desktop/dist-renderer/` is gitignored — never commit it.
+- macOS: `desktop/scripts/notarize.cjs` runs after signing when `APPLE_ID`/`APPLE_APP_SPECIFIC_PASSWORD`/`APPLE_TEAM_ID` are set; without them packaging still works locally.
 
 ## Key conventions
 
@@ -141,7 +155,10 @@ Tests use Node's built-in test runner. Integration tests create temp dirs, run t
 
 ## Known issues / future work
 
-- 10+ remaining scripts still duplicate `slugify` instead of importing from `lib.mjs` — incremental migration in progress
 - `examples/project.config.example.json` was dead config — removed
 - Some remaining scripts call ffprobe directly instead of `lib.probeVideo` — incremental migration in progress
-- 86 KB README overlaps with WORKFLOWS.md — consider trimming README to a quickstart and pointing to docs/ for full workflow reference
+- README is a quickstart + command reference; walkthroughs live in `docs/WORKFLOWS.md`. Keep the split — do not grow walkthrough content back into README
+- Caption fonts are NOT bundled: render machines must have the caption fonts installed (`src/fonts.ts` warns on missing ones). Bundling via `loadFont` + `staticFile` is the real fix
+- The caption layout memo in `src/captioned-clip.tsx` rebuilds the SVG masks per frame by design (per-frame pop/motion is baked into the masks); the stable-input memoization only covers `containerPositionStyle` and page segmentation
+- `--json` output convention is implemented in ~2 of 38 scripts — migrate incrementally using `emitJsonResult`
+- ESLint covers `scripts/`, `desktop/`, `tests/`; Remotion `src/` is covered by strict tsc only — extend typescript-eslint there later

@@ -2,12 +2,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {
-  resolveProvider,
-  createClient,
-  resolveModel,
-  chatCompletion,
-} from './ai-provider.mjs';
+import {z} from 'zod';
+import {resolveProvider, createClient, structuredChatCompletion} from './ai-provider.mjs';
 import {
   ensureDir,
   loadEnv,
@@ -19,11 +15,13 @@ import {
   readCaptions,
   requireArg,
   run,
+  slugify,
 } from './lib.mjs';
 import {
   buildViralScorecard,
   buildThoughtUnits,
   snapSelectionToThoughtBoundaries,
+  tokenize,
 } from './clipkit-lib.mjs';
 
 const usage = `
@@ -62,68 +60,6 @@ Options:
   --disable-sound-effects Disable automatic sound effects for this run.
   --selection-model ID    Model for editorial selection. Default: provider-specific (see ai-provider.mjs).
 `;
-
-const stopWords = new Set([
-  'a',
-  'an',
-  'and',
-  'are',
-  'as',
-  'at',
-  'be',
-  'been',
-  'being',
-  'but',
-  'by',
-  'for',
-  'from',
-  'had',
-  'has',
-  'have',
-  'he',
-  'her',
-  'his',
-  'i',
-  'if',
-  'in',
-  'into',
-  'is',
-  'it',
-  'its',
-  'me',
-  'my',
-  'of',
-  'on',
-  'or',
-  'our',
-  'she',
-  'so',
-  'that',
-  'the',
-  'their',
-  'them',
-  'they',
-  'this',
-  'to',
-  'was',
-  'we',
-  'were',
-  'with',
-  'you',
-  'your',
-]);
-
-const normalizeToken = (value) =>
-  String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9$]+/g, '')
-    .replace(/(ing|ed|es|s)$/g, '');
-
-const tokenize = (value) =>
-  String(value ?? '')
-    .split(/[^a-zA-Z0-9$]+/)
-    .map(normalizeToken)
-    .filter((token) => token && !stopWords.has(token));
 
 const titleCaseWords = (value) =>
   String(value ?? '')
@@ -184,17 +120,12 @@ loadEnv();
 
 const video = path.resolve(requireArg(args, 'video', usage));
 const outDir = path.resolve(args['out-dir'] ?? path.join(outputsRoot, 'smart-clips'));
-const workDir = path.resolve(
-  args['work-dir'] ?? path.join(outputsRoot, 'smart-clips', 'work'),
-);
+const workDir = path.resolve(args['work-dir'] ?? path.join(outputsRoot, 'smart-clips', 'work'));
 const maxClips = Number(args['max-clips'] ?? 3);
 const minSeconds = Number(args['min-seconds'] ?? 18);
 const maxSeconds = Number(args['max-seconds'] ?? 55);
 const paddingSeconds = Math.max(0, Number(args['padding-seconds'] ?? 2));
-const boundaryLookaroundSeconds = Math.max(
-  0,
-  Number(args['boundary-lookaround-seconds'] ?? 6),
-);
+const boundaryLookaroundSeconds = Math.max(0, Number(args['boundary-lookaround-seconds'] ?? 6));
 const thoughtSnappingEnabled = !args['disable-thought-snapping'];
 const reviewWidth = Number(args['review-width'] ?? 1280);
 const reviewFps = Number(args['review-fps'] ?? 15);
@@ -249,7 +180,10 @@ if (
   run('npm', indexArgs);
 }
 
-const safeBase = path.basename(video, path.extname(video)).replace(/[^a-z0-9._-]+/gi, '_').slice(0, 90);
+const safeBase = path
+  .basename(video, path.extname(video))
+  .replace(/[^a-z0-9._-]+/gi, '_')
+  .slice(0, 90);
 const transcriptPath = path.join(workDir, `${safeBase}.transcript.json`);
 const selectionPath = path.join(outDir, 'selection.json');
 
@@ -343,8 +277,7 @@ const buildFallbackSelection = ({captions, durationSeconds}) => {
   const clipForWindow = (startSeconds) => {
     const endTarget = Math.min(durationSeconds, startSeconds + targetDuration);
     const windowCaptions = captions.filter(
-      (caption) =>
-        caption.endMs / 1000 >= startSeconds && caption.startMs / 1000 <= endTarget,
+      (caption) => caption.endMs / 1000 >= startSeconds && caption.startMs / 1000 <= endTarget,
     );
     if (windowCaptions.length < 16) {
       return null;
@@ -382,8 +315,7 @@ const buildFallbackSelection = ({captions, durationSeconds}) => {
     const topKeywords = [...counts.entries()]
       .sort(
         (a, b) =>
-          (fallbackKeywordWeights[b[0]] ?? 0) + b[1] -
-          ((fallbackKeywordWeights[a[0]] ?? 0) + a[1]),
+          (fallbackKeywordWeights[b[0]] ?? 0) + b[1] - ((fallbackKeywordWeights[a[0]] ?? 0) + a[1]),
       )
       .map(([token]) => token)
       .filter((token) => token.length >= 4)
@@ -452,46 +384,6 @@ const buildFallbackSelection = ({captions, durationSeconds}) => {
   };
 };
 
-const schema = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['clips'],
-  properties: {
-    clips: {
-      type: 'array',
-      minItems: 1,
-      maxItems: maxClips,
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: [
-          'title',
-          'startSeconds',
-          'endSeconds',
-          'score',
-          'reason',
-          'hook',
-          'highlightWords',
-        ],
-        properties: {
-          title: {type: 'string'},
-          startSeconds: {type: 'number'},
-          endSeconds: {type: 'number'},
-          score: {type: 'number'},
-          reason: {type: 'string'},
-          hook: {type: 'string'},
-          highlightWords: {
-            type: 'array',
-            minItems: 1,
-            maxItems: 8,
-            items: {type: 'string'},
-          },
-        },
-      },
-    },
-  },
-};
-
 const input = [
   {
     role: 'system',
@@ -544,36 +436,62 @@ const jsonSchemaHint = `Return ONLY a valid JSON object with this exact structur
 }`;
 const systemMessage = input[0].content + '\n\n' + jsonSchemaHint;
 
+// Strict shape for any selection plan — whether it came from the model or
+// from a stale selection.json on disk. Invalid plans are discarded and
+// re-generated rather than crashing the render loop downstream.
+const selectionSchema = z
+  .object({
+    clips: z
+      .array(
+        z
+          .object({
+            title: z.string(),
+            startSeconds: z.number(),
+            endSeconds: z.number(),
+          })
+          .passthrough(),
+      )
+      .min(1),
+  })
+  .passthrough();
+
+const validateSelection = (candidate, label = 'selection plan') => {
+  const parsed = selectionSchema.safeParse(candidate);
+  if (!parsed.success) {
+    throw new Error(
+      `Invalid ${label} JSON: ${parsed.error.issues?.[0]?.message ?? 'unknown schema error'}`,
+    );
+  }
+  return parsed.data;
+};
+
 let selection;
 let usedModel;
 let lastError;
 
 if (fs.existsSync(selectionPath) && !args.reselect) {
-  selection = JSON.parse(fs.readFileSync(selectionPath, 'utf8'));
-  usedModel = selection.model;
-  console.log(`Using existing selection plan: ${selectionPath}`);
-} else {
+  try {
+    selection = validateSelection(JSON.parse(fs.readFileSync(selectionPath, 'utf8')));
+    usedModel = selection.model;
+    console.log(`Using existing selection plan: ${selectionPath}`);
+  } catch {
+    console.warn(`Existing selection plan at ${selectionPath} is invalid — regenerating.`);
+    selection = null;
+  }
+}
+
+if (!selection) {
   if (client) {
     for (const model of candidateModels) {
       try {
-        const response = await client.chat.completions.create({
-          model,
-          messages: [
-            {role: 'system', content: systemMessage},
-            {role: 'user', content: input[1].content},
-          ],
-          response_format: {type: 'json_object'},
-          temperature: 0.7,
-        });
-
-        const rawText = response.choices?.[0]?.message?.content ?? '';
-        const jsonText = rawText
-          .replace(/^```json\s*/i, '')
-          .replace(/^```\s*/, '')
-          .replace(/```\s*$/, '')
-          .trim();
-
-        selection = JSON.parse(jsonText);
+        selection = validateSelection(
+          await structuredChatCompletion(client, {
+            model,
+            systemPrompt: systemMessage,
+            userPrompt: input[1].content,
+            temperature: 0.7,
+          }),
+        );
         usedModel = model;
         break;
       } catch (error) {
@@ -601,7 +519,7 @@ if (fs.existsSync(selectionPath) && !args.reselect) {
   selection.sourceProfile = sourceProfile;
   selection.transcriptSource = transcriptEnhancement?.enabled
     ? `analysis-text-enhancement:${transcriptEnhancement.model}`
-    : transcriptBundle.metadata?.provider ?? 'raw-captions';
+    : (transcriptBundle.metadata?.provider ?? 'raw-captions');
   selection.thoughtBoundaryConfig = {
     enabled: thoughtSnappingEnabled,
     lookaroundSeconds: boundaryLookaroundSeconds,
@@ -660,7 +578,10 @@ const shiftTranscriptEnhancementChunks = (startSeconds, endSeconds) => {
     sourceProvider: transcriptEnhancement.sourceProvider,
     chunkCount: shiftedChunks.length,
     changeCount: shiftedChunks.filter((chunk) => chunk.correctedText !== chunk.rawText).length,
-    correctedText: shiftedChunks.map((chunk) => chunk.correctedText).join(' ').trim(),
+    correctedText: shiftedChunks
+      .map((chunk) => chunk.correctedText)
+      .join(' ')
+      .trim(),
     chunks: shiftedChunks,
   };
 };
@@ -700,11 +621,7 @@ selection.clips.forEach((clip, index) => {
   clip.thoughtBoundaryAlignment = boundaryAdjusted.source;
   clip.sourceProfile = sourceProfile;
   clip.viralScorecard = buildViralScorecard(clip);
-  const clipSlug = `${String(index + 1).padStart(2, '0')}-${clip.title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 42)}`;
+  const clipSlug = `${String(index + 1).padStart(2, '0')}-${slugify(clip.title, 'clip').slice(0, 42)}`;
   const rawClipPath = path.join(workDir, `${clipSlug}.mp4`);
   const momentExportPath = path.join(outDir, `${clipSlug}.moment.mp4`);
   const sceneMixPath = path.join(workDir, `${clipSlug}.scene-mix.mp4`);
@@ -907,3 +824,8 @@ console.log(
     ? `Done. Exported selected source moments to: ${outDir}`
     : `Done. Review clips in: ${outDir}`,
 );
+
+process.on('unhandledRejection', (error) => {
+  console.error(`Fatal error: ${error?.message ?? error}`);
+  process.exit(1);
+});

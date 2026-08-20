@@ -2,11 +2,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {fileURLToPath} from 'node:url';
 import {ensureDir, parseArgs, projectRoot} from './lib.mjs';
 import {timestampSlug} from './clipkit-lib.mjs';
 
-const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
 
 const usage = `
@@ -56,7 +54,15 @@ const musicTrack = args['music-track']
 const ffprobeDuration = (file) => {
   const raw = execFileSync(
     'ffprobe',
-    ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', file],
+    [
+      '-v',
+      'error',
+      '-show_entries',
+      'format=duration',
+      '-of',
+      'default=noprint_wrappers=1:nokey=1',
+      file,
+    ],
     {encoding: 'utf8'},
   ).trim();
   const duration = Number(raw);
@@ -121,7 +127,10 @@ const segmentFiles = selectedImages.map((image, index) => {
 });
 
 const concatFile = path.join(workDir, 'segments.txt');
-fs.writeFileSync(concatFile, segmentFiles.map((file) => `file '${file.replaceAll("'", "'\\''")}'`).join('\n') + '\n');
+fs.writeFileSync(
+  concatFile,
+  segmentFiles.map((file) => `file '${file.replaceAll("'", "'\\''")}'`).join('\n') + '\n',
+);
 const baseVideo = path.join(workDir, `${itemId}-base.mp4`);
 run('ffmpeg', [
   '-y',
@@ -143,14 +152,22 @@ const captionPlan = [
   {start: 1.9, end: 4.2, lines: captionLinesForListing(listing, 0), size: 78},
   {start: 4.2, end: 7.0, lines: captionLinesForListing(listing, 1), size: 72},
   {start: 7.0, end: 9.9, lines: captionLinesForListing(listing, 2), size: 74},
-  {start: 9.9, end: 12.2, lines: ['Real photos.', listing.title?.includes('Kobe') ? 'Real slab.' : 'Real gear.'], size: 82},
+  {
+    start: 9.9,
+    end: 12.2,
+    lines: ['Real photos.', listing.title?.includes('Kobe') ? 'Real slab.' : 'Real gear.'],
+    size: 82,
+  },
   {start: 12.2, end: duration - 0.1, lines: ['GRAB IT ON EBAY'], size: 90},
 ].filter((item) => item.start < duration && item.end > item.start);
 
 const captionsDir = path.join(workDir, 'captions');
 ensureDir(captionsDir);
 const captionSpecPath = path.join(workDir, 'caption-spec.json');
-fs.writeFileSync(captionSpecPath, `${JSON.stringify({width, height, captionsDir, captionPlan}, null, 2)}\n`);
+fs.writeFileSync(
+  captionSpecPath,
+  `${JSON.stringify({width, height, captionsDir, captionPlan}, null, 2)}\n`,
+);
 
 run('python3', [
   '-c',
@@ -202,7 +219,14 @@ for idx,item in enumerate(spec['captionPlan'], start=1):
 
 const inputs = ['-i', baseVideo, '-i', voiceoverPath];
 captionPlan.forEach((_, index) => {
-  inputs.push('-loop', '1', '-t', duration.toFixed(3), '-i', path.join(captionsDir, `${String(index + 1).padStart(2, '0')}.png`));
+  inputs.push(
+    '-loop',
+    '1',
+    '-t',
+    duration.toFixed(3),
+    '-i',
+    path.join(captionsDir, `${String(index + 1).padStart(2, '0')}.png`),
+  );
 });
 const hasMusic = fs.existsSync(musicTrack);
 if (hasMusic) {
@@ -270,7 +294,10 @@ const manifest = {
   work_dir: workDir,
   created_at: new Date().toISOString(),
 };
-fs.writeFileSync(path.join(finalDir, `${itemId}-photo-ad-manifest.json`), `${JSON.stringify(manifest, null, 2)}\n`);
+fs.writeFileSync(
+  path.join(finalDir, `${itemId}-photo-ad-manifest.json`),
+  `${JSON.stringify(manifest, null, 2)}\n`,
+);
 console.log(`Photo ad: ${outPath}`);
 
 function captionLinesForListing(currentListing, slot) {

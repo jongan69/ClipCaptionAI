@@ -25,11 +25,9 @@ const format = arg('--format', 'mp4');
 const outRoot = arg('--out', path.join('outputs', 'logo-animations'));
 
 // Ask Remotion for the composition list rather than duplicating the registry here.
-const raw = execFileSync(
-  'npx',
-  ['remotion', 'compositions', 'src/showcase-index.tsx', '--quiet'],
-  {encoding: 'utf8'}
-);
+const raw = execFileSync('npx', ['remotion', 'compositions', 'src/showcase-index.tsx', '--quiet'], {
+  encoding: 'utf8',
+});
 
 const ids = (raw.match(/\S+/g) ?? [])
   .filter((id) => id && id.startsWith('Logo-'))
@@ -38,7 +36,7 @@ const ids = (raw.match(/\S+/g) ?? [])
 if (!ids.length) {
   console.error(
     `No logo compositions found${onlySlug ? ` for slug "${onlySlug}"` : ''}.\n` +
-      `Check that the brand and its variants are registered in src/logo/registry.ts.`
+      `Check that the brand and its variants are registered in src/logo/registry.ts.`,
   );
   process.exit(1);
 }
@@ -63,7 +61,7 @@ for (const id of ids) {
         '--log',
         'error',
       ],
-      {stdio: ['ignore', 'ignore', 'inherit']}
+      {stdio: ['ignore', 'ignore', 'inherit']},
     );
     console.log('ok');
   } catch {

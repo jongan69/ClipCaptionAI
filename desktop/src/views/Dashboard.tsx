@@ -1,24 +1,44 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import GlassPanel from "../components/ui/GlassPanel";
-import GlassCard from "../components/ui/GlassCard";
-import GlassButton from "../components/ui/GlassButton";
-import { useWorkflows, useRunWorkflow } from "../hooks/useIpc";
-import { useWorkflowStore } from "../stores/workflowStore";
-import { useJobStore } from "../stores/jobStore";
+import {useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import GlassPanel from '../components/ui/GlassPanel';
+import GlassCard from '../components/ui/GlassCard';
+import GlassButton from '../components/ui/GlassButton';
+import {useWorkflows} from '../hooks/useIpc';
+import {useWorkflowStore} from '../stores/workflowStore';
+import {useJobStore} from '../stores/jobStore';
 
 const QUICK_ACTIONS = [
-  { path: "/transcribe", label: "Transcribe Video", icon: "🎙️", desc: "Convert speech to captions" },
-  { path: "/caption", label: "Caption Video", icon: "✏️", desc: "Add styled captions to video" },
-  { path: "/workflow/auto-clips", label: "Smart Clips", icon: "🧠", desc: "AI-powered clip selection" },
-  { path: "/workflow/enhance", label: "Enhance with B-roll", icon: "🎬", desc: "Add contextual cutaways" },
-  { path: "/workflow/compress", label: "Compress Video", icon: "📦", desc: "CRF encoding & optimization" },
-  { path: "/workflow/tighten", label: "Tighten Video", icon: "✂️", desc: "Remove filler & repetition" },
+  {path: '/transcribe', label: 'Transcribe Video', icon: '🎙️', desc: 'Convert speech to captions'},
+  {path: '/caption', label: 'Caption Video', icon: '✏️', desc: 'Add styled captions to video'},
+  {
+    path: '/workflow/auto-clips',
+    label: 'Smart Clips',
+    icon: '🧠',
+    desc: 'AI-powered clip selection',
+  },
+  {
+    path: '/workflow/enhance',
+    label: 'Enhance with B-roll',
+    icon: '🎬',
+    desc: 'Add contextual cutaways',
+  },
+  {
+    path: '/workflow/compress',
+    label: 'Compress Video',
+    icon: '📦',
+    desc: 'CRF encoding & optimization',
+  },
+  {
+    path: '/workflow/tighten',
+    label: 'Tighten Video',
+    icon: '✂️',
+    desc: 'Remove filler & repetition',
+  },
 ];
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { loading: workflowsLoading } = useWorkflows();
+  useWorkflows(); // side-effect: loads workflows into the store
   const workflows = useWorkflowStore((s) => s.workflows);
   const env = useWorkflowStore((s) => s.environment);
   const currentJob = useJobStore((s) => s.currentJob);
@@ -27,14 +47,15 @@ export default function Dashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const outputs = await (window as any).cca?.listOutputs();
+        const outputs = await window.cca?.listOutputs();
         if (outputs) setRecentOutputs(outputs.slice(0, 5));
-      } catch {}
+      } catch {
+        /* CCA not available outside Electron */
+      }
     })();
   }, []);
 
   const envOk = env?.passed !== false;
-  const hasKeys = true; // Will be updated by secrets hook
 
   return (
     <div className="flex-1 overflow-y-auto space-y-4">
@@ -54,7 +75,7 @@ export default function Dashboard() {
               </p>
             )}
           </div>
-          <GlassButton variant="primary" size="lg" onClick={() => navigate("/transcribe")}>
+          <GlassButton variant="primary" size="lg" onClick={() => navigate('/transcribe')}>
             New Project
           </GlassButton>
         </div>
@@ -120,12 +141,14 @@ export default function Dashboard() {
               <GlassCard key={i} hover className="flex items-center justify-between py-2">
                 <div>
                   <div className="text-sm font-medium text-text-main">{entry.name}</div>
-                  <div className="text-xs text-text-dim">{new Date(entry.date).toLocaleString()}</div>
+                  <div className="text-xs text-text-dim">
+                    {new Date(entry.date).toLocaleString()}
+                  </div>
                 </div>
                 <GlassButton
                   size="sm"
                   onClick={async () => {
-                    await (window as any).cca?.openPath(entry.path);
+                    await window.cca?.openPath(entry.path);
                   }}
                 >
                   Open
@@ -137,15 +160,15 @@ export default function Dashboard() {
       </div>
 
       {/* Active Job */}
-      {currentJob?.status === "running" && (
+      {currentJob?.status === 'running' && (
         <GlassPanel variant="strong" className="p-4 flex items-center gap-3">
           <span className="w-2 h-2 rounded-full bg-accent-cyan animate-pulse" />
           <div className="flex-1">
             <div className="text-sm font-medium text-text-main">
-              {currentJob.workflowTitle || "Running workflow..."}
+              {currentJob.workflowTitle || 'Running workflow...'}
             </div>
             <div className="text-xs text-text-dim">
-              {currentJob.stage || "Processing"}
+              {currentJob.stage || 'Processing'}
               {currentJob.percent !== undefined && ` · ${Math.round(currentJob.percent)}%`}
             </div>
           </div>

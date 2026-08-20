@@ -13,16 +13,11 @@ import {
   slugify,
   splitVideoSegment,
 } from './lib.mjs';
-import {
-  resolveProvider,
-  createClient,
-  resolveModel,
-  chatCompletion,
-} from './ai-provider.mjs';
+import {resolveProvider, createClient, resolveModel, chatCompletion} from './ai-provider.mjs';
 
 const usage = `
 Usage:
-  npm run chapter:auto -- --video input.mp4 [options]
+  bun run chapter:auto -- --video input.mp4 [options]
 
 Options:
   --out FILE              Output chapters JSON. Default: outputs/chapters/<slug>.chapters.json
@@ -91,20 +86,30 @@ if (shouldSplit) {
 const transcriptPath = path.join(workDir, `${safeBase}.transcript.json`);
 
 if (!fs.existsSync(transcriptPath)) {
-  console.log('Transcribing video...');
-  const transcribeArgs = [
-    'run',
-    'transcribe',
-    '--',
-    '--video',
-    video,
-    '--out',
-    transcriptPath,
-  ];
-  if (args.language) {
-    transcribeArgs.push('--language', String(args.language));
+  const hasLocalWhisper = String(process.env.PATH ?? '')
+    .split(path.delimiter)
+    .some((directory) => {
+      try {
+        fs.accessSync(path.join(directory, 'whisper-cli'), fs.constants.X_OK);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+  if (hasLocalWhisper || process.env.OPENAI_API_KEY) {
+    console.log('Transcribing video...');
+    const transcribeArgs = ['run', 'transcribe', '--', '--video', video, '--out', transcriptPath];
+    if (args.language) {
+      transcribeArgs.push('--language', String(args.language));
+    }
+    run('bun', transcribeArgs);
+  } else {
+    fs.writeFileSync(
+      transcriptPath,
+      JSON.stringify({captions: [], transcription: '', metadata: {provider: 'none'}}, null, 2),
+    );
+    console.warn('No transcription provider available; using time-based chapter fallback.');
   }
-  run('npm', transcribeArgs);
 } else {
   console.log(`Using existing transcript: ${transcriptPath}`);
 }
@@ -200,9 +205,7 @@ const runTimeFallback = () => {
   chapters = Array.from({length: count}, (_, index) => ({
     title: `Part ${index + 1}`,
     startSeconds: Math.round(index * segmentLength),
-    endSeconds: Math.round(
-      Math.min(videoMeta.durationSeconds, (index + 1) * segmentLength),
-    ),
+    endSeconds: Math.round(Math.min(videoMeta.durationSeconds, (index + 1) * segmentLength)),
     description: `Segment ${index + 1} of ${count} from the conversation.`,
   }));
   usedModel = 'time-fallback';
@@ -217,9 +220,7 @@ if (!resolved.config) {
   const client = createClient(resolved);
 
   try {
-    console.log(
-      `Detecting chapters with ${resolved.config.label} (${chapterModel})...`,
-    );
+    console.log(`Detecting chapters with ${resolved.config.label} (${chapterModel})...`);
 
     const jsonText = await chatCompletion(client, {
       model: chapterModel,
@@ -260,8 +261,7 @@ for (let index = 1; index < chapters.length; index += 1) {
 }
 
 for (const chapter of chapters) {
-  chapter.durationSeconds =
-    Math.round((chapter.endSeconds - chapter.startSeconds) * 10) / 10;
+  chapter.durationSeconds = Math.round((chapter.endSeconds - chapter.startSeconds) * 10) / 10;
   if (chapter.index === undefined) {
     chapter.index = chapters.indexOf(chapter) + 1;
   }
@@ -310,3 +310,8 @@ if (shouldSplit) {
 }
 
 console.log('\nDone.');
+
+process.on('unhandledRejection', (error) => {
+  console.error(`Fatal error: ${error?.message ?? error}`);
+  process.exit(1);
+});

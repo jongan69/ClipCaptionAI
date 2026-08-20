@@ -4,7 +4,6 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import {stdin as input, stdout as output} from 'node:process';
 import {
-  ensureDir,
   ensureOutputDirs,
   outputWorkRoot,
   outputsRoot,
@@ -108,15 +107,11 @@ const buildPlan = ({cleanTemp, cleanOutputs, cleanAll, keepLatest}) => {
 
   if (cleanOutputs || cleanAll) {
     const outputDirs = listOutputDirs();
-    const outputTargets = cleanAll
-      ? outputDirs
-      : outputDirs.slice(Math.max(0, keepLatest));
+    const outputTargets = cleanAll ? outputDirs : outputDirs.slice(Math.max(0, keepLatest));
     targets.push(...outputTargets.map((entry) => entry.path));
   }
 
-  const uniqueTargets = [...new Set(targets)].filter((targetPath) =>
-    fs.existsSync(targetPath),
-  );
+  const uniqueTargets = [...new Set(targets)].filter((targetPath) => fs.existsSync(targetPath));
 
   return uniqueTargets.map((targetPath) => ({
     path: targetPath,
@@ -173,7 +168,7 @@ const askInteractiveMode = async () => {
   }
 };
 
-const confirmDelete = async (plan) => {
+const confirmDelete = async () => {
   const rl = readline.createInterface({input, output});
   try {
     const answer = (await rl.question('Delete these files? Type DELETE to confirm: ')).trim();
@@ -186,8 +181,7 @@ const confirmDelete = async (plan) => {
 const main = async () => {
   ensureOutputDirs();
 
-  const explicitMode =
-    Boolean(args.temp) || Boolean(args.outputs) || Boolean(args.all);
+  const explicitMode = Boolean(args.temp) || Boolean(args.outputs) || Boolean(args.all);
   const interactive = process.stdin.isTTY && process.stdout.isTTY;
 
   let options = {
@@ -230,7 +224,7 @@ const main = async () => {
     return;
   }
 
-  const confirmed = args.yes || (interactive && await confirmDelete(plan));
+  const confirmed = args.yes || (interactive && (await confirmDelete(plan)));
   if (!confirmed) {
     console.log('Cleanup canceled. Nothing deleted.');
     return;

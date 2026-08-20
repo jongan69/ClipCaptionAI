@@ -14,13 +14,11 @@ public/
 tests/
 *.log
 
-# Repository-only product work that is not part of the ClipCaptionAI CLI beta.
-assets/logos/listingos/
+# Repository-only product work that is not part of the ClipCaptionAI CLI.
+# (scripts/ebay/, scripts/logo/, src/logo/, assets/logos/ ARE shipped — they
+# back advertised CLI commands; see the "files" field in package.json.)
 listingos-deck-animations.html
-scripts/ebay/
-scripts/logo/
-src/listingos-deck-scenes.tsx
-src/logo/
+assets/logos/listingos/deck-animations.html
 
 # Local launchers and contributor-only notes.
 BROLL.command

@@ -11,7 +11,9 @@ import {
   projectRoot,
   readCaptionStyleConfig,
   run,
+  slugify as canonicalSlugify,
 } from './lib.mjs';
+import {timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
@@ -61,33 +63,14 @@ const requireOption = (key) => {
   return String(args[key]);
 };
 
-const slugify = (value, fallback = 'video') => {
-  const slug = String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 80);
-  return slug || fallback;
-};
-
-const timestampSlug = () => {
-  const now = new Date();
-  const pad = (value) => String(value).padStart(2, '0');
-  return [
-    now.getFullYear(),
-    pad(now.getMonth() + 1),
-    pad(now.getDate()),
-    pad(now.getHours()),
-    pad(now.getMinutes()),
-    pad(now.getSeconds()),
-  ].join('-');
-};
+const slugify = (value, fallback = 'video') => canonicalSlugify(value, fallback);
 
 const normalizeVideo = ({input, output, width, height, fit, fps}) => {
   const scaleMode = fit === 'cover' ? 'increase' : 'decrease';
-  const tail = fit === 'cover'
-    ? `crop=${width}:${height}`
-    : `pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black`;
+  const tail =
+    fit === 'cover'
+      ? `crop=${width}:${height}`
+      : `pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:black`;
   const filters = [
     `scale=${width}:${height}:force_original_aspect_ratio=${scaleMode}`,
     tail,
@@ -154,7 +137,7 @@ const sceneMixPath = path.join(assetsDir, `${safeBase}.broll-mix.mp4`);
 const finalPath = path.join(finalDir, `${safeBase}.broll-captioned.mp4`);
 const manifestPath = path.join(runDir, 'manifest.json');
 
-let videoForMix = sourceVideo;
+let videoForMix;
 if (args['no-normalize']) {
   fs.copyFileSync(sourceVideo, normalizedVideo);
   videoForMix = normalizedVideo;
@@ -206,7 +189,11 @@ if (contextScenesEnabled) {
     ? path.resolve(String(args['library-config']))
     : path.join(sceneLibraryPath, 'library.config.json');
 
-  if (args['local-scenes-only'] || args['reindex-scene-library'] || fs.existsSync(libraryConfigPath)) {
+  if (
+    args['local-scenes-only'] ||
+    args['reindex-scene-library'] ||
+    fs.existsSync(libraryConfigPath)
+  ) {
     const indexArgs = ['run', 'scene:index', '--', '--scene-library', sceneLibraryPath];
     if (fs.existsSync(libraryConfigPath)) {
       indexArgs.push('--library-config', libraryConfigPath);
@@ -333,3 +320,8 @@ if (manifest.finalPath) {
   console.log(`Final video: ${manifest.finalPath}`);
 }
 console.log(`Manifest: ${manifestPath}`);
+
+process.on('unhandledRejection', (error) => {
+  console.error(`Fatal error: ${error?.message ?? error}`);
+  process.exit(1);
+});

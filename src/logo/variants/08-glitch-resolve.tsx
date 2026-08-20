@@ -13,13 +13,13 @@ export const meta = {
     'Offsets and jitter collapse into a stable logo as a clean pass lands.',
 };
 
-const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
-  const brackets = logo.layer('brackets');
-  const mark = logo.layer('l-mark');
+const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
+  const frameLayer = logo.layer('frame');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
 
-  const settle = spring({frame: frame - 18, fps: 30, config: {damping: 16, stiffness: 150}});
+  const settle = spring({frame: frame - 18, fps, config: {damping: 16, stiffness: 150}});
   const lockOpacity = interpolate(settle, [0, 1], [0, 1]);
   const settleBeat = interpolate(frame, [18, 44], [0, 1], {
     extrapolateLeft: 'clamp',
@@ -36,8 +36,8 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
     extrapolateRight: 'clamp',
   });
 
-  const bracketPaths = [...(brackets?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map((m) => m[1]);
-  const dashLen = Math.max(...(bracketPaths.length ? bracketPaths.map(approxPathLength) : [120]));
+  const framePaths = [...(frameLayer?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map((m) => m[1]);
+  const dashLen = Math.max(...(framePaths.length ? framePaths.map(approxPathLength) : [120]));
 
   return (
     <LogoSvg logo={logo}>
@@ -47,19 +47,19 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
             opacity={marker}
             style={{
               transform: `translate(${jitter * 0.7 * sign}px, ${jitter * 0.4 * sign}px)`,
-              transformOrigin: originOf(logo, 'l-mark'),
+              transformOrigin: originOf(logo, 'mark'),
             }}
           >
-            <RawLayer logo={logo} id="l-mark" />
+            <RawLayer logo={logo} id="mark" />
           </g>
           <g
             opacity={settleBeat}
             style={{
               transform: `translate(${jitter * -0.5 * sign}px, ${jitter * -0.3 * sign}px)`,
-              transformOrigin: originOf(logo, 'l-mark'),
+              transformOrigin: originOf(logo, 'mark'),
             }}
           >
-            <RawLayer logo={logo} id="l-mark" />
+            <RawLayer logo={logo} id="mark" />
           </g>
         </>
       ) : null}
@@ -98,11 +98,11 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
         </>
       ) : null}
 
-      {bracketPaths.length ? (
+      {framePaths.length ? (
         <g
           fill="none"
-          stroke={brackets?.stroke ?? logo.brand.palette.primary}
-          strokeWidth={(brackets?.strokeWidth ?? 14) * (1 + (1 - lockOpacity) * 0.08)}
+          stroke={frameLayer?.stroke ?? logo.brand.palette.primary}
+          strokeWidth={(frameLayer?.strokeWidth ?? 14) * (1 + (1 - lockOpacity) * 0.08)}
           strokeLinecap="round"
           strokeLinejoin="round"
           opacity={interpolate(frame, [0, 26], [0.2, 1], {
@@ -110,7 +110,7 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
             extrapolateRight: 'clamp',
           })}
         >
-          {bracketPaths.map((d, i) => {
+          {framePaths.map((d, i) => {
             const draw = interpolate(frame, [i * 4, i * 4 + 20], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',

@@ -156,7 +156,9 @@ const markdownForHandoff = ({plan, jobs, paths}) => {
       `Output: ${job.output_hint}`,
       `Estimated credits: ${job.estimated_credits}`,
       `Reference images: ${job.reference_images.length}`,
-      job.missing_reference_images.length ? `Missing references: ${job.missing_reference_images.join(', ')}` : 'Missing references: none',
+      job.missing_reference_images.length
+        ? `Missing references: ${job.missing_reference_images.join(', ')}`
+        : 'Missing references: none',
       '',
       'Prompt:',
       '',
@@ -179,82 +181,107 @@ const markdownForHandoff = ({plan, jobs, paths}) => {
   return `${lines.join('\n')}\n`;
 };
 
-const premiumPlanPath = requireArg('premium-plan');
-if (!fs.existsSync(premiumPlanPath)) throw new Error(`Premium plan not found: ${premiumPlanPath}`);
-const plan = readJson(premiumPlanPath);
-const outDir = path.resolve(String(args['out-dir'] ?? path.join(path.dirname(premiumPlanPath), 'competitive-render-handoff')));
-ensureDir(outDir);
+const main = async () => {
+  const premiumPlanPath = requireArg('premium-plan');
+  if (!fs.existsSync(premiumPlanPath))
+    throw new Error(`Premium plan not found: ${premiumPlanPath}`);
+  const plan = readJson(premiumPlanPath);
+  const outDir = path.resolve(
+    String(
+      args['out-dir'] ?? path.join(path.dirname(premiumPlanPath), 'competitive-render-handoff'),
+    ),
+  );
+  ensureDir(outDir);
 
-const jobs = flattenJobs(plan);
-for (const job of jobs) ensureDir(job.output_dir);
+  const jobs = flattenJobs(plan);
+  for (const job of jobs) ensureDir(job.output_dir);
 
-const queuePath = path.join(outDir, 'render-queue.json');
-const queueJsonlPath = path.join(outDir, 'render-queue.jsonl');
-const urlMapTemplatePath = path.join(outDir, 'render-url-map.template.json');
-const runbookPath = path.join(outDir, 'higgsfield-render-runbook.md');
-const cliScriptPath = path.join(outDir, 'run-higgsfield-cli-jobs.sh');
-const manifestPath = path.join(outDir, 'competitive-render-handoff-manifest.json');
+  const queuePath = path.join(outDir, 'render-queue.json');
+  const queueJsonlPath = path.join(outDir, 'render-queue.jsonl');
+  const urlMapTemplatePath = path.join(outDir, 'render-url-map.template.json');
+  const runbookPath = path.join(outDir, 'higgsfield-render-runbook.md');
+  const cliScriptPath = path.join(outDir, 'run-higgsfield-cli-jobs.sh');
+  const manifestPath = path.join(outDir, 'competitive-render-handoff-manifest.json');
 
-const urlMapTemplate = Object.fromEntries(
-  jobs.map((job) => [
-    job.item_id,
-    {
-      ...(jobs
-        .filter((candidate) => candidate.item_id === job.item_id)
-        .reduce((acc, candidate) => {
-          acc[candidate.job_id] = candidate.output_hint;
-          return acc;
-        }, {})),
+  const urlMapTemplate = Object.fromEntries(
+    jobs.map((job) => [
+      job.item_id,
+      {
+        ...jobs
+          .filter((candidate) => candidate.item_id === job.item_id)
+          .reduce((acc, candidate) => {
+            acc[candidate.job_id] = candidate.output_hint;
+            return acc;
+          }, {}),
+      },
+    ]),
+  );
+
+  writeJson(queuePath, {
+    created_at: new Date().toISOString(),
+    source_premium_plan: premiumPlanPath,
+    jobs,
+  });
+  fs.writeFileSync(queueJsonlPath, `${jobs.map((job) => JSON.stringify(job)).join('\n')}\n`);
+  writeJson(urlMapTemplatePath, urlMapTemplate);
+  fs.writeFileSync(
+    runbookPath,
+    markdownForHandoff({
+      plan,
+      jobs,
+      paths: {premiumPlan: premiumPlanPath, urlMapTemplate: urlMapTemplatePath},
+    }),
+  );
+  fs.writeFileSync(
+    cliScriptPath,
+    `${[
+      '#!/usr/bin/env bash',
+      'set -euo pipefail',
+      '',
+      '# Review this script before running. It spends Higgsfield credits.',
+      ...jobs.flatMap((job) => [
+        '',
+        `echo ${shellQuote(`Rendering ${job.item_id} / ${job.job_id}`)}`,
+        cliCommandForJob(job),
+        `echo ${shellQuote(`Save/download result to: ${job.output_hint}`)}`,
+      ]),
+      '',
+    ].join('\n')}\n`,
+  );
+  fs.chmodSync(cliScriptPath, 0o755);
+
+  const manifest = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
+    source_premium_plan: premiumPlanPath,
+    out_dir: outDir,
+    job_count: jobs.length,
+    estimated_credits: jobs.reduce((sum, job) => sum + Number(job.estimated_credits ?? 0), 0),
+    missing_reference_image_count: jobs.reduce(
+      (sum, job) => sum + job.missing_reference_images.length,
+      0,
+    ),
+    missing_output_count: jobs.filter((job) => !job.output_exists).length,
+    artifacts: {
+      queue: queuePath,
+      queue_jsonl: queueJsonlPath,
+      url_map_template: urlMapTemplatePath,
+      runbook: runbookPath,
+      cli_script: cliScriptPath,
     },
-  ]),
-);
+  };
+  writeJson(manifestPath, manifest);
 
-writeJson(queuePath, {created_at: new Date().toISOString(), source_premium_plan: premiumPlanPath, jobs});
-fs.writeFileSync(queueJsonlPath, `${jobs.map((job) => JSON.stringify(job)).join('\n')}\n`);
-writeJson(urlMapTemplatePath, urlMapTemplate);
-fs.writeFileSync(runbookPath, markdownForHandoff({
-  plan,
-  jobs,
-  paths: {premiumPlan: premiumPlanPath, urlMapTemplate: urlMapTemplatePath},
-}));
-fs.writeFileSync(cliScriptPath, `${[
-  '#!/usr/bin/env bash',
-  'set -euo pipefail',
-  '',
-  '# Review this script before running. It spends Higgsfield credits.',
-  ...jobs.flatMap((job) => [
-    '',
-    `echo ${shellQuote(`Rendering ${job.item_id} / ${job.job_id}`)}`,
-    cliCommandForJob(job),
-    `echo ${shellQuote(`Save/download result to: ${job.output_hint}`)}`,
-  ]),
-  '',
-].join('\n')}\n`);
-fs.chmodSync(cliScriptPath, 0o755);
-
-const manifest = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  source_premium_plan: premiumPlanPath,
-  out_dir: outDir,
-  job_count: jobs.length,
-  estimated_credits: jobs.reduce((sum, job) => sum + Number(job.estimated_credits ?? 0), 0),
-  missing_reference_image_count: jobs.reduce((sum, job) => sum + job.missing_reference_images.length, 0),
-  missing_output_count: jobs.filter((job) => !job.output_exists).length,
-  artifacts: {
-    queue: queuePath,
-    queue_jsonl: queueJsonlPath,
-    url_map_template: urlMapTemplatePath,
-    runbook: runbookPath,
-    cli_script: cliScriptPath,
-  },
+  console.log(`Competitive render handoff: ${manifestPath}`);
+  console.log(`Runbook: ${runbookPath}`);
+  console.log(`Queue: ${queuePath}`);
+  console.log(`URL map template: ${urlMapTemplatePath}`);
+  console.log(`Jobs: ${manifest.job_count}`);
+  console.log(`Missing generated outputs: ${manifest.missing_output_count}`);
+  console.log(`Missing reference images: ${manifest.missing_reference_image_count}`);
 };
-writeJson(manifestPath, manifest);
 
-console.log(`Competitive render handoff: ${manifestPath}`);
-console.log(`Runbook: ${runbookPath}`);
-console.log(`Queue: ${queuePath}`);
-console.log(`URL map template: ${urlMapTemplatePath}`);
-console.log(`Jobs: ${manifest.job_count}`);
-console.log(`Missing generated outputs: ${manifest.missing_output_count}`);
-console.log(`Missing reference images: ${manifest.missing_reference_image_count}`);
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

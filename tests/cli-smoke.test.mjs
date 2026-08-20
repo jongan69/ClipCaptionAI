@@ -32,10 +32,24 @@ test('video plan creates a versioned machine-readable run manifest', () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-video-'));
   const brief = path.join(tempDir, 'brief.txt');
   fs.writeFileSync(brief, 'Open with the product.\nShow the workflow.\nClose with the result.\n');
-  const result = spawnSync('node', ['scripts/video.mjs', 'plan', '--brief-file', brief, '--audio', 'music-library/lofi-house/01-dmca-free-lofi-chilled-beats.mp3', '--run-id', runId, '--json'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/video.mjs',
+      'plan',
+      '--brief-file',
+      brief,
+      '--audio',
+      'music-library/lofi-house/01-dmca-free-lofi-chilled-beats.mp3',
+      '--run-id',
+      runId,
+      '--json',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   try {
     assert.equal(result.status, 0, result.stderr);
     const payload = JSON.parse(result.stdout);
@@ -47,7 +61,10 @@ test('video plan creates a versioned machine-readable run manifest', () => {
     assert.equal(manifest.audio.type, 'audio');
     assert.equal(manifest.status, 'planned');
   } finally {
-    fs.rmSync(path.join(projectRoot, 'outputs', 'video-runs', runId), {recursive: true, force: true});
+    fs.rmSync(path.join(projectRoot, 'outputs', 'video-runs', runId), {
+      recursive: true,
+      force: true,
+    });
     fs.rmSync(tempDir, {recursive: true, force: true});
   }
 });
@@ -57,10 +74,14 @@ test('video dry-run is resumable and does not require provider secrets', () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-video-'));
   const brief = path.join(tempDir, 'brief.txt');
   fs.writeFileSync(brief, 'A deterministic local render plan.');
-  const result = spawnSync('node', ['scripts/video.mjs', 'run', '--brief-file', brief, '--run-id', runId, '--dry-run', '--json'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/video.mjs', 'run', '--brief-file', brief, '--run-id', runId, '--dry-run', '--json'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   try {
     assert.equal(result.status, 0, result.stderr);
     const payload = JSON.parse(result.stdout);
@@ -68,7 +89,10 @@ test('video dry-run is resumable and does not require provider secrets', () => {
     assert.equal(payload.dryRun, true);
     assert.match(payload.plannedOutput, new RegExp(`${runId}.*mp4`));
   } finally {
-    fs.rmSync(path.join(projectRoot, 'outputs', 'video-runs', runId), {recursive: true, force: true});
+    fs.rmSync(path.join(projectRoot, 'outputs', 'video-runs', runId), {
+      recursive: true,
+      force: true,
+    });
     fs.rmSync(tempDir, {recursive: true, force: true});
   }
 });
@@ -135,10 +159,14 @@ test('competitive blueprint preview renderer exposes help', () => {
 });
 
 test('competitive blueprint batch preview renderer exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/render-competitive-blueprint-batch.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/render-competitive-blueprint-batch.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /render-competitive-blueprint-batch/);
@@ -147,10 +175,14 @@ test('competitive blueprint batch preview renderer exposes help', () => {
 });
 
 test('competitive premium render prep exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/prepare-competitive-premium-renders.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/prepare-competitive-premium-renders.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /prepare-competitive-premium-renders/);
@@ -159,10 +191,14 @@ test('competitive premium render prep exposes help', () => {
 });
 
 test('competitive premium finalizer exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/finalize-competitive-premium-ads.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/finalize-competitive-premium-ads.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /finalize-competitive-premium-ads/);
@@ -171,10 +207,14 @@ test('competitive premium finalizer exposes help', () => {
 });
 
 test('competitive premium render collector exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/collect-competitive-premium-renders.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/collect-competitive-premium-renders.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /collect-competitive-premium-renders/);
@@ -183,10 +223,14 @@ test('competitive premium render collector exposes help', () => {
 });
 
 test('competitive video pipeline auditor exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/audit-competitive-video-pipeline.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/audit-competitive-video-pipeline.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /audit-competitive-video-pipeline/);
@@ -219,10 +263,14 @@ test('competitive video QA gate exposes help', () => {
 });
 
 test('competitive video control loop exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/run-competitive-video-control-loop.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/run-competitive-video-control-loop.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /run-competitive-video-control-loop/);
@@ -231,10 +279,14 @@ test('competitive video control loop exposes help', () => {
 });
 
 test('competitive render handoff exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/export-competitive-render-handoff.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/export-competitive-render-handoff.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /export-competitive-render-handoff/);
@@ -243,10 +295,14 @@ test('competitive render handoff exporter exposes help', () => {
 });
 
 test('competitive Higgsfield render runner exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/run-competitive-higgsfield-renders.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/run-competitive-higgsfield-renders.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /run-competitive-higgsfield-renders/);
@@ -255,10 +311,14 @@ test('competitive Higgsfield render runner exposes help', () => {
 });
 
 test('competitive creative packet exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/export-competitive-creative-packets.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/export-competitive-creative-packets.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /export-competitive-creative-packets/);
@@ -266,10 +326,14 @@ test('competitive creative packet exporter exposes help', () => {
 });
 
 test('competitive voiceover plan exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/export-competitive-voiceover-plan.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/export-competitive-voiceover-plan.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /export-competitive-voiceover-plan/);
@@ -289,10 +353,14 @@ test('local AI provider commands expose guarded help without requiring secrets',
 });
 
 test('eBay main photo candidate generator exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/generate-ebay-main-photo-candidates.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/generate-ebay-main-photo-candidates.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /generate-ebay-main-photo-candidates/);
@@ -300,10 +368,14 @@ test('eBay main photo candidate generator exposes help', () => {
 });
 
 test('eBay main photo apply bundle exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/export-ebay-main-photo-apply-bundle.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/export-ebay-main-photo-apply-bundle.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /export-ebay-main-photo-apply-bundle/);
@@ -311,10 +383,14 @@ test('eBay main photo apply bundle exporter exposes help', () => {
 });
 
 test('competitive research rerun helper exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/rerun-competitive-research-packet.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/rerun-competitive-research-packet.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /rerun-competitive-research-packet/);
@@ -323,10 +399,14 @@ test('competitive research rerun helper exposes help', () => {
 });
 
 test('competitive research queue exporter exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/export-competitive-research-queue.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/export-competitive-research-queue.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /export-competitive-research-queue/);
@@ -335,10 +415,14 @@ test('competitive research queue exporter exposes help', () => {
 });
 
 test('competitive research queue processor exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/process-competitive-research-queue.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/process-competitive-research-queue.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /process-competitive-research-queue/);
@@ -347,10 +431,14 @@ test('competitive research queue processor exposes help', () => {
 });
 
 test('competitive research results importer exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/import-competitive-research-results.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/import-competitive-research-results.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /import-competitive-research-results/);
@@ -359,10 +447,14 @@ test('competitive research results importer exposes help', () => {
 });
 
 test('competitive research import loop exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/run-competitive-research-import-loop.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/run-competitive-research-import-loop.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /run-competitive-research-import-loop/);
@@ -377,26 +469,62 @@ test('competitive blueprint batch preview renderer writes a dry-run manifest', (
   const secondDir = path.join(blueprintsDir, '398174269080');
   fs.mkdirSync(firstDir, {recursive: true});
   fs.mkdirSync(secondDir, {recursive: true});
-  fs.writeFileSync(path.join(firstDir, 'creative-blueprint.json'), JSON.stringify({
-    listing: {item_id: '398174220620', title: 'Playing Card Rug'},
-    selected_reference: {title: 'Matched rug video', platform: 'kalodata', url: 'https://example.com/rug-video', fit_score: 80, metrics: {trend_score: 25}},
-    beats: [{beat: 'hook', time_seconds: {start: 0, end: 2}, caption_intent: 'one-line pattern interrupt'}],
-  }, null, 2));
-  fs.writeFileSync(path.join(secondDir, 'creative-blueprint.json'), JSON.stringify({
-    listing: {item_id: '398174269080', title: 'Car Jack Stands'},
-    selected_reference: {title: 'Matched jack stand video'},
-    beats: [{beat: 'hook', time_seconds: {start: 0, end: 2}, caption_intent: 'one-line pattern interrupt'}],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(firstDir, 'creative-blueprint.json'),
+    JSON.stringify(
+      {
+        listing: {item_id: '398174220620', title: 'Playing Card Rug'},
+        selected_reference: {
+          title: 'Matched rug video',
+          platform: 'kalodata',
+          url: 'https://example.com/rug-video',
+          fit_score: 80,
+          metrics: {trend_score: 25},
+        },
+        beats: [
+          {
+            beat: 'hook',
+            time_seconds: {start: 0, end: 2},
+            caption_intent: 'one-line pattern interrupt',
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    path.join(secondDir, 'creative-blueprint.json'),
+    JSON.stringify(
+      {
+        listing: {item_id: '398174269080', title: 'Car Jack Stands'},
+        selected_reference: {title: 'Matched jack stand video'},
+        beats: [
+          {
+            beat: 'hook',
+            time_seconds: {start: 0, end: 2},
+            caption_intent: 'one-line pattern interrupt',
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
 
-  const result = spawnSync('node', [
-    'scripts/ebay/render-competitive-blueprint-batch.mjs',
-    '--blueprints-dir',
-    blueprintsDir,
-    '--dry-run',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/render-competitive-blueprint-batch.mjs',
+      '--blueprints-dir',
+      blueprintsDir,
+      '--dry-run',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Blueprints discovered: 2/);
@@ -407,7 +535,10 @@ test('competitive blueprint batch preview renderer writes a dry-run manifest', (
   assert.equal(manifest.discovered_count, 2);
   assert.equal(manifest.skipped_count, 2);
   assert.equal(manifest.failed_count, 0);
-  assert.deepEqual(manifest.renders.map((entry) => entry.item_id), ['398174220620', '398174269080']);
+  assert.deepEqual(
+    manifest.renders.map((entry) => entry.item_id),
+    ['398174220620', '398174269080'],
+  );
 });
 
 test('competitive premium render prep writes credit-aware Higgsfield packets', () => {
@@ -420,84 +551,182 @@ test('competitive premium render prep writes credit-aware Higgsfield packets', (
   fs.mkdirSync(finalDir, {recursive: true});
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
   fs.writeFileSync(path.join(projectDir, '02.jpg'), 'fake image placeholder');
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398174220620',
-    title: 'Playing Card Rug',
-    url: 'https://www.ebay.com/itm/398174220620',
-    images: [
-      {index: 1, filename: '01.jpg', path: path.join(projectDir, '01.jpg')},
-      {index: 2, filename: '02.jpg', path: path.join(projectDir, '02.jpg')},
-    ],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398174220620',
+        title: 'Playing Card Rug',
+        url: 'https://www.ebay.com/itm/398174220620',
+        images: [
+          {index: 1, filename: '01.jpg', path: path.join(projectDir, '01.jpg')},
+          {index: 2, filename: '02.jpg', path: path.join(projectDir, '02.jpg')},
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   const blueprintPath = path.join(creativeDir, 'creative-blueprint.json');
-  fs.writeFileSync(blueprintPath, JSON.stringify({
-    listing: {item_id: '398174220620', title: 'Playing Card Rug'},
-    selected_reference: {title: 'Matched rug video', platform: 'kalodata', url: 'https://example.com/rug-video', fit_score: 80, metrics: {trend_score: 25}},
-    higgsfield_prompts: [
-      {id: 'competitive-01-hero', purpose: 'Hero reveal', prompt: 'Hero prompt', duration_seconds: 5, references: ['best actual listing photo']},
-      {id: 'competitive-02-proof', purpose: 'Proof detail', prompt: 'Proof prompt', duration_seconds: 5, references: ['detail listing photos']},
-    ],
-  }, null, 2));
-  fs.writeFileSync(path.join(creativeDir, 'higgsfield-competitive-render-jobs.json'), JSON.stringify({
-    jobs: [
-      {id: 'competitive-01-hero', purpose: 'Hero reveal', prompt: 'Hero prompt', duration_seconds: 5, references: ['best actual listing photo']},
-      {id: 'competitive-02-proof', purpose: 'Proof detail', prompt: 'Proof prompt', duration_seconds: 5, references: ['detail listing photos']},
-    ],
-  }, null, 2));
+  fs.writeFileSync(
+    blueprintPath,
+    JSON.stringify(
+      {
+        listing: {item_id: '398174220620', title: 'Playing Card Rug'},
+        selected_reference: {
+          title: 'Matched rug video',
+          platform: 'kalodata',
+          url: 'https://example.com/rug-video',
+          fit_score: 80,
+          metrics: {trend_score: 25},
+        },
+        higgsfield_prompts: [
+          {
+            id: 'competitive-01-hero',
+            purpose: 'Hero reveal',
+            prompt: 'Hero prompt',
+            duration_seconds: 5,
+            references: ['best actual listing photo'],
+          },
+          {
+            id: 'competitive-02-proof',
+            purpose: 'Proof detail',
+            prompt: 'Proof prompt',
+            duration_seconds: 5,
+            references: ['detail listing photos'],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    path.join(creativeDir, 'higgsfield-competitive-render-jobs.json'),
+    JSON.stringify(
+      {
+        jobs: [
+          {
+            id: 'competitive-01-hero',
+            purpose: 'Hero reveal',
+            prompt: 'Hero prompt',
+            duration_seconds: 5,
+            references: ['best actual listing photo'],
+          },
+          {
+            id: 'competitive-02-proof',
+            purpose: 'Proof detail',
+            prompt: 'Proof prompt',
+            duration_seconds: 5,
+            references: ['detail listing photos'],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   const renderManifestPath = path.join(finalDir, '398174220620-competitive-preview-manifest.json');
-  fs.writeFileSync(renderManifestPath, JSON.stringify({
-    item_id: '398174220620',
-    title: 'Playing Card Rug',
-    project_dir: projectDir,
-    final_video: path.join(finalDir, 'preview.mp4'),
-    proof_frame: path.join(finalDir, 'proof.jpg'),
-    selected_reference: {title: 'Matched rug video', platform: 'kalodata', url: 'https://example.com/rug-video', fit_score: 80, metrics: {trend_score: 25}},
-  }, null, 2));
+  fs.writeFileSync(
+    renderManifestPath,
+    JSON.stringify(
+      {
+        item_id: '398174220620',
+        title: 'Playing Card Rug',
+        project_dir: projectDir,
+        final_video: path.join(finalDir, 'preview.mp4'),
+        proof_frame: path.join(finalDir, 'proof.jpg'),
+        selected_reference: {
+          title: 'Matched rug video',
+          platform: 'kalodata',
+          url: 'https://example.com/rug-video',
+          fit_score: 80,
+          metrics: {trend_score: 25},
+        },
+      },
+      null,
+      2,
+    ),
+  );
   const previewManifest = path.join(tempRoot, 'competitive-preview-render-manifest.json');
-  fs.writeFileSync(previewManifest, JSON.stringify({
-    renders: [{
-      blueprint: blueprintPath,
-      item_id: '398174220620',
-      title: 'Playing Card Rug',
-      ok: true,
-      final_video: path.join(finalDir, 'preview.mp4'),
-      proof_frame: path.join(finalDir, 'proof.jpg'),
-      manifest: renderManifestPath,
-      selected_reference: {title: 'Matched rug video', platform: 'kalodata', url: 'https://example.com/rug-video', fit_score: 80, metrics: {trend_score: 25}},
-    }],
-  }, null, 2));
-  const roiPlan = path.join(tempRoot, 'higgsfield-roi-plan.json');
-  fs.writeFileSync(roiPlan, JSON.stringify({
-    selected: [{item_id: '398174220620', roi_score: 100, price: 49.99}],
-    ranked: [{item_id: '398174220620', roi_score: 100, price: 49.99}],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/prepare-competitive-premium-renders.mjs',
-    '--preview-manifest',
+  fs.writeFileSync(
     previewManifest,
-    '--roi-plan',
+    JSON.stringify(
+      {
+        renders: [
+          {
+            blueprint: blueprintPath,
+            item_id: '398174220620',
+            title: 'Playing Card Rug',
+            ok: true,
+            final_video: path.join(finalDir, 'preview.mp4'),
+            proof_frame: path.join(finalDir, 'proof.jpg'),
+            manifest: renderManifestPath,
+            selected_reference: {
+              title: 'Matched rug video',
+              platform: 'kalodata',
+              url: 'https://example.com/rug-video',
+              fit_score: 80,
+              metrics: {trend_score: 25},
+            },
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  const roiPlan = path.join(tempRoot, 'higgsfield-roi-plan.json');
+  fs.writeFileSync(
     roiPlan,
-    '--credit-budget',
-    '22.5',
-    '--max-jobs-per-listing',
-    '1',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        selected: [{item_id: '398174220620', roi_score: 100, price: 49.99}],
+        ranked: [{item_id: '398174220620', roi_score: 100, price: 49.99}],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/prepare-competitive-premium-renders.mjs',
+      '--preview-manifest',
+      previewManifest,
+      '--roi-plan',
+      roiPlan,
+      '--credit-budget',
+      '22.5',
+      '--max-jobs-per-listing',
+      '1',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Selected listings: 1/);
-  const planPath = path.join(tempRoot, 'competitive-premium-render-plan', 'competitive-premium-render-plan.json');
+  const planPath = path.join(
+    tempRoot,
+    'competitive-premium-render-plan',
+    'competitive-premium-render-plan.json',
+  );
   assert.ok(fs.existsSync(planPath));
   const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
   assert.equal(plan.selected_count, 1);
   assert.equal(plan.estimated_selected_credits, 22.5);
   assert.equal(plan.selected[0].jobs.length, 1);
   assert.deepEqual(plan.selected[0].jobs[0].reference_images, [path.join(projectDir, '01.jpg')]);
-  assert.ok(fs.existsSync(path.join(projectDir, 'higgsfield', 'competitive-premium-render-jobs.json')));
-  assert.ok(fs.existsSync(path.join(projectDir, 'higgsfield', 'render-competitive-premium-shots.sh')));
+  assert.ok(
+    fs.existsSync(path.join(projectDir, 'higgsfield', 'competitive-premium-render-jobs.json')),
+  );
+  assert.ok(
+    fs.existsSync(path.join(projectDir, 'higgsfield', 'render-competitive-premium-shots.sh')),
+  );
   assert.ok(fs.existsSync(path.join(projectDir, 'higgsfield', 'competitive-premium-qa.md')));
 });
 
@@ -511,15 +740,22 @@ test('competitive premium render prep converts blueprint beats into product-safe
   fs.mkdirSync(finalDir, {recursive: true});
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
   fs.writeFileSync(path.join(projectDir, '02.jpg'), 'fake detail image placeholder');
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398176513526',
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    url: 'https://www.ebay.com/itm/398176513526',
-    images: [
-      {index: 1, filename: '01.jpg', path: path.join(projectDir, '01.jpg')},
-      {index: 2, filename: '02.jpg', path: path.join(projectDir, '02.jpg')},
-    ],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398176513526',
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        url: 'https://www.ebay.com/itm/398176513526',
+        images: [
+          {index: 1, filename: '01.jpg', path: path.join(projectDir, '01.jpg')},
+          {index: 2, filename: '02.jpg', path: path.join(projectDir, '02.jpg')},
+        ],
+      },
+      null,
+      2,
+    ),
+  );
 
   const selectedReference = {
     title: 'Cat cabinet viral organizer video',
@@ -529,102 +765,157 @@ test('competitive premium render prep converts blueprint beats into product-safe
     metrics: {trend_score: 44},
   };
   const blueprintPath = path.join(creativeDir, 'creative-blueprint.json');
-  fs.writeFileSync(blueprintPath, JSON.stringify({
-    listing: {item_id: '398176513526', title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black'},
-    selected_reference: selectedReference,
-    beats: [
+  fs.writeFileSync(
+    blueprintPath,
+    JSON.stringify(
       {
-        beat: 'hook',
-        competitor_pattern: 'mess reveal',
-        original_execution: 'Translate the messy room opener into a clean reveal of our actual cabinet.',
-        source_assets: ['image_1'],
-        caption_intent: 'hide the litter mess',
-        sfx: ['impact hit'],
-        imported_structure_note: 'mess reveal',
-        imported_audio_note: 'quiet lofi beat with whoosh cuts',
-        time_seconds: {start: 0, end: 4},
+        listing: {
+          item_id: '398176513526',
+          title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        },
+        selected_reference: selectedReference,
+        beats: [
+          {
+            beat: 'hook',
+            competitor_pattern: 'mess reveal',
+            original_execution:
+              'Translate the messy room opener into a clean reveal of our actual cabinet.',
+            source_assets: ['image_1'],
+            caption_intent: 'hide the litter mess',
+            sfx: ['impact hit'],
+            imported_structure_note: 'mess reveal',
+            imported_audio_note: 'quiet lofi beat with whoosh cuts',
+            time_seconds: {start: 0, end: 4},
+          },
+          {
+            beat: 'proof detail',
+            competitor_pattern: 'rattan door closeup',
+            original_execution:
+              'Show the actual rattan doors and cabinet finish without inventing accessories.',
+            source_assets: ['image_2', 'image_3'],
+            caption_intent: 'real cabinet detail',
+            sfx: ['macro tick'],
+            imported_structure_note: 'rattan door closeup',
+            imported_audio_note: 'quiet lofi beat with whoosh cuts',
+            time_seconds: {start: 4, end: 8},
+          },
+          {
+            beat: 'use-case b-roll',
+            competitor_pattern: 'room styling bridge',
+            original_execution: 'Use cleared room context without implying included props.',
+            source_assets: ['cleared_story_broll'],
+            caption_intent: 'cleaner room',
+            sfx: ['whoosh'],
+            imported_structure_note: 'room styling bridge',
+            imported_audio_note: 'quiet lofi beat with whoosh cuts',
+            time_seconds: {start: 8, end: 12},
+          },
+          {
+            beat: 'offer close',
+            competitor_pattern: 'CTA and final cabinet shot',
+            original_execution: 'Return to the actual product and point buyers to eBay details.',
+            source_assets: ['image_1'],
+            caption_intent: 'check the eBay listing',
+            sfx: ['soft hit'],
+            imported_structure_note: 'CTA and final cabinet shot',
+            imported_audio_note: 'quiet lofi beat with whoosh cuts',
+            time_seconds: {start: 12, end: 16},
+          },
+        ],
+        higgsfield_prompts: [
+          {
+            id: 'competitive-01-hero',
+            purpose: 'Generic hero',
+            prompt: 'Old generic hero prompt',
+            duration_seconds: 5,
+          },
+        ],
       },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    path.join(creativeDir, 'higgsfield-competitive-render-jobs.json'),
+    JSON.stringify(
       {
-        beat: 'proof detail',
-        competitor_pattern: 'rattan door closeup',
-        original_execution: 'Show the actual rattan doors and cabinet finish without inventing accessories.',
-        source_assets: ['image_2', 'image_3'],
-        caption_intent: 'real cabinet detail',
-        sfx: ['macro tick'],
-        imported_structure_note: 'rattan door closeup',
-        imported_audio_note: 'quiet lofi beat with whoosh cuts',
-        time_seconds: {start: 4, end: 8},
+        jobs: [
+          {
+            id: 'competitive-01-hero',
+            purpose: 'Generic hero',
+            prompt: 'Old generic hero prompt',
+            duration_seconds: 5,
+          },
+        ],
       },
-      {
-        beat: 'use-case b-roll',
-        competitor_pattern: 'room styling bridge',
-        original_execution: 'Use cleared room context without implying included props.',
-        source_assets: ['cleared_story_broll'],
-        caption_intent: 'cleaner room',
-        sfx: ['whoosh'],
-        imported_structure_note: 'room styling bridge',
-        imported_audio_note: 'quiet lofi beat with whoosh cuts',
-        time_seconds: {start: 8, end: 12},
-      },
-      {
-        beat: 'offer close',
-        competitor_pattern: 'CTA and final cabinet shot',
-        original_execution: 'Return to the actual product and point buyers to eBay details.',
-        source_assets: ['image_1'],
-        caption_intent: 'check the eBay listing',
-        sfx: ['soft hit'],
-        imported_structure_note: 'CTA and final cabinet shot',
-        imported_audio_note: 'quiet lofi beat with whoosh cuts',
-        time_seconds: {start: 12, end: 16},
-      },
-    ],
-    higgsfield_prompts: [
-      {id: 'competitive-01-hero', purpose: 'Generic hero', prompt: 'Old generic hero prompt', duration_seconds: 5},
-    ],
-  }, null, 2));
-  fs.writeFileSync(path.join(creativeDir, 'higgsfield-competitive-render-jobs.json'), JSON.stringify({
-    jobs: [{id: 'competitive-01-hero', purpose: 'Generic hero', prompt: 'Old generic hero prompt', duration_seconds: 5}],
-  }, null, 2));
+      null,
+      2,
+    ),
+  );
   const renderManifestPath = path.join(finalDir, '398176513526-competitive-preview-manifest.json');
-  fs.writeFileSync(renderManifestPath, JSON.stringify({
-    item_id: '398176513526',
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    project_dir: projectDir,
-    final_video: path.join(finalDir, 'preview.mp4'),
-    proof_frame: path.join(finalDir, 'proof.jpg'),
-    selected_reference: selectedReference,
-  }, null, 2));
+  fs.writeFileSync(
+    renderManifestPath,
+    JSON.stringify(
+      {
+        item_id: '398176513526',
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        project_dir: projectDir,
+        final_video: path.join(finalDir, 'preview.mp4'),
+        proof_frame: path.join(finalDir, 'proof.jpg'),
+        selected_reference: selectedReference,
+      },
+      null,
+      2,
+    ),
+  );
   const previewManifest = path.join(tempRoot, 'competitive-preview-render-manifest.json');
-  fs.writeFileSync(previewManifest, JSON.stringify({
-    renders: [{
-      blueprint: blueprintPath,
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      ok: true,
-      final_video: path.join(finalDir, 'preview.mp4'),
-      proof_frame: path.join(finalDir, 'proof.jpg'),
-      manifest: renderManifestPath,
-      selected_reference: selectedReference,
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/prepare-competitive-premium-renders.mjs',
-    '--preview-manifest',
+  fs.writeFileSync(
     previewManifest,
-    '--credit-budget',
-    '45',
-    '--max-jobs-per-listing',
-    '2',
-    '--higgs-model',
-    'seedance_2_0_mini',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        renders: [
+          {
+            blueprint: blueprintPath,
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            ok: true,
+            final_video: path.join(finalDir, 'preview.mp4'),
+            proof_frame: path.join(finalDir, 'proof.jpg'),
+            manifest: renderManifestPath,
+            selected_reference: selectedReference,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/prepare-competitive-premium-renders.mjs',
+      '--preview-manifest',
+      previewManifest,
+      '--credit-budget',
+      '45',
+      '--max-jobs-per-listing',
+      '2',
+      '--higgs-model',
+      'seedance_2_0_mini',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
-  const planPath = path.join(tempRoot, 'competitive-premium-render-plan', 'competitive-premium-render-plan.json');
+  const planPath = path.join(
+    tempRoot,
+    'competitive-premium-render-plan',
+    'competitive-premium-render-plan.json',
+  );
   const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
   assert.equal(plan.selected_count, 1);
   assert.equal(plan.selected[0].jobs.length, 2);
@@ -640,11 +931,19 @@ test('competitive premium render prep converts blueprint beats into product-safe
   assert.equal(plan.selected[0].jobs[1].beat.competitor_pattern, 'rattan door closeup');
   assert.deepEqual(plan.selected[0].jobs[1].reference_images, [path.join(projectDir, '02.jpg')]);
 
-  const packet = JSON.parse(fs.readFileSync(path.join(projectDir, 'higgsfield', 'competitive-premium-render-jobs.json'), 'utf8'));
+  const packet = JSON.parse(
+    fs.readFileSync(
+      path.join(projectDir, 'higgsfield', 'competitive-premium-render-jobs.json'),
+      'utf8',
+    ),
+  );
   assert.equal(packet.source_blueprint_beats, blueprintPath);
   assert.equal(packet.jobs[0].beat.imported_audio_note, 'quiet lofi beat with whoosh cuts');
   assert.doesNotMatch(packet.jobs[0].prompt, /Old generic hero prompt/);
-  const renderScript = fs.readFileSync(path.join(projectDir, 'higgsfield', 'render-competitive-premium-shots.sh'), 'utf8');
+  const renderScript = fs.readFileSync(
+    path.join(projectDir, 'higgsfield', 'render-competitive-premium-shots.sh'),
+    'utf8',
+  );
   assert.match(renderScript, /seedance_2_0_mini/);
   assert.match(renderScript, /--aspect_ratio '9:16'/);
   assert.match(renderScript, /--resolution '720p'/);
@@ -660,70 +959,138 @@ test('competitive premium render prep holds weak fallback references for researc
   fs.mkdirSync(creativeDir, {recursive: true});
   fs.mkdirSync(finalDir, {recursive: true});
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398176513526',
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    images: [{index: 1, filename: '01.jpg', path: path.join(projectDir, '01.jpg')}],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398176513526',
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        images: [{index: 1, filename: '01.jpg', path: path.join(projectDir, '01.jpg')}],
+      },
+      null,
+      2,
+    ),
+  );
   const blueprintPath = path.join(creativeDir, 'creative-blueprint.json');
-  fs.writeFileSync(blueprintPath, JSON.stringify({
-    listing: {item_id: '398176513526', title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black'},
-    selected_reference: {id: 'fallback-template-cat-cabinet', platform: 'fallback-template', title: 'Fallback direct product ad', fit_score: 0, metrics: {trend_score: 0}},
-    higgsfield_prompts: [{id: 'competitive-01-hero', purpose: 'Hero reveal', prompt: 'Hero prompt', duration_seconds: 5}],
-  }, null, 2));
+  fs.writeFileSync(
+    blueprintPath,
+    JSON.stringify(
+      {
+        listing: {
+          item_id: '398176513526',
+          title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        },
+        selected_reference: {
+          id: 'fallback-template-cat-cabinet',
+          platform: 'fallback-template',
+          title: 'Fallback direct product ad',
+          fit_score: 0,
+          metrics: {trend_score: 0},
+        },
+        higgsfield_prompts: [
+          {
+            id: 'competitive-01-hero',
+            purpose: 'Hero reveal',
+            prompt: 'Hero prompt',
+            duration_seconds: 5,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   const renderManifestPath = path.join(finalDir, '398176513526-competitive-preview-manifest.json');
-  fs.writeFileSync(renderManifestPath, JSON.stringify({
-    item_id: '398176513526',
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    project_dir: projectDir,
-    final_video: path.join(finalDir, 'preview.mp4'),
-    proof_frame: path.join(finalDir, 'proof.jpg'),
-    selected_reference: {id: 'fallback-template-cat-cabinet', platform: 'fallback-template', title: 'Fallback direct product ad', fit_score: 0, metrics: {trend_score: 0}},
-  }, null, 2));
+  fs.writeFileSync(
+    renderManifestPath,
+    JSON.stringify(
+      {
+        item_id: '398176513526',
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        project_dir: projectDir,
+        final_video: path.join(finalDir, 'preview.mp4'),
+        proof_frame: path.join(finalDir, 'proof.jpg'),
+        selected_reference: {
+          id: 'fallback-template-cat-cabinet',
+          platform: 'fallback-template',
+          title: 'Fallback direct product ad',
+          fit_score: 0,
+          metrics: {trend_score: 0},
+        },
+      },
+      null,
+      2,
+    ),
+  );
   const previewManifest = path.join(tempRoot, 'competitive-preview-render-manifest.json');
-  fs.writeFileSync(previewManifest, JSON.stringify({
-    renders: [{
-      blueprint: blueprintPath,
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      ok: true,
-      final_video: path.join(finalDir, 'preview.mp4'),
-      proof_frame: path.join(finalDir, 'proof.jpg'),
-      manifest: renderManifestPath,
-      selected_reference: {id: 'fallback-template-cat-cabinet', platform: 'fallback-template', title: 'Fallback direct product ad', fit_score: 0, metrics: {trend_score: 0}},
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/prepare-competitive-premium-renders.mjs',
-    '--preview-manifest',
+  fs.writeFileSync(
     previewManifest,
-    '--credit-budget',
-    '22.5',
-    '--max-jobs-per-listing',
-    '1',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        renders: [
+          {
+            blueprint: blueprintPath,
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            ok: true,
+            final_video: path.join(finalDir, 'preview.mp4'),
+            proof_frame: path.join(finalDir, 'proof.jpg'),
+            manifest: renderManifestPath,
+            selected_reference: {
+              id: 'fallback-template-cat-cabinet',
+              platform: 'fallback-template',
+              title: 'Fallback direct product ad',
+              fit_score: 0,
+              metrics: {trend_score: 0},
+            },
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/prepare-competitive-premium-renders.mjs',
+      '--preview-manifest',
+      previewManifest,
+      '--credit-budget',
+      '22.5',
+      '--max-jobs-per-listing',
+      '1',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
-  const planPath = path.join(tempRoot, 'competitive-premium-render-plan', 'competitive-premium-render-plan.json');
+  const planPath = path.join(
+    tempRoot,
+    'competitive-premium-render-plan',
+    'competitive-premium-render-plan.json',
+  );
   const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
   assert.equal(plan.selected_count, 0);
   assert.equal(plan.held_count, 1);
   assert.equal(plan.held[0].hold_reason, 'research quality review required');
   assert.equal(plan.held[0].reference_quality.status, 'research_review_required');
-  assert.ok(plan.held[0].reference_quality.issues.some((issue) => issue.includes('fallback-template')));
+  assert.ok(
+    plan.held[0].reference_quality.issues.some((issue) => issue.includes('fallback-template')),
+  );
 
-  const audit = spawnSync('node', [
-    'scripts/ebay/audit-competitive-video-pipeline.mjs',
-    '--premium-plan',
-    planPath,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const audit = spawnSync(
+    'node',
+    ['scripts/ebay/audit-competitive-video-pipeline.mjs', '--premium-plan', planPath],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   assert.equal(audit.status, 0, audit.stderr);
   assert.match(audit.stdout, /research_review_required=1/);
 });
@@ -734,24 +1101,37 @@ test('competitive premium finalizer reports missing generated clips without asse
   fs.mkdirSync(path.join(projectDir, 'higgsfield-renders'), {recursive: true});
   const premiumPlan = path.join(tempRoot, 'competitive-premium-render-plan.json');
   const expectedClip = path.join(projectDir, 'higgsfield-renders', 'competitive-01-hero.mp4');
-  fs.writeFileSync(premiumPlan, JSON.stringify({
-    selected: [{
-      item_id: '398174220620',
-      title: 'Playing Card Rug',
-      project_dir: projectDir,
-      jobs: [{id: 'competitive-01-hero', output_hint: expectedClip}],
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/finalize-competitive-premium-ads.mjs',
-    '--premium-plan',
+  fs.writeFileSync(
     premiumPlan,
-    '--dry-run',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        selected: [
+          {
+            item_id: '398174220620',
+            title: 'Playing Card Rug',
+            project_dir: projectDir,
+            jobs: [{id: 'competitive-01-hero', output_hint: expectedClip}],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/finalize-competitive-premium-ads.mjs',
+      '--premium-plan',
+      premiumPlan,
+      '--dry-run',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Not ready: 1/);
@@ -769,23 +1149,37 @@ test('competitive premium render collector reports missing sources without faili
   const projectDir = path.join(tempRoot, 'projects', '398174220620');
   fs.mkdirSync(path.join(projectDir, 'higgsfield-renders'), {recursive: true});
   const premiumPlan = path.join(tempRoot, 'competitive-premium-render-plan.json');
-  fs.writeFileSync(premiumPlan, JSON.stringify({
-    selected: [{
-      item_id: '398174220620',
-      title: 'Playing Card Rug',
-      project_dir: projectDir,
-      jobs: [{id: 'competitive-01-hero', output_hint: path.join(projectDir, 'higgsfield-renders', 'competitive-01-hero.mp4')}],
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/collect-competitive-premium-renders.mjs',
-    '--premium-plan',
+  fs.writeFileSync(
     premiumPlan,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        selected: [
+          {
+            item_id: '398174220620',
+            title: 'Playing Card Rug',
+            project_dir: projectDir,
+            jobs: [
+              {
+                id: 'competitive-01-hero',
+                output_hint: path.join(projectDir, 'higgsfield-renders', 'competitive-01-hero.mp4'),
+              },
+            ],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/collect-competitive-premium-renders.mjs', '--premium-plan', premiumPlan],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Missing source: 1/);
@@ -806,7 +1200,11 @@ test('competitive video pipeline auditor reports generated clip blockers', () =>
   fs.mkdirSync(premiumDir, {recursive: true});
 
   const expectedClip = path.join(projectDir, 'higgsfield-renders', 'competitive-01-hero.mp4');
-  const previewManifest = path.join(tempRoot, 'competitive-creative', 'competitive-preview-render-manifest.json');
+  const previewManifest = path.join(
+    tempRoot,
+    'competitive-creative',
+    'competitive-preview-render-manifest.json',
+  );
   const premiumPlan = path.join(premiumDir, 'competitive-premium-render-plan.json');
   const collectManifest = path.join(premiumDir, 'competitive-premium-collect-manifest.json');
   const finalizeManifest = path.join(premiumDir, 'competitive-premium-finalize-manifest.json');
@@ -817,88 +1215,147 @@ test('competitive video pipeline auditor reports generated clip blockers', () =>
   const handoffUrlMap = path.join(handoffDir, 'render-url-map.template.json');
   fs.mkdirSync(handoffDir, {recursive: true});
 
-  fs.writeFileSync(previewManifest, JSON.stringify({
-    renders: [{
-      item_id: '398174220620',
-      title: 'Playing Card Rug',
-      ok: true,
-      final_video: path.join(projectDir, 'final', 'preview.mp4'),
-      proof_frame: path.join(projectDir, 'final', 'preview.jpg'),
-      blueprint: path.join(tempRoot, 'competitive-creative', '398174220620', 'creative-blueprint.json'),
-    }],
-  }, null, 2));
-  fs.writeFileSync(premiumPlan, JSON.stringify({
-    selected: [{
-      item_id: '398174220620',
-      title: 'Playing Card Rug',
-      project_dir: projectDir,
-      estimated_credits: 22.5,
-      jobs: [{
-        id: 'competitive-01-hero',
-        purpose: 'Hook beat',
-        beat: {
-          index: 1,
-          name: 'hook',
-          competitor_pattern: 'rug room reveal',
-          caption_intent: 'room upgrade',
-          imported_audio_note: 'lofi house bed',
-        },
-        output_hint: expectedClip,
-      }],
-    }],
-  }, null, 2));
-  fs.writeFileSync(collectManifest, JSON.stringify({
-    results: [{
-      item_id: '398174220620',
-      job_id: 'competitive-01-hero',
-      output_hint: expectedClip,
-      imported: false,
-      existing: false,
-      missing_source: true,
-    }],
-  }, null, 2));
-  fs.writeFileSync(finalizeManifest, JSON.stringify({
-    results: [{
-      item_id: '398174220620',
-      ready: false,
-      assembled: false,
-      missing_clips: [{job_id: 'competitive-01-hero', path: expectedClip}],
-    }],
-  }, null, 2));
-  fs.writeFileSync(handoffQueue, JSON.stringify({
-    jobs: [{
-      item_id: '398174220620',
-      queue_id: '398174220620:competitive-01-hero',
-      job_id: 'competitive-01-hero',
-      output_hint: expectedClip,
-      output_exists: false,
-      missing_reference_images: [],
-      estimated_credits: 22.5,
-      beat: {index: 1, name: 'hook', competitor_pattern: 'rug room reveal'},
-      competitor_pattern: 'rug room reveal',
-      original_execution: 'Reveal the actual rug photo as a room upgrade.',
-      caption_intent: 'room upgrade',
-      imported_audio_note: 'lofi house bed',
-    }],
-  }, null, 2));
+  fs.writeFileSync(
+    previewManifest,
+    JSON.stringify(
+      {
+        renders: [
+          {
+            item_id: '398174220620',
+            title: 'Playing Card Rug',
+            ok: true,
+            final_video: path.join(projectDir, 'final', 'preview.mp4'),
+            proof_frame: path.join(projectDir, 'final', 'preview.jpg'),
+            blueprint: path.join(
+              tempRoot,
+              'competitive-creative',
+              '398174220620',
+              'creative-blueprint.json',
+            ),
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    premiumPlan,
+    JSON.stringify(
+      {
+        selected: [
+          {
+            item_id: '398174220620',
+            title: 'Playing Card Rug',
+            project_dir: projectDir,
+            estimated_credits: 22.5,
+            jobs: [
+              {
+                id: 'competitive-01-hero',
+                purpose: 'Hook beat',
+                beat: {
+                  index: 1,
+                  name: 'hook',
+                  competitor_pattern: 'rug room reveal',
+                  caption_intent: 'room upgrade',
+                  imported_audio_note: 'lofi house bed',
+                },
+                output_hint: expectedClip,
+              },
+            ],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    collectManifest,
+    JSON.stringify(
+      {
+        results: [
+          {
+            item_id: '398174220620',
+            job_id: 'competitive-01-hero',
+            output_hint: expectedClip,
+            imported: false,
+            existing: false,
+            missing_source: true,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    finalizeManifest,
+    JSON.stringify(
+      {
+        results: [
+          {
+            item_id: '398174220620',
+            ready: false,
+            assembled: false,
+            missing_clips: [{job_id: 'competitive-01-hero', path: expectedClip}],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    handoffQueue,
+    JSON.stringify(
+      {
+        jobs: [
+          {
+            item_id: '398174220620',
+            queue_id: '398174220620:competitive-01-hero',
+            job_id: 'competitive-01-hero',
+            output_hint: expectedClip,
+            output_exists: false,
+            missing_reference_images: [],
+            estimated_credits: 22.5,
+            beat: {index: 1, name: 'hook', competitor_pattern: 'rug room reveal'},
+            competitor_pattern: 'rug room reveal',
+            original_execution: 'Reveal the actual rug photo as a room upgrade.',
+            caption_intent: 'room upgrade',
+            imported_audio_note: 'lofi house bed',
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(handoffRunbook, '# Handoff\n');
   fs.writeFileSync(handoffUrlMap, '{}\n');
-  fs.writeFileSync(handoffManifest, JSON.stringify({
-    artifacts: {
-      queue: handoffQueue,
-      runbook: handoffRunbook,
-      url_map_template: handoffUrlMap,
-    },
-  }, null, 2));
+  fs.writeFileSync(
+    handoffManifest,
+    JSON.stringify(
+      {
+        artifacts: {
+          queue: handoffQueue,
+          runbook: handoffRunbook,
+          url_map_template: handoffUrlMap,
+        },
+      },
+      null,
+      2,
+    ),
+  );
 
-  const result = spawnSync('node', [
-    'scripts/ebay/audit-competitive-video-pipeline.mjs',
-    '--premium-plan',
-    premiumPlan,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/audit-competitive-video-pipeline.mjs', '--premium-plan', premiumPlan],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /waiting_for_generated_clips=1/);
@@ -916,7 +1373,10 @@ test('competitive video pipeline auditor reports generated clip blockers', () =>
   assert.equal(report.items[0].premium.jobs[0].competitor_pattern, 'rug room reveal');
   assert.equal(report.items[0].premium.jobs[0].caption_intent, 'room upgrade');
   assert.equal(report.items[0].handoff.jobs[0].competitor_pattern, 'rug room reveal');
-  assert.equal(report.items[0].handoff.jobs[0].original_execution, 'Reveal the actual rug photo as a room upgrade.');
+  assert.equal(
+    report.items[0].handoff.jobs[0].original_execution,
+    'Reveal the actual rug photo as a room upgrade.',
+  );
   assert.equal(report.items[0].handoff.jobs[0].imported_audio_note, 'lofi house bed');
   assert.equal(report.items[0].handoff.runbook, handoffRunbook);
   assert.ok(report.items[0].blockers.some((blocker) => blocker.includes(expectedClip)));
@@ -933,105 +1393,151 @@ test('competitive review board generator writes an HTML operator board', () => {
   fs.writeFileSync(previewVideo, 'fake preview placeholder');
   fs.writeFileSync(proofFrame, 'fake proof placeholder');
   const blueprintPath = path.join(creativeDir, 'creative-blueprint.json');
-  fs.writeFileSync(blueprintPath, JSON.stringify({
-    listing: {item_id: '398174269080', title: 'Diehard Car Jack Stands'},
-    selected_reference: {
-      id: 'ref-1',
-      platform: 'tiktok',
-      creator: '@garageproof',
-      title: 'Jack stands garage safety kit',
-      url: 'https://example.com/ref',
-      fit_score: 140,
-      hook_pattern: 'price-value hook',
-      metrics: {
-        views: 8400,
-        sold: 118,
-        revenue: 7600,
-        trend_score: 115,
-        views_per_day: 5500,
+  fs.writeFileSync(
+    blueprintPath,
+    JSON.stringify(
+      {
+        listing: {item_id: '398174269080', title: 'Diehard Car Jack Stands'},
+        selected_reference: {
+          id: 'ref-1',
+          platform: 'tiktok',
+          creator: '@garageproof',
+          title: 'Jack stands garage safety kit',
+          url: 'https://example.com/ref',
+          fit_score: 140,
+          hook_pattern: 'price-value hook',
+          metrics: {
+            views: 8400,
+            sold: 118,
+            revenue: 7600,
+            trend_score: 115,
+            views_per_day: 5500,
+          },
+        },
       },
-    },
-  }, null, 2));
-  fs.writeFileSync(path.join(creativeDir, 'competitor-trend-report.json'), JSON.stringify({
-    ranked_references: [{
-      id: 'ref-1',
-      platform: 'tiktok',
-      creator: '@garageproof',
-      title: 'Jack stands garage safety kit',
-      fit_score: 140,
-      trend_score: 115,
-      hook_pattern: 'price-value hook',
-      trend_reason: '8,400 views',
-      metrics: {views: 8400},
-    }],
-  }, null, 2));
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    path.join(creativeDir, 'competitor-trend-report.json'),
+    JSON.stringify(
+      {
+        ranked_references: [
+          {
+            id: 'ref-1',
+            platform: 'tiktok',
+            creator: '@garageproof',
+            title: 'Jack stands garage safety kit',
+            fit_score: 140,
+            trend_score: 115,
+            hook_pattern: 'price-value hook',
+            trend_reason: '8,400 views',
+            metrics: {views: 8400},
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   const previewManifest = path.join(tempRoot, 'competitive-preview-render-manifest.json');
   fs.writeFileSync(previewManifest, JSON.stringify({renders: []}, null, 2));
-  fs.writeFileSync(path.join(tempRoot, 'competitive-video-qa-report.json'), JSON.stringify({
-    summary: {items: 1, pass: 1, warn: 0, fail: 0, average_score: 96},
-    items: [{
-      item_id: '398174269080',
-      status: 'pass',
-      score: 96,
-      probe: {width: 1080, height: 1920, duration_seconds: 10, has_audio: true},
-      audio: {mean_volume_db: -34.5},
-      scenes: {scene_change_count: 5},
-      issues: [],
-      warnings: [],
-    }],
-  }, null, 2));
-  const statusPath = path.join(tempRoot, 'competitive-video-pipeline-status.json');
-  const missingClip = path.join(tempRoot, 'projects', '398174269080', 'higgsfield-renders', 'competitive-01-hero.mp4');
-  fs.writeFileSync(statusPath, JSON.stringify({
-    manifests: {preview: previewManifest},
-    summary: {items: 1, by_status: {waiting_for_generated_clips: 1}, blockers: 1},
-    items: [{
-      item_id: '398174269080',
-      title: 'Diehard Car Jack Stands',
-      blueprint: blueprintPath,
-      status: 'waiting_for_generated_clips',
-      next_action: 'Generate or collect the missing Higgsfield clips, then finalize.',
-      preview: {ok: true, final_video: previewVideo, proof_frame: proofFrame},
-      premium: {jobs: [{
-        id: 'competitive-01-hero',
-        output_hint: missingClip,
-        exists: false,
-        beat: {name: 'hook'},
-        competitor_pattern: 'garage safety reveal',
-        caption_intent: 'safer garage setup',
-      }]},
-      handoff: {
-        manifest: path.join(tempRoot, 'competitive-render-handoff-manifest.json'),
-        queue: path.join(tempRoot, 'render-queue.json'),
-        runbook: path.join(tempRoot, 'higgsfield-render-runbook.md'),
-        url_map_template: path.join(tempRoot, 'render-url-map.template.json'),
-        jobs: [{
-          queue_id: '398174269080:competitive-01-hero',
-          job_id: 'competitive-01-hero',
-          output_hint: missingClip,
-          output_exists: false,
-          missing_reference_images: [],
-          competitor_pattern: 'garage safety reveal',
-          original_execution: 'Use our actual jack stand photo for a trust-first opener.',
-          imported_audio_note: 'quiet rock beat with metal hits',
-        }],
+  fs.writeFileSync(
+    path.join(tempRoot, 'competitive-video-qa-report.json'),
+    JSON.stringify(
+      {
+        summary: {items: 1, pass: 1, warn: 0, fail: 0, average_score: 96},
+        items: [
+          {
+            item_id: '398174269080',
+            status: 'pass',
+            score: 96,
+            probe: {width: 1080, height: 1920, duration_seconds: 10, has_audio: true},
+            audio: {mean_volume_db: -34.5},
+            scenes: {scene_change_count: 5},
+            issues: [],
+            warnings: [],
+          },
+        ],
       },
-      blockers: [`Missing generated clip: ${missingClip}`],
-    }],
-  }, null, 2));
+      null,
+      2,
+    ),
+  );
+  const statusPath = path.join(tempRoot, 'competitive-video-pipeline-status.json');
+  const missingClip = path.join(
+    tempRoot,
+    'projects',
+    '398174269080',
+    'higgsfield-renders',
+    'competitive-01-hero.mp4',
+  );
+  fs.writeFileSync(
+    statusPath,
+    JSON.stringify(
+      {
+        manifests: {preview: previewManifest},
+        summary: {items: 1, by_status: {waiting_for_generated_clips: 1}, blockers: 1},
+        items: [
+          {
+            item_id: '398174269080',
+            title: 'Diehard Car Jack Stands',
+            blueprint: blueprintPath,
+            status: 'waiting_for_generated_clips',
+            next_action: 'Generate or collect the missing Higgsfield clips, then finalize.',
+            preview: {ok: true, final_video: previewVideo, proof_frame: proofFrame},
+            premium: {
+              jobs: [
+                {
+                  id: 'competitive-01-hero',
+                  output_hint: missingClip,
+                  exists: false,
+                  beat: {name: 'hook'},
+                  competitor_pattern: 'garage safety reveal',
+                  caption_intent: 'safer garage setup',
+                },
+              ],
+            },
+            handoff: {
+              manifest: path.join(tempRoot, 'competitive-render-handoff-manifest.json'),
+              queue: path.join(tempRoot, 'render-queue.json'),
+              runbook: path.join(tempRoot, 'higgsfield-render-runbook.md'),
+              url_map_template: path.join(tempRoot, 'render-url-map.template.json'),
+              jobs: [
+                {
+                  queue_id: '398174269080:competitive-01-hero',
+                  job_id: 'competitive-01-hero',
+                  output_hint: missingClip,
+                  output_exists: false,
+                  missing_reference_images: [],
+                  competitor_pattern: 'garage safety reveal',
+                  original_execution: 'Use our actual jack stand photo for a trust-first opener.',
+                  imported_audio_note: 'quiet rock beat with metal hits',
+                },
+              ],
+            },
+            blockers: [`Missing generated clip: ${missingClip}`],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(path.join(tempRoot, 'competitive-render-handoff-manifest.json'), '{}\n');
   fs.writeFileSync(path.join(tempRoot, 'render-queue.json'), '{}\n');
   fs.writeFileSync(path.join(tempRoot, 'higgsfield-render-runbook.md'), '# Runbook\n');
   fs.writeFileSync(path.join(tempRoot, 'render-url-map.template.json'), '{}\n');
 
-  const result = spawnSync('node', [
-    'scripts/ebay/build-competitive-review-board.mjs',
-    '--status',
-    statusPath,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/build-competitive-review-board.mjs', '--status', statusPath],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Competitive review board/);
@@ -1057,43 +1563,45 @@ test('competitive review board generator writes an HTML operator board', () => {
 test('competitive video QA gate writes a report for a vertical MP4', (t) => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-qa-video-'));
   const video = path.join(tempRoot, 'qa-input.mp4');
-  const ffmpeg = spawnSync('ffmpeg', [
-    '-hide_banner',
-    '-loglevel',
-    'error',
-    '-y',
-    '-f',
-    'lavfi',
-    '-i',
-    'testsrc2=s=720x1280:d=1:r=24',
-    '-f',
-    'lavfi',
-    '-i',
-    'sine=frequency=440:duration=1',
-    '-c:v',
-    'libx264',
-    '-pix_fmt',
-    'yuv420p',
-    '-c:a',
-    'aac',
-    '-shortest',
-    video,
-  ], {encoding: 'utf8'});
+  const ffmpeg = spawnSync(
+    'ffmpeg',
+    [
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-y',
+      '-f',
+      'lavfi',
+      '-i',
+      'testsrc2=s=720x1280:d=1:r=24',
+      '-f',
+      'lavfi',
+      '-i',
+      'sine=frequency=440:duration=1',
+      '-c:v',
+      'libx264',
+      '-pix_fmt',
+      'yuv420p',
+      '-c:a',
+      'aac',
+      '-shortest',
+      video,
+    ],
+    {encoding: 'utf8'},
+  );
   if (ffmpeg.status !== 0 || !fs.existsSync(video)) {
     t.skip('ffmpeg is required for the competitive QA smoke test');
     return;
   }
 
-  const result = spawnSync('node', [
-    'scripts/ebay/qa-competitive-videos.mjs',
-    '--video',
-    video,
-    '--item-id',
-    'qa-item',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/qa-competitive-videos.mjs', '--video', video, '--item-id', 'qa-item'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Competitive video QA report/);
@@ -1113,43 +1621,67 @@ test('competitive video QA gate writes a report for a vertical MP4', (t) => {
 test('competitive video control loop writes a dry-run manifest', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-control-loop-'));
   const previewManifest = path.join(tempRoot, 'competitive-preview-render-manifest.json');
-  fs.writeFileSync(previewManifest, JSON.stringify({
-    renders: [{
-      item_id: '398174269080',
-      title: 'Diehard Car Jack Stands',
-      ok: true,
-      final_video: path.join(tempRoot, 'preview.mp4'),
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/run-competitive-video-control-loop.mjs',
-    '--preview-manifest',
+  fs.writeFileSync(
     previewManifest,
-    '--dry-run',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        renders: [
+          {
+            item_id: '398174269080',
+            title: 'Diehard Car Jack Stands',
+            ok: true,
+            final_video: path.join(tempRoot, 'preview.mp4'),
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/run-competitive-video-control-loop.mjs',
+      '--preview-manifest',
+      previewManifest,
+      '--dry-run',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Competitive control-loop manifest/);
-  const manifestPath = path.join(tempRoot, 'competitive-control-loop', 'competitive-control-loop-manifest.json');
+  const manifestPath = path.join(
+    tempRoot,
+    'competitive-control-loop',
+    'competitive-control-loop-manifest.json',
+  );
   assert.ok(fs.existsSync(manifestPath));
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(manifest.dry_run, true);
   assert.equal(manifest.ok, true);
-  assert.deepEqual(manifest.steps.map((step) => step.name), [
-    'qa_previews',
-    'prepare_premium_packets',
-    'export_render_handoff',
-    'collect_generated_clips',
-    'finalize_readiness',
-    'audit_status',
-    'export_creative_packets',
-    'build_review_board',
-  ]);
-  assert.ok(fs.existsSync(path.join(tempRoot, 'competitive-control-loop', 'competitive-control-loop-manifest.md')));
+  assert.deepEqual(
+    manifest.steps.map((step) => step.name),
+    [
+      'qa_previews',
+      'prepare_premium_packets',
+      'export_render_handoff',
+      'collect_generated_clips',
+      'finalize_readiness',
+      'audit_status',
+      'export_creative_packets',
+      'build_review_board',
+    ],
+  );
+  assert.ok(
+    fs.existsSync(
+      path.join(tempRoot, 'competitive-control-loop', 'competitive-control-loop-manifest.md'),
+    ),
+  );
 });
 
 test('eBay competitive-plan can run from saved dashboard and workbench snapshots', () => {
@@ -1161,79 +1693,106 @@ test('eBay competitive-plan can run from saved dashboard and workbench snapshots
   fs.writeFileSync(imagePath, 'fake image placeholder');
 
   const dashboardPath = path.join(tempRoot, 'dashboard.json');
-  fs.writeFileSync(dashboardPath, JSON.stringify({
-    summary: {active_listing_count: 1},
-    listings: [{
-      ok: true,
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      url: 'https://www.ebay.com/itm/398176513526',
-      price: 199.99,
-      asset_score: 42,
-      picture_count: 3,
-      video_count: 0,
-      bid_count: 0,
-      watch_count: 2,
-    }],
-  }, null, 2));
+  fs.writeFileSync(
+    dashboardPath,
+    JSON.stringify(
+      {
+        summary: {active_listing_count: 1},
+        listings: [
+          {
+            ok: true,
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            url: 'https://www.ebay.com/itm/398176513526',
+            price: 199.99,
+            asset_score: 42,
+            picture_count: 3,
+            video_count: 0,
+            bid_count: 0,
+            watch_count: 2,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
 
   const workbenchPath = path.join(tempRoot, 'workbench.json');
-  fs.writeFileSync(workbenchPath, JSON.stringify({
-    manifest: {
-      listings: [{
-        item_id: '398176513526',
-        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-        url: 'https://www.ebay.com/itm/398176513526',
-        directory: projectDir,
-        images: [{
-          filename: '01.jpg',
-          path: imagePath,
-          source_url: 'https://example.com/01.jpg',
-        }],
-      }],
-    },
-  }, null, 2));
+  fs.writeFileSync(
+    workbenchPath,
+    JSON.stringify(
+      {
+        manifest: {
+          listings: [
+            {
+              item_id: '398176513526',
+              title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+              url: 'https://www.ebay.com/itm/398176513526',
+              directory: projectDir,
+              images: [
+                {
+                  filename: '01.jpg',
+                  path: imagePath,
+                  source_url: 'https://example.com/01.jpg',
+                },
+              ],
+            },
+          ],
+        },
+      },
+      null,
+      2,
+    ),
+  );
 
   const competitorsPath = path.join(tempRoot, 'automatio-kalodata.csv');
-  fs.writeFileSync(competitorsPath, [
-    'Product Title,Video URL,Hook,Caption,Video Views,Product Units Sold,Product GMV,Duration Seconds,Shot Breakdown,Audio Notes',
-    '"Double cat litter box enclosure rattan cabinet","https://example.com/cat-cabinet-video","Your litter box can stop looking like a litter box","Hide two litter boxes and make the room cleaner","88000","430","US$38000","16","mess reveal, cabinet proof, room styling, CTA","soft house beat with whoosh cuts"',
-  ].join('\n'));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/ebay-cinematic-ads.mjs',
-    'competitive-plan',
-    '--dashboard-file',
-    dashboardPath,
-    '--workbench-file',
-    workbenchPath,
-    '--competitors',
+  fs.writeFileSync(
     competitorsPath,
-    '--out-dir',
-    outRoot,
-    '--max-listings',
-    '1',
-    '--credit-budget',
-    '40',
-    '--credits-per-shot',
-    '10',
-    '--max-higgs-shots',
-    '4',
-    '--no-download',
-    '--no-discover-youtube',
-    '--no-analyze-reference-video',
-    '--run-control-loop',
-    '--control-loop-dry-run',
-    '--run-higgsfield-renders',
-    '--higgs-render-model',
-    'seedance_2_0_mini',
-    '--higgs-render-dry-run',
-    '--higgs-render-skip-cost',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-    maxBuffer: 1024 * 1024 * 20,
-  });
+    [
+      'Product Title,Video URL,Hook,Caption,Video Views,Product Units Sold,Product GMV,Duration Seconds,Shot Breakdown,Audio Notes',
+      '"Double cat litter box enclosure rattan cabinet","https://example.com/cat-cabinet-video","Your litter box can stop looking like a litter box","Hide two litter boxes and make the room cleaner","88000","430","US$38000","16","mess reveal, cabinet proof, room styling, CTA","soft house beat with whoosh cuts"',
+    ].join('\n'),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/ebay-cinematic-ads.mjs',
+      'competitive-plan',
+      '--dashboard-file',
+      dashboardPath,
+      '--workbench-file',
+      workbenchPath,
+      '--competitors',
+      competitorsPath,
+      '--out-dir',
+      outRoot,
+      '--max-listings',
+      '1',
+      '--credit-budget',
+      '40',
+      '--credits-per-shot',
+      '10',
+      '--max-higgs-shots',
+      '4',
+      '--no-download',
+      '--no-discover-youtube',
+      '--no-analyze-reference-video',
+      '--run-control-loop',
+      '--control-loop-dry-run',
+      '--run-higgsfield-renders',
+      '--higgs-render-model',
+      'seedance_2_0_mini',
+      '--higgs-render-dry-run',
+      '--higgs-render-skip-cost',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+      maxBuffer: 1024 * 1024 * 20,
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Competitive pipeline manifest/);
@@ -1245,8 +1804,14 @@ test('eBay competitive-plan can run from saved dashboard and workbench snapshots
   assert.equal(pipeline.control_loop.higgsfield_render_dry_run, true);
   assert.ok(fs.existsSync(path.join(outRoot, 'higgsfield-roi-plan.json')));
   assert.ok(fs.existsSync(path.join(projectDir, 'listing.json')));
-  assert.ok(fs.existsSync(path.join(outRoot, 'competitive-creative', '398176513526', 'creative-blueprint.json')));
-  const controlManifest = JSON.parse(fs.readFileSync(pipeline.control_loop.control_loop_manifest, 'utf8'));
+  assert.ok(
+    fs.existsSync(
+      path.join(outRoot, 'competitive-creative', '398176513526', 'creative-blueprint.json'),
+    ),
+  );
+  const controlManifest = JSON.parse(
+    fs.readFileSync(pipeline.control_loop.control_loop_manifest, 'utf8'),
+  );
   assert.equal(controlManifest.dry_run, true);
   assert.ok(controlManifest.steps.some((step) => step.name === 'render_higgsfield_jobs'));
 });
@@ -1254,67 +1819,91 @@ test('eBay competitive-plan can run from saved dashboard and workbench snapshots
 test('eBay traffic optimizer writes immediate CTR and conversion worklists', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-traffic-opt-'));
   const reportPath = path.join(tempRoot, 'traffic.csv');
-  fs.writeFileSync(reportPath, [
-    'disclaimer line',
-    'Listing title,eBay item ID,Item Start Date,Category,Current promoted listings status,Quantity available,Total impressions,Click-through rate = Page views from eBay site/Total impressions,Quantity sold,% Top 20 Search Impressions,Sales conversion rate = Quantity sold/Total page views,Top 20 search slot impressions from promoted listings,% change in top 20 search slot impressions from promoted listings,Top 20 search slot organic impressions,% change in top 20 search slot impressions,Rest of search slot impressions,Total Search Impressions,Non-search promoted listings impressions,% Change in non-search promoted listings impressions,Non-search organic impressions,% Change in non-search organic impressions,Total Promoted Listings impressions (applies to eBay site only),Total Promoted Offsite impressions (applies to off-eBay only),Total organic impressions on eBay site,Total page views,Page views via promoted listings impressions on eBay site,Page views via promoted listings Impressions from outside eBay (search engines, affilliates),Page views via organic impressions on eBay site,Page views from organic impressions outside eBay (Includes page views from search engines),',
-    'High Views Camera,="398160795273",2026-07-10,Digital Cameras,Promoted,1,"17,567",2.9%,0,67.6%,0.0%,0,0,0,0,0,"5,551",0,0,0,0,686,0,"16,881",519,0,0,519,0,',
-    'Ignored Hat,="398175425702",2026-07-14,Hats,Non-promoted,1,257,0.0%,0,9.8%,0.0%,0,0,0,0,0,246,0,0,257,0,0,0,257,0,0,0,0,0,',
-  ].join('\n'));
+  fs.writeFileSync(
+    reportPath,
+    [
+      'disclaimer line',
+      'Listing title,eBay item ID,Item Start Date,Category,Current promoted listings status,Quantity available,Total impressions,Click-through rate = Page views from eBay site/Total impressions,Quantity sold,% Top 20 Search Impressions,Sales conversion rate = Quantity sold/Total page views,Top 20 search slot impressions from promoted listings,% change in top 20 search slot impressions from promoted listings,Top 20 search slot organic impressions,% change in top 20 search slot impressions,Rest of search slot impressions,Total Search Impressions,Non-search promoted listings impressions,% Change in non-search promoted listings impressions,Non-search organic impressions,% Change in non-search organic impressions,Total Promoted Listings impressions (applies to eBay site only),Total Promoted Offsite impressions (applies to off-eBay only),Total organic impressions on eBay site,Total page views,Page views via promoted listings impressions on eBay site,Page views via promoted listings Impressions from outside eBay (search engines, affilliates),Page views via organic impressions on eBay site,Page views from organic impressions outside eBay (Includes page views from search engines),',
+      'High Views Camera,="398160795273",2026-07-10,Digital Cameras,Promoted,1,"17,567",2.9%,0,67.6%,0.0%,0,0,0,0,0,"5,551",0,0,0,0,686,0,"16,881",519,0,0,519,0,',
+      'Ignored Hat,="398175425702",2026-07-14,Hats,Non-promoted,1,257,0.0%,0,9.8%,0.0%,0,0,0,0,0,246,0,0,257,0,0,0,257,0,0,0,0,0,',
+    ].join('\n'),
+  );
 
   const outDir = path.join(tempRoot, 'out');
-  const result = spawnSync('node', [
-    'scripts/ebay/optimize-ebay-traffic-report.mjs',
-    '--traffic-report',
-    reportPath,
-    '--out-dir',
-    outDir,
-    '--max-listings',
-    '2',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/optimize-ebay-traffic-report.mjs',
+      '--traffic-report',
+      reportPath,
+      '--out-dir',
+      outDir,
+      '--max-listings',
+      '2',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Traffic optimization worklist/);
-  const worklist = JSON.parse(fs.readFileSync(path.join(outDir, 'traffic-optimization-worklist.json'), 'utf8'));
+  const worklist = JSON.parse(
+    fs.readFileSync(path.join(outDir, 'traffic-optimization-worklist.json'), 'utf8'),
+  );
   assert.equal(worklist.summary.listing_count, 2);
   assert.equal(worklist.immediate.length, 2);
   assert.equal(worklist.immediate[0].item_id, '398160795273');
   assert.equal(worklist.immediate[0].primary_action, 'conversion_trust_video');
   assert.equal(worklist.immediate[1].primary_action, 'main_image_title');
-  const dashboard = JSON.parse(fs.readFileSync(path.join(outDir, 'traffic-dashboard-snapshot.json'), 'utf8'));
+  const dashboard = JSON.parse(
+    fs.readFileSync(path.join(outDir, 'traffic-dashboard-snapshot.json'), 'utf8'),
+  );
   assert.equal(dashboard.listings.length, 2);
   assert.equal(dashboard.listings[0].traffic.page_views, 519);
   assert.ok(fs.existsSync(path.join(outDir, 'traffic-optimization-worklist.md')));
-  assert.ok(fs.readFileSync(path.join(outDir, 'traffic-optimization-worklist.csv'), 'utf8').includes('High Views Camera'));
+  assert.ok(
+    fs
+      .readFileSync(path.join(outDir, 'traffic-optimization-worklist.csv'), 'utf8')
+      .includes('High Views Camera'),
+  );
 });
 
 test('eBay traffic optimizer can focus on dropship quantity listings', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-dropship-opt-'));
   const reportPath = path.join(tempRoot, 'traffic.csv');
-  fs.writeFileSync(reportPath, [
-    'report preamble',
-    'Listing title,eBay item ID,Item Start Date,Category,Current promoted listings status,Quantity available,Total impressions,Click-through rate = Page views from eBay site/Total impressions,Quantity sold,% Top 20 Search Impressions,Sales conversion rate = Quantity sold/Total page views,Top 20 search slot impressions from promoted listings,% change in top 20 search slot impressions from promoted listings,Top 20 search slot organic impressions,% change in top 20 search slot impressions,Rest of search slot impressions,Total Search Impressions,Non-search promoted listings impressions,% Change in non-search promoted listings impressions,Non-search organic impressions,% Change in non-search organic impressions,Total Promoted Listings impressions (applies to eBay site only),Total Promoted Offsite impressions (applies to off-eBay only),Total organic impressions on eBay site,Total page views,Page views via promoted listings impressions on eBay site,Page views via promoted listings Impressions from outside eBay (search engines, affilliates),Page views via organic impressions on eBay site,Page views from organic impressions outside eBay (Includes page views from search engines),',
-    'One Off Camera,="398160795273",2026-07-10,Digital Cameras,Promoted,1,"17,567",2.9%,0,67.6%,0.0%,0,0,0,0,0,"5,551",0,0,0,0,686,0,"16,881",519,0,0,519,0,',
-    'Supplier Dog Crate,="398175951396",2026-07-14,Cages & Crates,Promoted,2,295,1.0%,0,57.0%,0.0%,0,0,0,0,0,200,0,0,95,0,100,0,195,3,0,0,3,0,',
-  ].join('\n'));
+  fs.writeFileSync(
+    reportPath,
+    [
+      'report preamble',
+      'Listing title,eBay item ID,Item Start Date,Category,Current promoted listings status,Quantity available,Total impressions,Click-through rate = Page views from eBay site/Total impressions,Quantity sold,% Top 20 Search Impressions,Sales conversion rate = Quantity sold/Total page views,Top 20 search slot impressions from promoted listings,% change in top 20 search slot impressions from promoted listings,Top 20 search slot organic impressions,% change in top 20 search slot impressions,Rest of search slot impressions,Total Search Impressions,Non-search promoted listings impressions,% Change in non-search promoted listings impressions,Non-search organic impressions,% Change in non-search organic impressions,Total Promoted Listings impressions (applies to eBay site only),Total Promoted Offsite impressions (applies to off-eBay only),Total organic impressions on eBay site,Total page views,Page views via promoted listings impressions on eBay site,Page views via promoted listings Impressions from outside eBay (search engines, affilliates),Page views via organic impressions on eBay site,Page views from organic impressions outside eBay (Includes page views from search engines),',
+      'One Off Camera,="398160795273",2026-07-10,Digital Cameras,Promoted,1,"17,567",2.9%,0,67.6%,0.0%,0,0,0,0,0,"5,551",0,0,0,0,686,0,"16,881",519,0,0,519,0,',
+      'Supplier Dog Crate,="398175951396",2026-07-14,Cages & Crates,Promoted,2,295,1.0%,0,57.0%,0.0%,0,0,0,0,0,200,0,0,95,0,100,0,195,3,0,0,3,0,',
+    ].join('\n'),
+  );
 
   const outDir = path.join(tempRoot, 'out');
-  const result = spawnSync('node', [
-    'scripts/ebay/optimize-ebay-traffic-report.mjs',
-    '--traffic-report',
-    reportPath,
-    '--out-dir',
-    outDir,
-    '--dropship-only',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/optimize-ebay-traffic-report.mjs',
+      '--traffic-report',
+      reportPath,
+      '--out-dir',
+      outDir,
+      '--dropship-only',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
-  const worklist = JSON.parse(fs.readFileSync(path.join(outDir, 'traffic-optimization-worklist.json'), 'utf8'));
+  const worklist = JSON.parse(
+    fs.readFileSync(path.join(outDir, 'traffic-optimization-worklist.json'), 'utf8'),
+  );
   assert.equal(worklist.summary.all_listing_count, 2);
   assert.equal(worklist.summary.listing_count, 1);
   assert.equal(worklist.summary.filter.dropship_only, true);
@@ -1333,55 +1922,68 @@ test('competitive render handoff exporter writes queue and runbook', () => {
   fs.writeFileSync(imagePath, 'fake image placeholder');
   const outputHint = path.join(projectDir, 'higgsfield-renders', 'competitive-01-hero.mp4');
   const premiumPlan = path.join(tempRoot, 'competitive-premium-render-plan.json');
-  fs.writeFileSync(premiumPlan, JSON.stringify({
-    preview_manifest: path.join(tempRoot, 'competitive-preview-render-manifest.json'),
-    credit_budget: 22.5,
-    max_jobs_per_listing: 1,
-    selected: [{
-      item_id: '398174269080',
-      title: 'Diehard Car Jack Stands',
-      project_dir: projectDir,
-      listing_url: 'https://www.ebay.com/itm/398174269080',
-      preview_video: path.join(projectDir, 'final', 'preview.mp4'),
-      selected_reference: {title: 'Jack stand reference', hook_pattern: 'price-value hook'},
-      jobs: [{
-        id: 'competitive-01-hero',
-        purpose: 'Hero reveal',
-        beat: {
-          index: 1,
-          name: 'hook',
-          competitor_pattern: 'garage safety reveal',
-          original_execution: 'Use our actual jack stand photo for a trust-first opener.',
-          caption_intent: 'safer garage setup',
-          sfx: ['impact hit', 'tool click'],
-          imported_audio_note: 'quiet rock beat with metal hits',
-        },
-        prompt: 'Render exact jack stands from reference photo.',
-        model: 'seedance_2_0_mini',
-        resolution: '720p',
-        mode: 'std',
-        aspect_ratio: '9:16',
-        duration_seconds: 5,
-        estimated_credits: 22.5,
-        reference_images: [imagePath],
-        output_hint: outputHint,
-      }],
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/export-competitive-render-handoff.mjs',
-    '--premium-plan',
+  fs.writeFileSync(
     premiumPlan,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        preview_manifest: path.join(tempRoot, 'competitive-preview-render-manifest.json'),
+        credit_budget: 22.5,
+        max_jobs_per_listing: 1,
+        selected: [
+          {
+            item_id: '398174269080',
+            title: 'Diehard Car Jack Stands',
+            project_dir: projectDir,
+            listing_url: 'https://www.ebay.com/itm/398174269080',
+            preview_video: path.join(projectDir, 'final', 'preview.mp4'),
+            selected_reference: {title: 'Jack stand reference', hook_pattern: 'price-value hook'},
+            jobs: [
+              {
+                id: 'competitive-01-hero',
+                purpose: 'Hero reveal',
+                beat: {
+                  index: 1,
+                  name: 'hook',
+                  competitor_pattern: 'garage safety reveal',
+                  original_execution: 'Use our actual jack stand photo for a trust-first opener.',
+                  caption_intent: 'safer garage setup',
+                  sfx: ['impact hit', 'tool click'],
+                  imported_audio_note: 'quiet rock beat with metal hits',
+                },
+                prompt: 'Render exact jack stands from reference photo.',
+                model: 'seedance_2_0_mini',
+                resolution: '720p',
+                mode: 'std',
+                aspect_ratio: '9:16',
+                duration_seconds: 5,
+                estimated_credits: 22.5,
+                reference_images: [imagePath],
+                output_hint: outputHint,
+              },
+            ],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/export-competitive-render-handoff.mjs', '--premium-plan', premiumPlan],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Competitive render handoff/);
   const handoffDir = path.join(tempRoot, 'competitive-render-handoff');
-  const manifest = JSON.parse(fs.readFileSync(path.join(handoffDir, 'competitive-render-handoff-manifest.json'), 'utf8'));
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(handoffDir, 'competitive-render-handoff-manifest.json'), 'utf8'),
+  );
   assert.equal(manifest.job_count, 1);
   assert.equal(manifest.missing_reference_image_count, 0);
   assert.equal(manifest.missing_output_count, 1);
@@ -1394,12 +1996,21 @@ test('competitive render handoff exporter writes queue and runbook', () => {
   assert.equal(queue.jobs[0].queue_id, '398174269080:competitive-01-hero');
   assert.deepEqual(queue.jobs[0].reference_images, [imagePath]);
   assert.equal(queue.jobs[0].competitor_pattern, 'garage safety reveal');
-  assert.equal(queue.jobs[0].original_execution, 'Use our actual jack stand photo for a trust-first opener.');
+  assert.equal(
+    queue.jobs[0].original_execution,
+    'Use our actual jack stand photo for a trust-first opener.',
+  );
   assert.equal(queue.jobs[0].caption_intent, 'safer garage setup');
   assert.deepEqual(queue.jobs[0].sfx, ['impact hit', 'tool click']);
   assert.equal(queue.jobs[0].imported_audio_note, 'quiet rock beat with metal hits');
-  assert.equal(JSON.parse(fs.readFileSync(path.join(handoffDir, 'render-queue.jsonl'), 'utf8').trim()).beat.name, 'hook');
-  const urlMap = JSON.parse(fs.readFileSync(path.join(handoffDir, 'render-url-map.template.json'), 'utf8'));
+  assert.equal(
+    JSON.parse(fs.readFileSync(path.join(handoffDir, 'render-queue.jsonl'), 'utf8').trim()).beat
+      .name,
+    'hook',
+  );
+  const urlMap = JSON.parse(
+    fs.readFileSync(path.join(handoffDir, 'render-url-map.template.json'), 'utf8'),
+  );
   assert.equal(urlMap['398174269080']['competitive-01-hero'], outputHint);
   const runbook = fs.readFileSync(path.join(handoffDir, 'higgsfield-render-runbook.md'), 'utf8');
   assert.match(runbook, /Output Contract/);
@@ -1415,68 +2026,100 @@ test('competitive Higgsfield render runner plans Mini-compatible jobs and resume
   fs.mkdirSync(path.join(projectDir, 'higgsfield'), {recursive: true});
   const imagePath = path.join(projectDir, '01.jpg');
   fs.writeFileSync(imagePath, 'fake image placeholder');
-  const completedJobJson = path.join(projectDir, 'higgsfield', 'competitive-01-hook.competitive-job.json');
-  fs.writeFileSync(completedJobJson, JSON.stringify([{
-    id: 'existing-job',
-    status: 'completed',
-    result_url: 'https://cdn.example.com/higgs-hook.mp4',
-  }], null, 2));
-  const premiumPlan = path.join(tempRoot, 'competitive-premium-render-plan.json');
-  fs.writeFileSync(premiumPlan, JSON.stringify({
-    selected: [{
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      project_dir: projectDir,
-      jobs: [
+  const completedJobJson = path.join(
+    projectDir,
+    'higgsfield',
+    'competitive-01-hook.competitive-job.json',
+  );
+  fs.writeFileSync(
+    completedJobJson,
+    JSON.stringify(
+      [
         {
-          id: 'competitive-01-hook',
-          purpose: 'Hook',
-          prompt: 'Hook prompt',
-          model: 'seedance_2_0',
-          resolution: '720p',
-          mode: 'std',
-          aspect_ratio: '9:16',
-          duration_seconds: 4,
-          estimated_credits: 10,
-          reference_images: [imagePath],
-          output_hint: path.join(projectDir, 'higgsfield-renders', 'competitive-01-hook.mp4'),
-        },
-        {
-          id: 'competitive-02-proof-detail',
-          purpose: 'Proof',
-          prompt: 'Proof prompt',
-          model: 'seedance_2_0',
-          resolution: '720p',
-          mode: 'std',
-          aspect_ratio: '9:16',
-          duration_seconds: 4,
-          estimated_credits: 10,
-          reference_images: [imagePath],
-          output_hint: path.join(projectDir, 'higgsfield-renders', 'competitive-02-proof-detail.mp4'),
+          id: 'existing-job',
+          status: 'completed',
+          result_url: 'https://cdn.example.com/higgs-hook.mp4',
         },
       ],
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/run-competitive-higgsfield-renders.mjs',
-    '--premium-plan',
+      null,
+      2,
+    ),
+  );
+  const premiumPlan = path.join(tempRoot, 'competitive-premium-render-plan.json');
+  fs.writeFileSync(
     premiumPlan,
-    '--model',
-    'seedance_2_0_mini',
-    '--credit-budget',
-    '15',
-    '--dry-run',
-    '--skip-cost',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        selected: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            project_dir: projectDir,
+            jobs: [
+              {
+                id: 'competitive-01-hook',
+                purpose: 'Hook',
+                prompt: 'Hook prompt',
+                model: 'seedance_2_0',
+                resolution: '720p',
+                mode: 'std',
+                aspect_ratio: '9:16',
+                duration_seconds: 4,
+                estimated_credits: 10,
+                reference_images: [imagePath],
+                output_hint: path.join(projectDir, 'higgsfield-renders', 'competitive-01-hook.mp4'),
+              },
+              {
+                id: 'competitive-02-proof-detail',
+                purpose: 'Proof',
+                prompt: 'Proof prompt',
+                model: 'seedance_2_0',
+                resolution: '720p',
+                mode: 'std',
+                aspect_ratio: '9:16',
+                duration_seconds: 4,
+                estimated_credits: 10,
+                reference_images: [imagePath],
+                output_hint: path.join(
+                  projectDir,
+                  'higgsfield-renders',
+                  'competitive-02-proof-detail.mp4',
+                ),
+              },
+            ],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/run-competitive-higgsfield-renders.mjs',
+      '--premium-plan',
+      premiumPlan,
+      '--model',
+      'seedance_2_0_mini',
+      '--credit-budget',
+      '15',
+      '--dry-run',
+      '--skip-cost',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Competitive Higgsfield render manifest/);
   const outDir = path.join(tempRoot, 'competitive-higgsfield-render-run');
-  const manifest = JSON.parse(fs.readFileSync(path.join(outDir, 'competitive-higgsfield-render-manifest.json'), 'utf8'));
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(outDir, 'competitive-higgsfield-render-manifest.json'), 'utf8'),
+  );
   assert.equal(manifest.candidate_count, 2);
   assert.equal(manifest.existing_completed_count, 1);
   assert.equal(manifest.results[0].status, 'existing_completed');
@@ -1484,8 +2127,13 @@ test('competitive Higgsfield render runner plans Mini-compatible jobs and resume
   assert.equal(manifest.results[1].model, 'seedance_2_0_mini');
   assert.ok(!manifest.results[1].command_args.includes('--mode'));
   assert.ok(manifest.results[1].command_args.includes('--aspect_ratio'));
-  const urlMap = JSON.parse(fs.readFileSync(path.join(outDir, 'higgsfield-render-url-map.json'), 'utf8'));
-  assert.equal(urlMap['398176513526']['competitive-01-hook'], 'https://cdn.example.com/higgs-hook.mp4');
+  const urlMap = JSON.parse(
+    fs.readFileSync(path.join(outDir, 'higgsfield-render-url-map.json'), 'utf8'),
+  );
+  assert.equal(
+    urlMap['398176513526']['competitive-01-hook'],
+    'https://cdn.example.com/higgs-hook.mp4',
+  );
 });
 
 test('competitive Higgsfield render runner does not exceed the first-job credit budget', () => {
@@ -1495,41 +2143,58 @@ test('competitive Higgsfield render runner does not exceed the first-job credit 
   const imagePath = path.join(projectDir, '01.jpg');
   fs.writeFileSync(imagePath, 'fake image placeholder');
   const premiumPlan = path.join(tempRoot, 'competitive-premium-render-plan.json');
-  fs.writeFileSync(premiumPlan, JSON.stringify({
-    selected: [{
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      project_dir: projectDir,
-      jobs: [{
-        id: 'competitive-01-hook',
-        prompt: 'Hook prompt',
-        model: 'seedance_2_0_mini',
-        resolution: '720p',
-        aspect_ratio: '9:16',
-        duration_seconds: 4,
-        estimated_credits: 10,
-        reference_images: [imagePath],
-        output_hint: path.join(projectDir, 'higgsfield-renders', 'competitive-01-hook.mp4'),
-      }],
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/run-competitive-higgsfield-renders.mjs',
-    '--premium-plan',
+  fs.writeFileSync(
     premiumPlan,
-    '--credit-budget',
-    '5',
-    '--dry-run',
-    '--skip-cost',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        selected: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            project_dir: projectDir,
+            jobs: [
+              {
+                id: 'competitive-01-hook',
+                prompt: 'Hook prompt',
+                model: 'seedance_2_0_mini',
+                resolution: '720p',
+                aspect_ratio: '9:16',
+                duration_seconds: 4,
+                estimated_credits: 10,
+                reference_images: [imagePath],
+                output_hint: path.join(projectDir, 'higgsfield-renders', 'competitive-01-hook.mp4'),
+              },
+            ],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/run-competitive-higgsfield-renders.mjs',
+      '--premium-plan',
+      premiumPlan,
+      '--credit-budget',
+      '5',
+      '--dry-run',
+      '--skip-cost',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   const outDir = path.join(tempRoot, 'competitive-higgsfield-render-run');
-  const manifest = JSON.parse(fs.readFileSync(path.join(outDir, 'competitive-higgsfield-render-manifest.json'), 'utf8'));
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(outDir, 'competitive-higgsfield-render-manifest.json'), 'utf8'),
+  );
   assert.equal(manifest.created_count, 0);
   assert.equal(manifest.held_count, 1);
   assert.equal(manifest.results[0].status, 'held_credit_budget');
@@ -1553,61 +2218,132 @@ test('competitive creative packet exporter writes per-listing packet folders', (
   fs.writeFileSync(proofFrame, 'fake proof placeholder');
 
   const blueprintPath = path.join(creativeDir, 'creative-blueprint.json');
-  fs.writeFileSync(blueprintPath, JSON.stringify({
-    listing: {item_id: '398174269080', title: 'Diehard Car Jack Stands'},
-    selected_reference: {title: 'Jack stand competitor', platform: 'kalodata', hook_pattern: 'safety hook', metrics: {trend_score: 42}},
-    product_truth_rules: ['Use real jack stand references only.'],
-    beats: [{
-      beat: 'hook',
-      competitor_pattern: 'fast safety hook',
-      original_execution: 'Open on the exact jack stands.',
-      source_assets: ['image_1'],
-      time_seconds: {start: 0, end: 2},
-    }],
-  }, null, 2));
-  fs.writeFileSync(path.join(tempRoot, 'competitive-video-qa-report.json'), JSON.stringify({
-    items: [{
-      item_id: '398174269080',
-      status: 'pass',
-      score: 96,
-      probe: {width: 1080, height: 1920, duration_seconds: 10, has_audio: true},
-      audio: {mean_volume_db: -34},
-      scenes: {scene_change_count: 4},
-      issues: [],
-      warnings: [],
-    }],
-  }, null, 2));
+  fs.writeFileSync(
+    blueprintPath,
+    JSON.stringify(
+      {
+        listing: {item_id: '398174269080', title: 'Diehard Car Jack Stands'},
+        selected_reference: {
+          title: 'Jack stand competitor',
+          platform: 'kalodata',
+          hook_pattern: 'safety hook',
+          metrics: {trend_score: 42},
+        },
+        product_truth_rules: ['Use real jack stand references only.'],
+        beats: [
+          {
+            beat: 'hook',
+            competitor_pattern: 'fast safety hook',
+            original_execution: 'Open on the exact jack stands.',
+            source_assets: ['image_1'],
+            time_seconds: {start: 0, end: 2},
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    path.join(tempRoot, 'competitive-video-qa-report.json'),
+    JSON.stringify(
+      {
+        items: [
+          {
+            item_id: '398174269080',
+            status: 'pass',
+            score: 96,
+            probe: {width: 1080, height: 1920, duration_seconds: 10, has_audio: true},
+            audio: {mean_volume_db: -34},
+            scenes: {scene_change_count: 4},
+            issues: [],
+            warnings: [],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   const previewManifest = path.join(tempRoot, 'competitive-preview-render-manifest.json');
   fs.writeFileSync(previewManifest, JSON.stringify({renders: []}, null, 2));
   const statusPath = path.join(premiumDir, 'competitive-video-pipeline-status.json');
-  fs.writeFileSync(statusPath, JSON.stringify({
-    manifests: {preview: previewManifest},
-    items: [{
-      item_id: '398174269080',
-      title: 'Diehard Car Jack Stands',
-      status: 'research_review_required',
-      next_action: 'Add stronger competitor/Kalodata reference evidence or rerun premium prep with --allow-weak-research.',
-      blueprint: blueprintPath,
-      preview: {final_video: previewVideo, proof_frame: proofFrame, selected_reference: {title: 'Jack stand competitor'}},
-      premium: {jobs: [{id: 'competitive-01-hero', output_hint: path.join(projectDir, 'higgsfield-renders', 'competitive-01-hero.mp4'), reference_images: [referenceImage]}]},
-      handoff: {jobs: [{queue_id: '398174269080:competitive-01-hero', job_id: 'competitive-01-hero', output_hint: path.join(projectDir, 'higgsfield-renders', 'competitive-01-hero.mp4'), prompt: 'Render exact jack stands.', estimated_credits: 22.5, missing_reference_images: []}]},
-      premium_hold: {reason: 'research quality review required', reference_quality: {issues: ['selected reference is fallback-template']}},
-      blockers: ['Research quality: selected reference is fallback-template'],
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/export-competitive-creative-packets.mjs',
-    '--status',
+  fs.writeFileSync(
     statusPath,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        manifests: {preview: previewManifest},
+        items: [
+          {
+            item_id: '398174269080',
+            title: 'Diehard Car Jack Stands',
+            status: 'research_review_required',
+            next_action:
+              'Add stronger competitor/Kalodata reference evidence or rerun premium prep with --allow-weak-research.',
+            blueprint: blueprintPath,
+            preview: {
+              final_video: previewVideo,
+              proof_frame: proofFrame,
+              selected_reference: {title: 'Jack stand competitor'},
+            },
+            premium: {
+              jobs: [
+                {
+                  id: 'competitive-01-hero',
+                  output_hint: path.join(
+                    projectDir,
+                    'higgsfield-renders',
+                    'competitive-01-hero.mp4',
+                  ),
+                  reference_images: [referenceImage],
+                },
+              ],
+            },
+            handoff: {
+              jobs: [
+                {
+                  queue_id: '398174269080:competitive-01-hero',
+                  job_id: 'competitive-01-hero',
+                  output_hint: path.join(
+                    projectDir,
+                    'higgsfield-renders',
+                    'competitive-01-hero.mp4',
+                  ),
+                  prompt: 'Render exact jack stands.',
+                  estimated_credits: 22.5,
+                  missing_reference_images: [],
+                },
+              ],
+            },
+            premium_hold: {
+              reason: 'research quality review required',
+              reference_quality: {issues: ['selected reference is fallback-template']},
+            },
+            blockers: ['Research quality: selected reference is fallback-template'],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/export-competitive-creative-packets.mjs', '--status', statusPath],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Competitive creative packets/);
-  const manifestPath = path.join(premiumDir, 'competitive-creative-packets', 'competitive-creative-packets-manifest.json');
+  const manifestPath = path.join(
+    premiumDir,
+    'competitive-creative-packets',
+    'competitive-creative-packets-manifest.json',
+  );
   assert.ok(fs.existsSync(manifestPath));
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(manifest.packet_count, 1);
@@ -1624,7 +2360,10 @@ test('competitive creative packet exporter writes per-listing packet folders', (
   assert.match(markdown, /Selected Structure/);
   assert.match(markdown, /Beat Map/);
   assert.match(markdown, /Rejection Checklist/);
-  const researchMarkdown = fs.readFileSync(path.join(packetDir, 'research', 'research-brief.md'), 'utf8');
+  const researchMarkdown = fs.readFileSync(
+    path.join(packetDir, 'research', 'research-brief.md'),
+    'utf8',
+  );
   assert.match(researchMarkdown, /Search Queries/);
   assert.match(researchMarkdown, /Why Export First/);
   assert.match(researchMarkdown, /logged-in browser scraper/);
@@ -1634,7 +2373,9 @@ test('competitive creative packet exporter writes per-listing packet folders', (
   assert.equal(packet.qa.status, 'pass');
   assert.equal(packet.local_assets.reference_images.length, 1);
   assert.ok(packet.research.research_brief_markdown.endsWith('research-brief.md'));
-  const researchJson = JSON.parse(fs.readFileSync(path.join(packetDir, 'research', 'research-brief.json'), 'utf8'));
+  const researchJson = JSON.parse(
+    fs.readFileSync(path.join(packetDir, 'research', 'research-brief.json'), 'utf8'),
+  );
   assert.ok(researchJson.research_source_note.some((note) => note.includes('anti-bot checks')));
 });
 
@@ -1649,58 +2390,118 @@ test('competitive research rerun helper infers project from packet breadcrumbs',
   fs.mkdirSync(creativeDir, {recursive: true});
   fs.mkdirSync(packetDir, {recursive: true});
   fs.mkdirSync(finalDir, {recursive: true});
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: itemId,
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    images: [],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: itemId,
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        images: [],
+      },
+      null,
+      2,
+    ),
+  );
   const sourceBlueprint = path.join(creativeDir, 'creative-blueprint.json');
-  fs.writeFileSync(sourceBlueprint, JSON.stringify({
-    listing: {item_id: itemId, title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black'},
-    selected_reference: {platform: 'fallback-template', fit_score: 0},
-  }, null, 2));
+  fs.writeFileSync(
+    sourceBlueprint,
+    JSON.stringify(
+      {
+        listing: {
+          item_id: itemId,
+          title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        },
+        selected_reference: {platform: 'fallback-template', fit_score: 0},
+      },
+      null,
+      2,
+    ),
+  );
   const renderManifest = path.join(finalDir, `${itemId}-competitive-preview-manifest.json`);
   fs.writeFileSync(renderManifest, JSON.stringify({project_dir: projectDir}, null, 2));
-  const previewManifest = path.join(tempRoot, 'competitive-creative', 'competitive-preview-render-manifest.json');
-  fs.writeFileSync(previewManifest, JSON.stringify({
-    renders: [{item_id: itemId, manifest: renderManifest, final_video: path.join(finalDir, 'preview.mp4')}],
-  }, null, 2));
-  const statusPath = path.join(tempRoot, 'competitive-premium-render-plan', 'competitive-video-pipeline-status.json');
+  const previewManifest = path.join(
+    tempRoot,
+    'competitive-creative',
+    'competitive-preview-render-manifest.json',
+  );
+  fs.writeFileSync(
+    previewManifest,
+    JSON.stringify(
+      {
+        renders: [
+          {
+            item_id: itemId,
+            manifest: renderManifest,
+            final_video: path.join(finalDir, 'preview.mp4'),
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  const statusPath = path.join(
+    tempRoot,
+    'competitive-premium-render-plan',
+    'competitive-video-pipeline-status.json',
+  );
   fs.mkdirSync(path.dirname(statusPath), {recursive: true});
   fs.writeFileSync(statusPath, JSON.stringify({manifests: {preview: previewManifest}}, null, 2));
-  fs.writeFileSync(path.join(packetDir, 'creative-packet.json'), JSON.stringify({
-    item_id: itemId,
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    status: 'research_review_required',
-    source_status: statusPath,
-    source_blueprint: sourceBlueprint,
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(packetDir, 'creative-packet.json'),
+    JSON.stringify(
+      {
+        item_id: itemId,
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        status: 'research_review_required',
+        source_status: statusPath,
+        source_blueprint: sourceBlueprint,
+      },
+      null,
+      2,
+    ),
+  );
   const competitors = path.join(tempRoot, 'automatio-export.csv');
-  fs.writeFileSync(competitors, [
-    'Product Title,Creator Handle,Video URL,Hook,Video Views,Items Sold,Total Revenue',
-    '"Double cat litter cabinet","@catspaces","https://example.com/cat","Hide the litter box","88K","430","US$38K"',
-  ].join('\n'));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/rerun-competitive-research-packet.mjs',
-    '--packet-dir',
-    packetDir,
-    '--competitors',
+  fs.writeFileSync(
     competitors,
-    '--dry-run',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    [
+      'Product Title,Creator Handle,Video URL,Hook,Video Views,Items Sold,Total Revenue',
+      '"Double cat litter cabinet","@catspaces","https://example.com/cat","Hide the litter box","88K","430","US$38K"',
+    ].join('\n'),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/rerun-competitive-research-packet.mjs',
+      '--packet-dir',
+      packetDir,
+      '--competitors',
+      competitors,
+      '--dry-run',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Competitive research rerun manifest/);
-  const manifest = JSON.parse(fs.readFileSync(path.join(creativeDir, 'competitive-research-rerun-manifest.json'), 'utf8'));
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(creativeDir, 'competitive-research-rerun-manifest.json'), 'utf8'),
+  );
   assert.equal(manifest.dry_run, true);
   assert.equal(manifest.project_dir, projectDir);
   assert.equal(manifest.steps.length, 2);
-  assert.match(manifest.steps[0].command, new RegExp(projectDir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-  assert.match(manifest.steps[0].command, new RegExp(competitors.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(
+    manifest.steps[0].command,
+    new RegExp(projectDir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+  );
+  assert.match(
+    manifest.steps[0].command,
+    new RegExp(competitors.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+  );
   assert.match(manifest.steps[1].command, /run-competitive-video-control-loop/);
 });
 
@@ -1713,52 +2514,85 @@ test('competitive research queue exporter writes Automatio search queue', () => 
   const researchBrief = path.join(researchDir, 'research-brief.md');
   const researchJson = path.join(researchDir, 'research-brief.json');
   const importTemplate = path.join(researchDir, 'competitor-import-template.csv');
-  fs.writeFileSync(packetJson, JSON.stringify({
-    item_id: '398176513526',
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    status: 'research_review_required',
-    blockers: ['Research quality: selected reference is fallback-template'],
-  }, null, 2));
+  fs.writeFileSync(
+    packetJson,
+    JSON.stringify(
+      {
+        item_id: '398176513526',
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        status: 'research_review_required',
+        blockers: ['Research quality: selected reference is fallback-template'],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(researchBrief, '# Research brief\n');
   fs.writeFileSync(importTemplate, 'Product Title,Video URL\n');
-  fs.writeFileSync(researchJson, JSON.stringify({
-    item_id: '398176513526',
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    status: 'research_review_required',
-    issues: ['selected reference is fallback-template', 'fit score 0 below minimum 1'],
-    required_columns: ['Product Title', 'Video URL', 'Items Sold'],
-    search_queries: [
-      'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black product demo',
-      'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black TikTok Shop',
-    ],
-    competitor_import_template: importTemplate,
-  }, null, 2));
-  const packetsManifest = path.join(tempRoot, 'competitive-creative-packets', 'competitive-creative-packets-manifest.json');
-  fs.writeFileSync(packetsManifest, JSON.stringify({
-    packets: [{
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      packet_dir: packetDir,
-      packet_json: packetJson,
-      research_brief: researchBrief,
-    }],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/export-competitive-research-queue.mjs',
-    '--packets-manifest',
+  fs.writeFileSync(
+    researchJson,
+    JSON.stringify(
+      {
+        item_id: '398176513526',
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        status: 'research_review_required',
+        issues: ['selected reference is fallback-template', 'fit score 0 below minimum 1'],
+        required_columns: ['Product Title', 'Video URL', 'Items Sold'],
+        search_queries: [
+          'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black product demo',
+          'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black TikTok Shop',
+        ],
+        competitor_import_template: importTemplate,
+      },
+      null,
+      2,
+    ),
+  );
+  const packetsManifest = path.join(
+    tempRoot,
+    'competitive-creative-packets',
+    'competitive-creative-packets-manifest.json',
+  );
+  fs.writeFileSync(
     packetsManifest,
-    '--credit-budget',
-    '22.5',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        packets: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            packet_dir: packetDir,
+            packet_json: packetJson,
+            research_brief: researchBrief,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/export-competitive-research-queue.mjs',
+      '--packets-manifest',
+      packetsManifest,
+      '--credit-budget',
+      '22.5',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Search rows: 2/);
   const outDir = path.join(tempRoot, 'competitive-research-queue');
-  const queueJson = JSON.parse(fs.readFileSync(path.join(outDir, 'competitive-research-queue.json'), 'utf8'));
+  const queueJson = JSON.parse(
+    fs.readFileSync(path.join(outDir, 'competitive-research-queue.json'), 'utf8'),
+  );
   assert.equal(queueJson.listing_count, 1);
   assert.equal(queueJson.query_count, 2);
   assert.match(queueJson.listings[0].rerun_command, /ebay:competitive-research-rerun/);
@@ -1784,50 +2618,79 @@ test('competitive research results importer fans consolidated Automatio rows int
   fs.writeFileSync(firstTemplate, `${columns}\n`);
   fs.writeFileSync(secondTemplate, `${columns}\n`);
   const queuePath = path.join(tempRoot, 'competitive-research-queue.json');
-  fs.writeFileSync(queuePath, JSON.stringify({
-    listings: [
-      {
-        item_id: '398176513526',
-        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-        packet_dir: firstPacket,
-        competitor_import_template: firstTemplate,
-        required_columns: columns.split(','),
-      },
-      {
-        item_id: '398176413575',
-        title: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case',
-        packet_dir: secondPacket,
-        competitor_import_template: secondTemplate,
-        required_columns: columns.split(','),
-      },
-    ],
-  }, null, 2));
-  const resultsPath = path.join(tempRoot, 'automatio-results.csv');
-  fs.writeFileSync(resultsPath, [
-    'Item ID,Search Query,Product Title,Video URL,Hook,Video Views,Items Sold',
-    '"398176513526","cat cabinet TikTok Shop","Double cat cabinet","https://example.com/cat","Hide the box","88K","430"',
-    '"398176413575","socket set product demo","Impact socket kit","https://example.com/socket","Mechanics need this","12K","91"',
-    '"000000000000","unmatched","Wrong thing","https://example.com/wrong","Nope","1M","1"',
-  ].join('\n'));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/import-competitive-research-results.mjs',
-    '--queue',
+  fs.writeFileSync(
     queuePath,
-    '--results',
+    JSON.stringify(
+      {
+        listings: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            packet_dir: firstPacket,
+            competitor_import_template: firstTemplate,
+            required_columns: columns.split(','),
+          },
+          {
+            item_id: '398176413575',
+            title: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case',
+            packet_dir: secondPacket,
+            competitor_import_template: secondTemplate,
+            required_columns: columns.split(','),
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  const resultsPath = path.join(tempRoot, 'automatio-results.csv');
+  fs.writeFileSync(
     resultsPath,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    [
+      'Item ID,Search Query,Product Title,Video URL,Hook,Video Views,Items Sold',
+      '"398176513526","cat cabinet TikTok Shop","Double cat cabinet","https://example.com/cat","Hide the box","88K","430"',
+      '"398176413575","socket set product demo","Impact socket kit","https://example.com/socket","Mechanics need this","12K","91"',
+      '"000000000000","unmatched","Wrong thing","https://example.com/wrong","Nope","1M","1"',
+    ].join('\n'),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/import-competitive-research-results.mjs',
+      '--queue',
+      queuePath,
+      '--results',
+      resultsPath,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Imported rows: 2/);
-  assert.match(fs.readFileSync(firstTemplate, 'utf8'), /Double cat cabinet,https:\/\/example\.com\/cat,Hide the box,88K,430/);
+  assert.match(
+    fs.readFileSync(firstTemplate, 'utf8'),
+    /Double cat cabinet,https:\/\/example\.com\/cat,Hide the box,88K,430/,
+  );
   assert.doesNotMatch(fs.readFileSync(firstTemplate, 'utf8'), /Impact socket kit/);
-  assert.match(fs.readFileSync(secondTemplate, 'utf8'), /Impact socket kit,https:\/\/example\.com\/socket,Mechanics need this,12K,91/);
+  assert.match(
+    fs.readFileSync(secondTemplate, 'utf8'),
+    /Impact socket kit,https:\/\/example\.com\/socket,Mechanics need this,12K,91/,
+  );
   assert.doesNotMatch(fs.readFileSync(secondTemplate, 'utf8'), /Double cat cabinet/);
-  const manifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-import', 'competitive-research-import-manifest.json'), 'utf8'));
+  const manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-import',
+        'competitive-research-import-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
   assert.equal(manifest.imported_rows, 2);
   assert.equal(manifest.skipped_rows, 1);
   assert.equal(manifest.low_match_rows, 0);
@@ -1847,60 +2710,94 @@ test('competitive research results importer routes rows by queued search query',
   fs.writeFileSync(firstTemplate, `${columns}\n`);
   fs.writeFileSync(secondTemplate, `${columns}\n`);
   const queuePath = path.join(tempRoot, 'competitive-research-queue.json');
-  fs.writeFileSync(queuePath, JSON.stringify({
-    listings: [
-      {
-        item_id: '398176513526',
-        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-        packet_dir: firstPacket,
-        competitor_import_template: firstTemplate,
-        required_columns: columns.split(','),
-      },
-      {
-        item_id: '398176413575',
-        title: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case',
-        packet_dir: secondPacket,
-        competitor_import_template: secondTemplate,
-        required_columns: columns.split(','),
-      },
-    ],
-    rows: [
-      {
-        item_id: '398176513526',
-        search_query: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black TikTok Shop',
-      },
-      {
-        item_id: '398176413575',
-        search_query: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case product demo',
-      },
-    ],
-  }, null, 2));
-  const resultsPath = path.join(tempRoot, 'automatio-results.csv');
-  fs.writeFileSync(resultsPath, [
-    'Search Query,Product Title,Video URL,Hook,Video Views,Items Sold',
-    '"Double Cat Litter Box Enclosure Cabinet Rattan Doors Black TikTok Shop","Double cat cabinet","https://example.com/cat","Hide the box","88K","430"',
-    '"VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case product demo","Impact socket kit","https://example.com/socket","Mechanics need this","12K","91"',
-  ].join('\n'));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/import-competitive-research-results.mjs',
-    '--queue',
+  fs.writeFileSync(
     queuePath,
-    '--results',
+    JSON.stringify(
+      {
+        listings: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            packet_dir: firstPacket,
+            competitor_import_template: firstTemplate,
+            required_columns: columns.split(','),
+          },
+          {
+            item_id: '398176413575',
+            title: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case',
+            packet_dir: secondPacket,
+            competitor_import_template: secondTemplate,
+            required_columns: columns.split(','),
+          },
+        ],
+        rows: [
+          {
+            item_id: '398176513526',
+            search_query: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black TikTok Shop',
+          },
+          {
+            item_id: '398176413575',
+            search_query: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case product demo',
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  const resultsPath = path.join(tempRoot, 'automatio-results.csv');
+  fs.writeFileSync(
     resultsPath,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    [
+      'Search Query,Product Title,Video URL,Hook,Video Views,Items Sold',
+      '"Double Cat Litter Box Enclosure Cabinet Rattan Doors Black TikTok Shop","Double cat cabinet","https://example.com/cat","Hide the box","88K","430"',
+      '"VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case product demo","Impact socket kit","https://example.com/socket","Mechanics need this","12K","91"',
+    ].join('\n'),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/import-competitive-research-results.mjs',
+      '--queue',
+      queuePath,
+      '--results',
+      resultsPath,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Imported rows: 2/);
-  assert.match(fs.readFileSync(firstTemplate, 'utf8'), /Double cat cabinet,https:\/\/example\.com\/cat,Hide the box,88K,430/);
+  assert.match(
+    fs.readFileSync(firstTemplate, 'utf8'),
+    /Double cat cabinet,https:\/\/example\.com\/cat,Hide the box,88K,430/,
+  );
   assert.doesNotMatch(fs.readFileSync(firstTemplate, 'utf8'), /Impact socket kit/);
-  assert.match(fs.readFileSync(secondTemplate, 'utf8'), /Impact socket kit,https:\/\/example\.com\/socket,Mechanics need this,12K,91/);
+  assert.match(
+    fs.readFileSync(secondTemplate, 'utf8'),
+    /Impact socket kit,https:\/\/example\.com\/socket,Mechanics need this,12K,91/,
+  );
   assert.doesNotMatch(fs.readFileSync(secondTemplate, 'utf8'), /Double cat cabinet/);
-  const manifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-import', 'competitive-research-import-manifest.json'), 'utf8'));
-  assert.deepEqual(manifest.route_sources, ['Item ID', 'Competitor Import Template', 'Packet Dir', 'Search Query']);
+  const manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-import',
+        'competitive-research-import-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
+  assert.deepEqual(manifest.route_sources, [
+    'Item ID',
+    'Competitor Import Template',
+    'Packet Dir',
+    'Search Query',
+  ]);
   assert.equal(manifest.imported_rows, 2);
   assert.equal(manifest.skipped_rows, 0);
   assert.equal(manifest.low_match_rows, 0);
@@ -1913,37 +2810,65 @@ test('competitive research results importer flags low product-match rows', () =>
   const template = path.join(packetDir, 'research', 'competitor-import-template.csv');
   fs.writeFileSync(template, 'Product Title,Video URL,Hook,Video Views,Items Sold\n');
   const queuePath = path.join(tempRoot, 'competitive-research-queue.json');
-  fs.writeFileSync(queuePath, JSON.stringify({
-    listings: [{
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      packet_dir: packetDir,
-      competitor_import_template: template,
-      required_columns: ['Product Title', 'Video URL', 'Hook', 'Video Views', 'Items Sold'],
-    }],
-  }, null, 2));
-  const resultsPath = path.join(tempRoot, 'automatio-results.csv');
-  fs.writeFileSync(resultsPath, [
-    'Item ID,Product Title,Video URL,Hook,Video Views,Items Sold',
-    '"398176513526","Cordless impact drill battery pack","https://example.com/drill","Garage tools are trending","99K","350"',
-  ].join('\n'));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/import-competitive-research-results.mjs',
-    '--queue',
+  fs.writeFileSync(
     queuePath,
-    '--results',
+    JSON.stringify(
+      {
+        listings: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            packet_dir: packetDir,
+            competitor_import_template: template,
+            required_columns: ['Product Title', 'Video URL', 'Hook', 'Video Views', 'Items Sold'],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  const resultsPath = path.join(tempRoot, 'automatio-results.csv');
+  fs.writeFileSync(
     resultsPath,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    [
+      'Item ID,Product Title,Video URL,Hook,Video Views,Items Sold',
+      '"398176513526","Cordless impact drill battery pack","https://example.com/drill","Garage tools are trending","99K","350"',
+    ].join('\n'),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/import-competitive-research-results.mjs',
+      '--queue',
+      queuePath,
+      '--results',
+      resultsPath,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
-  const manifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-import', 'competitive-research-import-manifest.json'), 'utf8'));
+  const manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-import',
+        'competitive-research-import-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
   assert.equal(manifest.low_match_rows, 1);
   assert.equal(manifest.writes[0].imported_preview_rows[0]._review.product_match.score, 0);
-  assert.match(manifest.writes[0].imported_preview_rows[0]._review.product_match.warnings.join(' '), /low product-title match/);
+  assert.match(
+    manifest.writes[0].imported_preview_rows[0]._review.product_match.warnings.join(' '),
+    /low product-title match/,
+  );
 });
 
 test('competitive research import loop imports rows and plans ready reruns', () => {
@@ -1953,41 +2878,66 @@ test('competitive research import loop imports rows and plans ready reruns', () 
   const template = path.join(packetDir, 'research', 'competitor-import-template.csv');
   fs.writeFileSync(template, 'Product Title,Video URL,Hook,Video Views,Items Sold\n');
   const queuePath = path.join(tempRoot, 'competitive-research-queue.json');
-  fs.writeFileSync(queuePath, JSON.stringify({
-    listings: [{
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      packet_dir: packetDir,
-      competitor_import_template: template,
-      required_columns: ['Product Title', 'Video URL', 'Hook', 'Video Views', 'Items Sold'],
-    }],
-    rows: [{
-      item_id: '398176513526',
-      search_query: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black product demo',
-    }],
-  }, null, 2));
-  const resultsPath = path.join(tempRoot, 'automatio-results.csv');
-  fs.writeFileSync(resultsPath, [
-    'Search Query,Product Title,Video URL,Hook,Video Views,Items Sold',
-    '"Double Cat Litter Box Enclosure Cabinet Rattan Doors Black product demo","Double cat cabinet","https://example.com/cat","Hide the box","88K","430"',
-  ].join('\n'));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/run-competitive-research-import-loop.mjs',
-    '--queue',
+  fs.writeFileSync(
     queuePath,
-    '--results',
+    JSON.stringify(
+      {
+        listings: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            packet_dir: packetDir,
+            competitor_import_template: template,
+            required_columns: ['Product Title', 'Video URL', 'Hook', 'Video Views', 'Items Sold'],
+          },
+        ],
+        rows: [
+          {
+            item_id: '398176513526',
+            search_query: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black product demo',
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  const resultsPath = path.join(tempRoot, 'automatio-results.csv');
+  fs.writeFileSync(
     resultsPath,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    [
+      'Search Query,Product Title,Video URL,Hook,Video Views,Items Sold',
+      '"Double Cat Litter Box Enclosure Cabinet Rattan Doors Black product demo","Double cat cabinet","https://example.com/cat","Hide the box","88K","430"',
+    ].join('\n'),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/run-competitive-research-import-loop.mjs',
+      '--queue',
+      queuePath,
+      '--results',
+      resultsPath,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Imported rows: 1/);
   assert.match(result.stdout, /Selected listings: 1/);
-  assert.match(fs.readFileSync(template, 'utf8'), /Double cat cabinet,https:\/\/example\.com\/cat,Hide the box,88K,430/);
-  const manifestPath = path.join(tempRoot, 'competitive-research-import-loop', 'competitive-research-import-loop-manifest.json');
+  assert.match(
+    fs.readFileSync(template, 'utf8'),
+    /Double cat cabinet,https:\/\/example\.com\/cat,Hide the box,88K,430/,
+  );
+  const manifestPath = path.join(
+    tempRoot,
+    'competitive-research-import-loop',
+    'competitive-research-import-loop-manifest.json',
+  );
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(manifest.ok, true);
   assert.equal(manifest.import_summary.imported_rows, 1);
@@ -1999,10 +2949,33 @@ test('competitive research import loop imports rows and plans ready reruns', () 
   assert.match(reviewHtml, /Double cat cabinet/);
   assert.match(reviewHtml, /Product Match/);
   assert.match(reviewHtml, /planned/);
-  const processManifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-import-loop', 'process', 'competitive-research-batch-rerun-manifest.json'), 'utf8'));
+  const processManifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-import-loop',
+        'process',
+        'competitive-research-batch-rerun-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
   assert.equal(processManifest.results[0].status, 'planned');
-  const importManifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-import-loop', 'import', 'competitive-research-import-manifest.json'), 'utf8'));
-  assert.equal(importManifest.writes[0].imported_preview_rows[0]['Product Title'], 'Double cat cabinet');
+  const importManifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-import-loop',
+        'import',
+        'competitive-research-import-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
+  assert.equal(
+    importManifest.writes[0].imported_preview_rows[0]['Product Title'],
+    'Double cat cabinet',
+  );
   assert.ok(importManifest.writes[0].imported_preview_rows[0]._review.product_match.score >= 0.2);
 });
 
@@ -2012,47 +2985,66 @@ test('competitive research queue processor selects filled templates', () => {
   const emptyPacket = path.join(tempRoot, 'packets', '398176413575-socket-set');
   fs.mkdirSync(path.join(filledPacket, 'research'), {recursive: true});
   fs.mkdirSync(path.join(emptyPacket, 'research'), {recursive: true});
-  fs.writeFileSync(path.join(filledPacket, 'creative-packet.json'), JSON.stringify({item_id: '398176513526'}, null, 2));
-  fs.writeFileSync(path.join(emptyPacket, 'creative-packet.json'), JSON.stringify({item_id: '398176413575'}, null, 2));
+  fs.writeFileSync(
+    path.join(filledPacket, 'creative-packet.json'),
+    JSON.stringify({item_id: '398176513526'}, null, 2),
+  );
+  fs.writeFileSync(
+    path.join(emptyPacket, 'creative-packet.json'),
+    JSON.stringify({item_id: '398176413575'}, null, 2),
+  );
   const filledCsv = path.join(filledPacket, 'research', 'competitor-import-template.csv');
   const emptyCsv = path.join(emptyPacket, 'research', 'competitor-import-template.csv');
-  fs.writeFileSync(filledCsv, [
-    'Product Title,Video URL,Hook,Video Views,Items Sold',
-    '"Double cat cabinet","https://example.com/cat","Hide the litter box","88K","430"',
-  ].join('\n'));
+  fs.writeFileSync(
+    filledCsv,
+    [
+      'Product Title,Video URL,Hook,Video Views,Items Sold',
+      '"Double cat cabinet","https://example.com/cat","Hide the litter box","88K","430"',
+    ].join('\n'),
+  );
   fs.writeFileSync(emptyCsv, 'Product Title,Video URL,Hook,Video Views,Items Sold\n');
   const queuePath = path.join(tempRoot, 'competitive-research-queue.json');
-  fs.writeFileSync(queuePath, JSON.stringify({
-    listings: [
-      {
-        item_id: '398176513526',
-        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-        packet_dir: filledPacket,
-        competitor_import_template: filledCsv,
-      },
-      {
-        item_id: '398176413575',
-        title: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case',
-        packet_dir: emptyPacket,
-        competitor_import_template: emptyCsv,
-      },
-    ],
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/process-competitive-research-queue.mjs',
-    '--queue',
+  fs.writeFileSync(
     queuePath,
-    '--dry-run',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        listings: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            packet_dir: filledPacket,
+            competitor_import_template: filledCsv,
+          },
+          {
+            item_id: '398176413575',
+            title: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case',
+            packet_dir: emptyPacket,
+            competitor_import_template: emptyCsv,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    ['scripts/ebay/process-competitive-research-queue.mjs', '--queue', queuePath, '--dry-run'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Selected listings: 1/);
   assert.match(result.stdout, /Skipped listings: 1/);
-  const manifestPath = path.join(tempRoot, 'competitive-research-batch-rerun', 'competitive-research-batch-rerun-manifest.json');
+  const manifestPath = path.join(
+    tempRoot,
+    'competitive-research-batch-rerun',
+    'competitive-research-batch-rerun-manifest.json',
+  );
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   assert.equal(manifest.selected_count, 1);
   assert.equal(manifest.skipped_count, 1);
@@ -2065,49 +3057,85 @@ test('competitive research queue processor requires trend metrics by default', (
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-research-process-trend-'));
   const packetDir = path.join(tempRoot, 'packets', '398176513526-cat-cabinet');
   fs.mkdirSync(path.join(packetDir, 'research'), {recursive: true});
-  fs.writeFileSync(path.join(packetDir, 'creative-packet.json'), JSON.stringify({item_id: '398176513526'}, null, 2));
+  fs.writeFileSync(
+    path.join(packetDir, 'creative-packet.json'),
+    JSON.stringify({item_id: '398176513526'}, null, 2),
+  );
   const competitors = path.join(packetDir, 'research', 'competitor-import-template.csv');
-  fs.writeFileSync(competitors, [
-    'Product Title,Video URL,Hook',
-    '"Double cat cabinet","https://example.com/cat","Hide the litter box"',
-  ].join('\n'));
+  fs.writeFileSync(
+    competitors,
+    [
+      'Product Title,Video URL,Hook',
+      '"Double cat cabinet","https://example.com/cat","Hide the litter box"',
+    ].join('\n'),
+  );
   const queuePath = path.join(tempRoot, 'competitive-research-queue.json');
-  fs.writeFileSync(queuePath, JSON.stringify({
-    listings: [{
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      packet_dir: packetDir,
-      competitor_import_template: competitors,
-    }],
-  }, null, 2));
-
-  const blocked = spawnSync('node', [
-    'scripts/ebay/process-competitive-research-queue.mjs',
-    '--queue',
+  fs.writeFileSync(
     queuePath,
-    '--dry-run',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        listings: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            packet_dir: packetDir,
+            competitor_import_template: competitors,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const blocked = spawnSync(
+    'node',
+    ['scripts/ebay/process-competitive-research-queue.mjs', '--queue', queuePath, '--dry-run'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   assert.equal(blocked.status, 0, blocked.stderr);
-  let manifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-batch-rerun', 'competitive-research-batch-rerun-manifest.json'), 'utf8'));
+  let manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-batch-rerun',
+        'competitive-research-batch-rerun-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
   assert.equal(manifest.selected_count, 0);
   assert.equal(manifest.skipped_count, 1);
   assert.match(manifest.skipped[0].skip_reason, /no rows include trend metrics/);
 
-  const override = spawnSync('node', [
-    'scripts/ebay/process-competitive-research-queue.mjs',
-    '--queue',
-    queuePath,
-    '--dry-run',
-    '--allow-no-trend-metrics',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const override = spawnSync(
+    'node',
+    [
+      'scripts/ebay/process-competitive-research-queue.mjs',
+      '--queue',
+      queuePath,
+      '--dry-run',
+      '--allow-no-trend-metrics',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   assert.equal(override.status, 0, override.stderr);
-  manifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-batch-rerun', 'competitive-research-batch-rerun-manifest.json'), 'utf8'));
+  manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-batch-rerun',
+        'competitive-research-batch-rerun-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
   assert.equal(manifest.selected_count, 1);
   assert.equal(manifest.results[0].status, 'planned');
 });
@@ -2117,99 +3145,167 @@ test('competitive research queue processor requires product match by default', (
   const packetDir = path.join(tempRoot, 'packets', '398176513526-cat-cabinet');
   fs.mkdirSync(path.join(packetDir, 'research'), {recursive: true});
   const competitors = path.join(packetDir, 'research', 'competitor-import-template.csv');
-  fs.writeFileSync(competitors, [
-    'Product Title,Video URL,Hook,Video Views,Items Sold',
-    '"Cordless impact drill battery pack","https://example.com/drill","Garage tools are trending","99K","350"',
-  ].join('\n'));
+  fs.writeFileSync(
+    competitors,
+    [
+      'Product Title,Video URL,Hook,Video Views,Items Sold',
+      '"Cordless impact drill battery pack","https://example.com/drill","Garage tools are trending","99K","350"',
+    ].join('\n'),
+  );
   const queuePath = path.join(tempRoot, 'competitive-research-queue.json');
-  fs.writeFileSync(queuePath, JSON.stringify({
-    listings: [{
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      packet_dir: packetDir,
-      competitor_import_template: competitors,
-    }],
-  }, null, 2));
-
-  const blocked = spawnSync('node', [
-    'scripts/ebay/process-competitive-research-queue.mjs',
-    '--queue',
+  fs.writeFileSync(
     queuePath,
-    '--dry-run',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        listings: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            packet_dir: packetDir,
+            competitor_import_template: competitors,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const blocked = spawnSync(
+    'node',
+    ['scripts/ebay/process-competitive-research-queue.mjs', '--queue', queuePath, '--dry-run'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   assert.equal(blocked.status, 0, blocked.stderr);
-  let manifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-batch-rerun', 'competitive-research-batch-rerun-manifest.json'), 'utf8'));
+  let manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-batch-rerun',
+        'competitive-research-batch-rerun-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
   assert.equal(manifest.selected_count, 0);
   assert.equal(manifest.skipped_count, 1);
   assert.match(manifest.skipped[0].skip_reason, /no rows meet product-match threshold/);
   assert.equal(manifest.evaluated[0].validation.max_product_match_score, 0);
 
-  const override = spawnSync('node', [
-    'scripts/ebay/process-competitive-research-queue.mjs',
-    '--queue',
-    queuePath,
-    '--dry-run',
-    '--allow-low-product-match',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const override = spawnSync(
+    'node',
+    [
+      'scripts/ebay/process-competitive-research-queue.mjs',
+      '--queue',
+      queuePath,
+      '--dry-run',
+      '--allow-low-product-match',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   assert.equal(override.status, 0, override.stderr);
-  manifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-batch-rerun', 'competitive-research-batch-rerun-manifest.json'), 'utf8'));
+  manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-batch-rerun',
+        'competitive-research-batch-rerun-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
   assert.equal(manifest.selected_count, 1);
   assert.equal(manifest.results[0].status, 'planned');
 });
 
 test('competitive research queue processor requires structure evidence by default', () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-research-process-structure-'));
+  const tempRoot = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'clipcaptionai-research-process-structure-'),
+  );
   const packetDir = path.join(tempRoot, 'packets', '398176513526-cat-cabinet');
   fs.mkdirSync(path.join(packetDir, 'research'), {recursive: true});
   const competitors = path.join(packetDir, 'research', 'competitor-import-template.csv');
-  fs.writeFileSync(competitors, [
-    'Product Title,Video URL,Video Views,Items Sold',
-    '"Double cat cabinet","https://example.com/cat","88K","430"',
-  ].join('\n'));
+  fs.writeFileSync(
+    competitors,
+    [
+      'Product Title,Video URL,Video Views,Items Sold',
+      '"Double cat cabinet","https://example.com/cat","88K","430"',
+    ].join('\n'),
+  );
   const queuePath = path.join(tempRoot, 'competitive-research-queue.json');
-  fs.writeFileSync(queuePath, JSON.stringify({
-    listings: [{
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      packet_dir: packetDir,
-      competitor_import_template: competitors,
-    }],
-  }, null, 2));
-
-  const blocked = spawnSync('node', [
-    'scripts/ebay/process-competitive-research-queue.mjs',
-    '--queue',
+  fs.writeFileSync(
     queuePath,
-    '--dry-run',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        listings: [
+          {
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            packet_dir: packetDir,
+            competitor_import_template: competitors,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const blocked = spawnSync(
+    'node',
+    ['scripts/ebay/process-competitive-research-queue.mjs', '--queue', queuePath, '--dry-run'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   assert.equal(blocked.status, 0, blocked.stderr);
-  let manifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-batch-rerun', 'competitive-research-batch-rerun-manifest.json'), 'utf8'));
+  let manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-batch-rerun',
+        'competitive-research-batch-rerun-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
   assert.equal(manifest.selected_count, 0);
   assert.equal(manifest.skipped_count, 1);
   assert.match(manifest.skipped[0].skip_reason, /no rows include structure evidence/);
   assert.equal(manifest.evaluated[0].validation.structure_row_count, 0);
 
-  const override = spawnSync('node', [
-    'scripts/ebay/process-competitive-research-queue.mjs',
-    '--queue',
-    queuePath,
-    '--dry-run',
-    '--allow-weak-structure',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const override = spawnSync(
+    'node',
+    [
+      'scripts/ebay/process-competitive-research-queue.mjs',
+      '--queue',
+      queuePath,
+      '--dry-run',
+      '--allow-weak-structure',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   assert.equal(override.status, 0, override.stderr);
-  manifest = JSON.parse(fs.readFileSync(path.join(tempRoot, 'competitive-research-batch-rerun', 'competitive-research-batch-rerun-manifest.json'), 'utf8'));
+  manifest = JSON.parse(
+    fs.readFileSync(
+      path.join(
+        tempRoot,
+        'competitive-research-batch-rerun',
+        'competitive-research-batch-rerun-manifest.json',
+      ),
+      'utf8',
+    ),
+  );
   assert.equal(manifest.selected_count, 1);
   assert.equal(manifest.results[0].status, 'planned');
 });
@@ -2217,22 +3313,26 @@ test('competitive research queue processor requires structure evidence by defaul
 test('competitive premium render collector imports a mapped local mp4', (t) => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-collect-plan-'));
   const sourceVideo = path.join(tempRoot, 'source.mp4');
-  const ffmpeg = spawnSync('ffmpeg', [
-    '-hide_banner',
-    '-loglevel',
-    'error',
-    '-y',
-    '-f',
-    'lavfi',
-    '-i',
-    'color=c=black:s=180x320:d=0.5:r=24',
-    '-an',
-    '-c:v',
-    'libx264',
-    '-pix_fmt',
-    'yuv420p',
-    sourceVideo,
-  ], {encoding: 'utf8'});
+  const ffmpeg = spawnSync(
+    'ffmpeg',
+    [
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-y',
+      '-f',
+      'lavfi',
+      '-i',
+      'color=c=black:s=180x320:d=0.5:r=24',
+      '-an',
+      '-c:v',
+      'libx264',
+      '-pix_fmt',
+      'yuv420p',
+      sourceVideo,
+    ],
+    {encoding: 'utf8'},
+  );
   if (ffmpeg.status !== 0 || !fs.existsSync(sourceVideo)) {
     t.skip('ffmpeg is required for the collector import smoke test');
     return;
@@ -2242,31 +3342,51 @@ test('competitive premium render collector imports a mapped local mp4', (t) => {
   fs.mkdirSync(path.join(projectDir, 'higgsfield-renders'), {recursive: true});
   const expectedClip = path.join(projectDir, 'higgsfield-renders', 'competitive-01-hero.mp4');
   const premiumPlan = path.join(tempRoot, 'competitive-premium-render-plan.json');
-  fs.writeFileSync(premiumPlan, JSON.stringify({
-    selected: [{
-      item_id: '398174220620',
-      title: 'Playing Card Rug',
-      project_dir: projectDir,
-      jobs: [{id: 'competitive-01-hero', output_hint: expectedClip}],
-    }],
-  }, null, 2));
-  const urlMap = path.join(tempRoot, 'render-map.json');
-  fs.writeFileSync(urlMap, JSON.stringify({
-    '398174220620': {
-      'competitive-01-hero': sourceVideo,
-    },
-  }, null, 2));
-
-  const result = spawnSync('node', [
-    'scripts/ebay/collect-competitive-premium-renders.mjs',
-    '--premium-plan',
+  fs.writeFileSync(
     premiumPlan,
-    '--url-map',
+    JSON.stringify(
+      {
+        selected: [
+          {
+            item_id: '398174220620',
+            title: 'Playing Card Rug',
+            project_dir: projectDir,
+            jobs: [{id: 'competitive-01-hero', output_hint: expectedClip}],
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+  const urlMap = path.join(tempRoot, 'render-map.json');
+  fs.writeFileSync(
     urlMap,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        398174220620: {
+          'competitive-01-hero': sourceVideo,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/collect-competitive-premium-renders.mjs',
+      '--premium-plan',
+      premiumPlan,
+      '--url-map',
+      urlMap,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Imported: 1/);
@@ -2284,12 +3404,19 @@ test('competitive listing video architect writes product-safe blueprints from co
   const projectDir = path.join(tempRoot, '398160795273');
   const outDir = path.join(tempRoot, 'intel');
   fs.mkdirSync(projectDir, {recursive: true});
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398160795273',
-    title: 'Sony a6700 26MP Mirrorless Camera + E 11mm f/1.8 Lens SmallRig Cage 4K',
-    url: 'https://www.ebay.com/itm/398160795273',
-    images: [],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398160795273',
+        title: 'Sony a6700 26MP Mirrorless Camera + E 11mm f/1.8 Lens SmallRig Cage 4K',
+        url: 'https://www.ebay.com/itm/398160795273',
+        images: [],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
   const competitors = path.join(tempRoot, 'kalodata.csv');
   fs.writeFileSync(
@@ -2300,19 +3427,23 @@ test('competitive listing video architect writes product-safe blueprints from co
     ].join('\n'),
   );
 
-  const result = spawnSync('node', [
-    'scripts/ebay/competitive-listing-video-architect.mjs',
-    'plan',
-    '--project-dir',
-    projectDir,
-    '--competitors',
-    competitors,
-    '--out-dir',
-    outDir,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/competitive-listing-video-architect.mjs',
+      'plan',
+      '--project-dir',
+      projectDir,
+      '--competitors',
+      competitors,
+      '--out-dir',
+      outDir,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   const blueprintPath = path.join(outDir, 'creative-blueprint.json');
@@ -2340,7 +3471,9 @@ test('competitive listing video architect writes product-safe blueprints from co
       {start: 19.2, end: 24},
     ],
   );
-  assert.ok(blueprint.product_truth_rules.some((rule) => /Do not use competitor footage/.test(rule)));
+  assert.ok(
+    blueprint.product_truth_rules.some((rule) => /Do not use competitor footage/.test(rule)),
+  );
 });
 
 test('competitive listing video architect preserves Kalodata trend metrics', () => {
@@ -2348,12 +3481,19 @@ test('competitive listing video architect preserves Kalodata trend metrics', () 
   const projectDir = path.join(tempRoot, '398176413575');
   const outDir = path.join(tempRoot, 'intel');
   fs.mkdirSync(projectDir, {recursive: true});
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398176413575',
-    title: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case',
-    url: 'https://www.ebay.com/itm/398176413575',
-    images: [],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398176413575',
+        title: 'VEVOR 34 Pc Deep Impact Socket Set Metric 8-36mm Case',
+        url: 'https://www.ebay.com/itm/398176413575',
+        images: [],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
   const competitors = path.join(tempRoot, 'automatio-kalodata.csv');
   fs.writeFileSync(
@@ -2364,22 +3504,28 @@ test('competitive listing video architect preserves Kalodata trend metrics', () 
     ].join('\n'),
   );
 
-  const result = spawnSync('node', [
-    'scripts/ebay/competitive-listing-video-architect.mjs',
-    'plan',
-    '--project-dir',
-    projectDir,
-    '--competitors',
-    competitors,
-    '--out-dir',
-    outDir,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/competitive-listing-video-architect.mjs',
+      'plan',
+      '--project-dir',
+      projectDir,
+      '--competitors',
+      competitors,
+      '--out-dir',
+      outDir,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
-  const blueprint = JSON.parse(fs.readFileSync(path.join(outDir, 'creative-blueprint.json'), 'utf8'));
+  const blueprint = JSON.parse(
+    fs.readFileSync(path.join(outDir, 'creative-blueprint.json'), 'utf8'),
+  );
   assert.equal(blueprint.selected_reference.metrics.views, 1200);
   assert.equal(blueprint.selected_reference.metrics.sold, 32);
   assert.equal(blueprint.selected_reference.metrics.revenue, 2400);
@@ -2390,7 +3536,10 @@ test('competitive listing video architect preserves Kalodata trend metrics', () 
   assert.equal(blueprint.selected_reference.metrics.posted_at, '2026-07-14T00:00:00.000Z');
   assert.ok(blueprint.selected_reference.metrics.trend_score > 0);
   assert.ok(blueprint.selected_reference.metrics.views_per_day > 0);
-  assert.equal(blueprint.selected_reference.structure_notes_for_analysis_only.audio_notes, 'garage whoosh hits over quiet beat');
+  assert.equal(
+    blueprint.selected_reference.structure_notes_for_analysis_only.audio_notes,
+    'garage whoosh hits over quiet beat',
+  );
   assert.equal(blueprint.beats[0].imported_audio_note, 'garage whoosh hits over quiet beat');
 
   const trendReportPath = path.join(outDir, 'competitor-trend-report.json');
@@ -2410,12 +3559,19 @@ test('research-brief Kalodata export columns clear premium research gate', () =>
   const finalDir = path.join(projectDir, 'final');
   fs.mkdirSync(projectDir, {recursive: true});
   fs.mkdirSync(finalDir, {recursive: true});
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398176513526',
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    url: 'https://www.ebay.com/itm/398176513526',
-    images: [{path: path.join(projectDir, '01.jpg')}],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398176513526',
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        url: 'https://www.ebay.com/itm/398176513526',
+        images: [{path: path.join(projectDir, '01.jpg')}],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
   const competitors = path.join(tempRoot, 'automatio-export.csv');
   fs.writeFileSync(
@@ -2426,19 +3582,23 @@ test('research-brief Kalodata export columns clear premium research gate', () =>
     ].join('\n'),
   );
 
-  const intel = spawnSync('node', [
-    'scripts/ebay/competitive-listing-video-architect.mjs',
-    'plan',
-    '--project-dir',
-    projectDir,
-    '--competitors',
-    competitors,
-    '--out-dir',
-    outDir,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const intel = spawnSync(
+    'node',
+    [
+      'scripts/ebay/competitive-listing-video-architect.mjs',
+      'plan',
+      '--project-dir',
+      projectDir,
+      '--competitors',
+      competitors,
+      '--out-dir',
+      outDir,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   assert.equal(intel.status, 0, intel.stderr);
 
   const blueprintPath = path.join(outDir, 'creative-blueprint.json');
@@ -2454,44 +3614,72 @@ test('research-brief Kalodata export columns clear premium research gate', () =>
   const renderManifestPath = path.join(finalDir, '398176513526-competitive-preview-manifest.json');
   fs.writeFileSync(previewVideo, 'fake preview video placeholder');
   fs.writeFileSync(proofFrame, 'fake proof frame placeholder');
-  fs.writeFileSync(renderManifestPath, JSON.stringify({
-    project_dir: projectDir,
-    selected_reference: blueprint.selected_reference,
-  }, null, 2));
+  fs.writeFileSync(
+    renderManifestPath,
+    JSON.stringify(
+      {
+        project_dir: projectDir,
+        selected_reference: blueprint.selected_reference,
+      },
+      null,
+      2,
+    ),
+  );
   const previewManifestPath = path.join(tempRoot, 'competitive-preview-render-manifest.json');
-  fs.writeFileSync(previewManifestPath, JSON.stringify({
-    renders: [{
-      ok: true,
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-      blueprint: blueprintPath,
-      final_video: previewVideo,
-      proof_frame: proofFrame,
-      manifest: renderManifestPath,
-      selected_reference: blueprint.selected_reference,
-    }],
-  }, null, 2));
-
-  const prep = spawnSync('node', [
-    'scripts/ebay/prepare-competitive-premium-renders.mjs',
-    '--preview-manifest',
+  fs.writeFileSync(
     previewManifestPath,
-    '--credit-budget',
-    '22.5',
-    '--max-jobs-per-listing',
-    '1',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    JSON.stringify(
+      {
+        renders: [
+          {
+            ok: true,
+            item_id: '398176513526',
+            title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+            blueprint: blueprintPath,
+            final_video: previewVideo,
+            proof_frame: proofFrame,
+            manifest: renderManifestPath,
+            selected_reference: blueprint.selected_reference,
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
+
+  const prep = spawnSync(
+    'node',
+    [
+      'scripts/ebay/prepare-competitive-premium-renders.mjs',
+      '--preview-manifest',
+      previewManifestPath,
+      '--credit-budget',
+      '22.5',
+      '--max-jobs-per-listing',
+      '1',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
   assert.equal(prep.status, 0, prep.stderr);
-  const planPath = path.join(tempRoot, 'competitive-premium-render-plan', 'competitive-premium-render-plan.json');
+  const planPath = path.join(
+    tempRoot,
+    'competitive-premium-render-plan',
+    'competitive-premium-render-plan.json',
+  );
   const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
   assert.equal(plan.selected_count, 1);
   assert.equal(plan.held_count, 0);
   assert.equal(plan.selected[0].reference_quality.status, 'ready');
-  assert.ok(fs.existsSync(path.join(projectDir, 'higgsfield', 'competitive-premium-render-jobs.json')));
-  assert.ok(fs.existsSync(path.join(projectDir, 'higgsfield', 'render-competitive-premium-shots.sh')));
+  assert.ok(
+    fs.existsSync(path.join(projectDir, 'higgsfield', 'competitive-premium-render-jobs.json')),
+  );
+  assert.ok(
+    fs.existsSync(path.join(projectDir, 'higgsfield', 'render-competitive-premium-shots.sh')),
+  );
 });
 
 test('competitive listing video architect favors product-matched references over high-view mismatches', () => {
@@ -2499,12 +3687,19 @@ test('competitive listing video architect favors product-matched references over
   const projectDir = path.join(tempRoot, '398174220620');
   const outDir = path.join(tempRoot, 'intel');
   fs.mkdirSync(projectDir, {recursive: true});
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398174220620',
-    title: 'Black & White Lucky You Playing Card Hearts Throw carpet, Rectangular 32 x 47',
-    url: 'https://www.ebay.com/itm/398174220620',
-    images: [],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398174220620',
+        title: 'Black & White Lucky You Playing Card Hearts Throw carpet, Rectangular 32 x 47',
+        url: 'https://www.ebay.com/itm/398174220620',
+        images: [],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
   const competitors = path.join(tempRoot, 'competitors.csv');
   fs.writeFileSync(
@@ -2516,22 +3711,28 @@ test('competitive listing video architect favors product-matched references over
     ].join('\n'),
   );
 
-  const result = spawnSync('node', [
-    'scripts/ebay/competitive-listing-video-architect.mjs',
-    'plan',
-    '--project-dir',
-    projectDir,
-    '--competitors',
-    competitors,
-    '--out-dir',
-    outDir,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/competitive-listing-video-architect.mjs',
+      'plan',
+      '--project-dir',
+      projectDir,
+      '--competitors',
+      competitors,
+      '--out-dir',
+      outDir,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
-  const blueprint = JSON.parse(fs.readFileSync(path.join(outDir, 'creative-blueprint.json'), 'utf8'));
+  const blueprint = JSON.parse(
+    fs.readFileSync(path.join(outDir, 'creative-blueprint.json'), 'utf8'),
+  );
   assert.match(blueprint.selected_reference.title, /rug/i);
   assert.equal(blueprint.selected_reference.url, 'https://example.com/rug');
   assert.ok(
@@ -2546,25 +3747,36 @@ test('competitive listing video architect keeps per-listing folders in projects-
   const projectDir = path.join(projectsDir, '398176123925');
   const outDir = path.join(tempRoot, 'intel');
   fs.mkdirSync(projectDir, {recursive: true});
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398176123925',
-    title: 'VEVOR Wet Dry Vac 2.6 Gallon 2.5 HP Portable Shop Vacuum',
-    url: 'https://www.ebay.com/itm/398176123925',
-    images: [],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398176123925',
+        title: 'VEVOR Wet Dry Vac 2.6 Gallon 2.5 HP Portable Shop Vacuum',
+        url: 'https://www.ebay.com/itm/398176123925',
+        images: [],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
 
-  const result = spawnSync('node', [
-    'scripts/ebay/competitive-listing-video-architect.mjs',
-    'plan',
-    '--projects-dir',
-    projectsDir,
-    '--out-dir',
-    outDir,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/competitive-listing-video-architect.mjs',
+      'plan',
+      '--projects-dir',
+      projectsDir,
+      '--out-dir',
+      outDir,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   const blueprintPath = path.join(outDir, '398176123925', 'creative-blueprint.json');
@@ -2585,39 +3797,57 @@ test('competitive voiceover plan exporter writes seller-voice scripts and render
   const outDir = path.join(tempRoot, 'voiceover-plan');
   fs.mkdirSync(projectDir, {recursive: true});
   fs.mkdirSync(itemBlueprintDir, {recursive: true});
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398176513526',
-    title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    images: [{path: path.join(projectDir, '01.jpg')}],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398176513526',
+        title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        images: [{path: path.join(projectDir, '01.jpg')}],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
-  fs.writeFileSync(path.join(itemBlueprintDir, 'creative-blueprint.json'), JSON.stringify({
-    listing: {
-      item_id: '398176513526',
-      title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
-    },
-    target_duration_seconds: 16,
-    original_script: {
-      voiceover_style: 'confident seller voice',
-      lines: [
-        'Here is the exact cat cabinet from the listing.',
-        'Look at the photos, check the details, and use eBay for checkout.',
-      ],
-    },
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(itemBlueprintDir, 'creative-blueprint.json'),
+    JSON.stringify(
+      {
+        listing: {
+          item_id: '398176513526',
+          title: 'Double Cat Litter Box Enclosure Cabinet Rattan Doors Black',
+        },
+        target_duration_seconds: 16,
+        original_script: {
+          voiceover_style: 'confident seller voice',
+          lines: [
+            'Here is the exact cat cabinet from the listing.',
+            'Look at the photos, check the details, and use eBay for checkout.',
+          ],
+        },
+      },
+      null,
+      2,
+    ),
+  );
 
-  const result = spawnSync('node', [
-    'scripts/ebay/export-competitive-voiceover-plan.mjs',
-    '--blueprints-dir',
-    blueprintsDir,
-    '--out-dir',
-    outDir,
-    '--voice-name',
-    'jonathan-test-voice',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/export-competitive-voiceover-plan.mjs',
+      '--blueprints-dir',
+      blueprintsDir,
+      '--out-dir',
+      outDir,
+      '--voice-name',
+      'jonathan-test-voice',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Competitive voiceover plan/);
@@ -2639,40 +3869,58 @@ test('competitive voiceover plan exporter replaces generic marketplace narration
   const outDir = path.join(tempRoot, 'voiceover-plan');
   fs.mkdirSync(projectDir, {recursive: true});
   fs.mkdirSync(itemBlueprintDir, {recursive: true});
-  fs.writeFileSync(path.join(projectDir, 'listing.json'), JSON.stringify({
-    item_id: '398172345288',
-    title: '16 in Electric Dethatcher Scarifier 15 Amp Lawn Rake w 14.5 Gal Catch Bag',
-    images: [{path: path.join(projectDir, '01.jpg')}],
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(projectDir, 'listing.json'),
+    JSON.stringify(
+      {
+        item_id: '398172345288',
+        title: '16 in Electric Dethatcher Scarifier 15 Amp Lawn Rake w 14.5 Gal Catch Bag',
+        images: [{path: path.join(projectDir, '01.jpg')}],
+      },
+      null,
+      2,
+    ),
+  );
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
-  fs.writeFileSync(path.join(itemBlueprintDir, 'creative-blueprint.json'), JSON.stringify({
-    listing: {
-      item_id: '398172345288',
-      title: '16 in Electric Dethatcher Scarifier 15 Amp Lawn Rake w 14.5 Gal Catch Bag',
-      inferred_category: 'marketplace product',
-    },
-    target_duration_seconds: 16,
-    original_script: {
-      lines: [
-        'Here is the exact marketplace product item from the listing, shown fast and clearly.',
-        'You are seeing the real photos and the real included items, not a stock fantasy version.',
-        'Check the closeups, confirm the condition, and use the eBay listing for the final details.',
-      ],
-    },
-  }, null, 2));
+  fs.writeFileSync(
+    path.join(itemBlueprintDir, 'creative-blueprint.json'),
+    JSON.stringify(
+      {
+        listing: {
+          item_id: '398172345288',
+          title: '16 in Electric Dethatcher Scarifier 15 Amp Lawn Rake w 14.5 Gal Catch Bag',
+          inferred_category: 'marketplace product',
+        },
+        target_duration_seconds: 16,
+        original_script: {
+          lines: [
+            'Here is the exact marketplace product item from the listing, shown fast and clearly.',
+            'You are seeing the real photos and the real included items, not a stock fantasy version.',
+            'Check the closeups, confirm the condition, and use the eBay listing for the final details.',
+          ],
+        },
+      },
+      null,
+      2,
+    ),
+  );
 
-  const result = spawnSync('node', [
-    'scripts/ebay/export-competitive-voiceover-plan.mjs',
-    '--blueprints-dir',
-    blueprintsDir,
-    '--out-dir',
-    outDir,
-    '--max-words',
-    '52',
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/export-competitive-voiceover-plan.mjs',
+      '--blueprints-dir',
+      blueprintsDir,
+      '--out-dir',
+      outDir,
+      '--max-words',
+      '52',
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   const manifest = JSON.parse(fs.readFileSync(path.join(outDir, 'latest.json'), 'utf8'));
@@ -2681,100 +3929,134 @@ test('competitive voiceover plan exporter replaces generic marketplace narration
   assert.doesNotMatch(manifest.entries[0].script.text, /stock fantasy version/);
 });
 
-test('eBay main photo candidate generator writes buyer-safe image manifest', {skip: spawnSync('which', ['magick']).status !== 0}, () => {
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-main-photo-'));
-  const sourceRoot = path.join(tempRoot, 'supplier-video-repairs');
-  const imageDir = path.join(sourceRoot, '20260715T000000Z', '398176209386-CJ-CHAIR', 'images');
-  const outDir = path.join(tempRoot, 'main-photo-candidates');
-  fs.mkdirSync(imageDir, {recursive: true});
-  const imagePath = path.join(imageDir, '01.jpg');
-  const imageResult = spawnSync('magick', [
-    '-size',
-    '640x420',
-    'xc:white',
-    '-fill',
-    '#1f6feb',
-    '-draw',
-    'rectangle 160,90 480,330',
-    imagePath,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
-  assert.equal(imageResult.status, 0, imageResult.stderr);
+test(
+  'eBay main photo candidate generator writes buyer-safe image manifest',
+  {skip: spawnSync('which', ['magick']).status !== 0},
+  () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-main-photo-'));
+    const sourceRoot = path.join(tempRoot, 'supplier-video-repairs');
+    const imageDir = path.join(sourceRoot, '20260715T000000Z', '398176209386-CJ-CHAIR', 'images');
+    const outDir = path.join(tempRoot, 'main-photo-candidates');
+    fs.mkdirSync(imageDir, {recursive: true});
+    const imagePath = path.join(imageDir, '01.jpg');
+    const imageResult = spawnSync(
+      'magick',
+      [
+        '-size',
+        '640x420',
+        'xc:white',
+        '-fill',
+        '#1f6feb',
+        '-draw',
+        'rectangle 160,90 480,330',
+        imagePath,
+      ],
+      {
+        cwd: projectRoot,
+        encoding: 'utf8',
+      },
+    );
+    assert.equal(imageResult.status, 0, imageResult.stderr);
 
-  const worklist = path.join(tempRoot, 'traffic-optimization-worklist.json');
-  fs.writeFileSync(worklist, JSON.stringify({
-    rows: [{
-      item_id: '398176209386',
-      title: 'PU Leather Ergonomic Office Chair Gaming Desk Chair Lumbar Support',
-      url: 'https://www.ebay.com/itm/398176209386',
-      impressions: 209,
-      views: 0,
-      ctr: 0,
-      sold: 0,
-      primary_action: 'main_image_title',
-      issue_tags: ['no_sales', 'zero_clicks', 'video_candidate'],
-      priority_score: 52,
-    }],
-  }, null, 2));
+    const worklist = path.join(tempRoot, 'traffic-optimization-worklist.json');
+    fs.writeFileSync(
+      worklist,
+      JSON.stringify(
+        {
+          rows: [
+            {
+              item_id: '398176209386',
+              title: 'PU Leather Ergonomic Office Chair Gaming Desk Chair Lumbar Support',
+              url: 'https://www.ebay.com/itm/398176209386',
+              impressions: 209,
+              views: 0,
+              ctr: 0,
+              sold: 0,
+              primary_action: 'main_image_title',
+              issue_tags: ['no_sales', 'zero_clicks', 'video_candidate'],
+              priority_score: 52,
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+    );
 
-  const result = spawnSync('node', [
-    'scripts/ebay/generate-ebay-main-photo-candidates.mjs',
-    '--worklist',
-    worklist,
-    '--source-root',
-    sourceRoot,
-    '--out-dir',
-    outDir,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+    const result = spawnSync(
+      'node',
+      [
+        'scripts/ebay/generate-ebay-main-photo-candidates.mjs',
+        '--worklist',
+        worklist,
+        '--source-root',
+        sourceRoot,
+        '--out-dir',
+        outDir,
+      ],
+      {
+        cwd: projectRoot,
+        encoding: 'utf8',
+      },
+    );
 
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /Generated: 1/);
-  const manifest = JSON.parse(fs.readFileSync(path.join(outDir, 'latest.json'), 'utf8'));
-  assert.equal(manifest.generated_count, 1);
-  assert.equal(manifest.entries[0].item_id, '398176209386');
-  assert.ok(fs.existsSync(manifest.entries[0].main_photo_candidate));
-  assert.ok(fs.existsSync(manifest.entries[0].thumbnail_focus_candidate));
-  assert.ok(fs.existsSync(manifest.all_contact_sheet));
-  assert.match(manifest.purpose, /No text overlays/);
-});
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, /Generated: 1/);
+    const manifest = JSON.parse(fs.readFileSync(path.join(outDir, 'latest.json'), 'utf8'));
+    assert.equal(manifest.generated_count, 1);
+    assert.equal(manifest.entries[0].item_id, '398176209386');
+    assert.ok(fs.existsSync(manifest.entries[0].main_photo_candidate));
+    assert.ok(fs.existsSync(manifest.entries[0].thumbnail_focus_candidate));
+    assert.ok(fs.existsSync(manifest.all_contact_sheet));
+    assert.match(manifest.purpose, /No text overlays/);
+  },
+);
 
 test('eBay main photo apply bundle exporter writes no-price-change upload folders', () => {
   const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-main-photo-apply-'));
   const imagePath = path.join(tempRoot, '398176209386-main-photo-candidate.jpg');
   fs.writeFileSync(imagePath, 'fake jpg placeholder');
   const queuePath = path.join(tempRoot, 'final-main-photo-upload-queue.json');
-  fs.writeFileSync(queuePath, JSON.stringify({
-    live_apply_blocker: 'Auth required',
-    entries: [{
-      rank: 1,
-      item_id: '398176209386',
-      title: 'PU Leather Ergonomic Office Chair Gaming Desk Chair Lumbar Support',
-      url: 'https://www.ebay.com/itm/398176209386',
-      impressions: 209,
-      views: 0,
-      ctr: 0,
-      final_status: 'ready_for_upload_preview',
-      selected_main_photo: imagePath,
-      selected_variant: 'standard_candidate',
-    }],
-  }, null, 2));
+  fs.writeFileSync(
+    queuePath,
+    JSON.stringify(
+      {
+        live_apply_blocker: 'Auth required',
+        entries: [
+          {
+            rank: 1,
+            item_id: '398176209386',
+            title: 'PU Leather Ergonomic Office Chair Gaming Desk Chair Lumbar Support',
+            url: 'https://www.ebay.com/itm/398176209386',
+            impressions: 209,
+            views: 0,
+            ctr: 0,
+            final_status: 'ready_for_upload_preview',
+            selected_main_photo: imagePath,
+            selected_variant: 'standard_candidate',
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  );
   const outDir = path.join(tempRoot, 'apply-bundle');
 
-  const result = spawnSync('node', [
-    'scripts/ebay/export-ebay-main-photo-apply-bundle.mjs',
-    '--queue',
-    queuePath,
-    '--out-dir',
-    outDir,
-  ], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    'node',
+    [
+      'scripts/ebay/export-ebay-main-photo-apply-bundle.mjs',
+      '--queue',
+      queuePath,
+      '--out-dir',
+      outDir,
+    ],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /Ready: 1/);
@@ -2791,32 +4073,19 @@ test('eBay main photo apply bundle exporter writes no-price-change upload folder
 // ── Chapter detection ─────────────────────────────────────────────────
 
 test('chapter:auto exposes help without requiring a video file', () => {
-  const result = spawnSync(
-    process.execPath,
-    ['scripts/chapter-video.mjs', '--help'],
-    {cwd: projectRoot, encoding: 'utf8'},
-  );
+  const result = spawnSync(process.execPath, ['scripts/chapter-video.mjs', '--help'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
 
   assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
-  assert.ok(
-    result.stdout.includes('chapter:auto'),
-    'help should mention chapter:auto',
-  );
-  assert.ok(
-    result.stdout.includes('--video'),
-    'help should document --video',
-  );
-  assert.ok(
-    result.stdout.includes('--split'),
-    'help should document --split',
-  );
-  assert.ok(
-    result.stdout.includes('DEEPSEEK_API_KEY'),
-    'help should mention DEEPSEEK_API_KEY',
-  );
+  assert.ok(result.stdout.includes('chapter:auto'), 'help should mention chapter:auto');
+  assert.ok(result.stdout.includes('--video'), 'help should document --video');
+  assert.ok(result.stdout.includes('--split'), 'help should document --split');
+  assert.ok(result.stdout.includes('DEEPSEEK_API_KEY'), 'help should mention DEEPSEEK_API_KEY');
 });
 
-test('chapter:auto writes a time-fallback chapters.json when no AI key is configured', () => {
+test('chapter:auto writes a time-fallback chapters.json when no AI key is configured', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cca-chapter-test-'));
   const videoPath = path.join(dir, 'silent.mp4');
   const outPath = path.join(dir, 'chapters.json');
@@ -2825,14 +4094,29 @@ test('chapter:auto writes a time-fallback chapters.json when no AI key is config
   spawnSync(
     'ffmpeg',
     [
-      '-hide_banner', '-loglevel', 'error', '-y',
-      '-f', 'lavfi',
-      '-i', 'color=c=black:s=640x360:d=45',
-      '-f', 'lavfi',
-      '-i', 'anullsrc=r=16000:cl=mono',
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-y',
+      '-f',
+      'lavfi',
+      '-i',
+      'color=c=black:s=640x360:d=45',
+      '-f',
+      'lavfi',
+      '-i',
+      'anullsrc=r=16000:cl=mono',
       '-shortest',
-      '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '35',
-      '-c:a', 'aac', '-b:a', '24k',
+      '-c:v',
+      'libx264',
+      '-preset',
+      'ultrafast',
+      '-crf',
+      '35',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '24k',
       videoPath,
     ],
     {stdio: 'pipe'},
@@ -2840,7 +4124,8 @@ test('chapter:auto writes a time-fallback chapters.json when no AI key is config
 
   if (!fs.existsSync(videoPath)) {
     fs.rmSync(dir, {recursive: true, force: true});
-    return; // skip — ffmpeg not available
+    t.skip('ffmpeg not available — cannot synthesize fixture video');
+    return;
   }
 
   const result = spawnSync(
@@ -2860,11 +4145,10 @@ test('chapter:auto writes a time-fallback chapters.json when no AI key is config
 });
 
 test('clipkit chapter command is registered', () => {
-  const result = spawnSync(
-    process.execPath,
-    ['bin/clipcaptionai.js', 'chapter', '--help'],
-    {cwd: projectRoot, encoding: 'utf8'},
-  );
+  const result = spawnSync(process.execPath, ['bin/clipcaptionai.js', 'chapter', '--help'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
 
   assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
   assert.ok(
@@ -2876,29 +4160,21 @@ test('clipkit chapter command is registered', () => {
 // ── Tighten detection ─────────────────────────────────────────────────
 
 test('tighten:auto exposes help without requiring a video file', () => {
-  const result = spawnSync(
-    process.execPath,
-    ['scripts/tighten-video.mjs', '--help'],
-    {cwd: projectRoot, encoding: 'utf8'},
-  );
+  const result = spawnSync(process.execPath, ['scripts/tighten-video.mjs', '--help'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
 
   assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
-  assert.ok(
-    result.stdout.includes('tighten:auto'),
-    'help should mention tighten:auto',
-  );
-  assert.ok(
-    result.stdout.includes('--aggressiveness'),
-    'help should document --aggressiveness',
-  );
+  assert.ok(result.stdout.includes('tighten:auto'), 'help should mention tighten:auto');
+  assert.ok(result.stdout.includes('--aggressiveness'), 'help should document --aggressiveness');
 });
 
 test('clipkit tighten command is registered', () => {
-  const result = spawnSync(
-    process.execPath,
-    ['bin/clipcaptionai.js', 'tighten', '--help'],
-    {cwd: projectRoot, encoding: 'utf8'},
-  );
+  const result = spawnSync(process.execPath, ['bin/clipcaptionai.js', 'tighten', '--help'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
 
   assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
   assert.ok(
@@ -2910,53 +4186,58 @@ test('clipkit tighten command is registered', () => {
 // ── Compression ───────────────────────────────────────────────────────────
 
 test('compress:video exposes help without requiring a video file', () => {
-  const result = spawnSync(
-    process.execPath,
-    ['scripts/compress-video.mjs', '--help'],
-    {cwd: projectRoot, encoding: 'utf8'},
-  );
+  const result = spawnSync(process.execPath, ['scripts/compress-video.mjs', '--help'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
 
   assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
-  assert.ok(
-    result.stdout.includes('compress:video'),
-    'help should mention compress:video',
-  );
-  assert.ok(
-    result.stdout.includes('--quality'),
-    'help should document --quality',
-  );
-  assert.ok(
-    result.stdout.includes('--codec'),
-    'help should document --codec',
-  );
-  assert.ok(
-    result.stdout.includes('--preset'),
-    'help should document --preset',
-  );
-  assert.ok(
-    result.stdout.includes('--scale'),
-    'help should document --scale',
-  );
+  assert.ok(result.stdout.includes('compress:video'), 'help should mention compress:video');
+  assert.ok(result.stdout.includes('--quality'), 'help should document --quality');
+  assert.ok(result.stdout.includes('--codec'), 'help should document --codec');
+  assert.ok(result.stdout.includes('--preset'), 'help should document --preset');
+  assert.ok(result.stdout.includes('--scale'), 'help should document --scale');
 });
 
-test('compress:video dry-run produces manifest without encoding', () => {
+test('compress:video dry-run produces manifest without encoding', (t) => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cca-compress-'));
   const fixture = path.join(tmp, 'source.mp4');
 
   try {
     // Synthesize a tiny test video
-    const ff = spawnSync('ffmpeg', [
-      '-hide_banner', '-loglevel', 'error', '-y',
-      '-f', 'lavfi', '-i', 'color=c=black:s=640x360:d=3',
-      '-f', 'lavfi', '-i', 'anullsrc=r=16000:cl=mono',
-      '-shortest',
-      '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '35',
-      '-c:a', 'aac', '-b:a', '24k',
-      fixture,
-    ], {encoding: 'utf8'});
+    const ff = spawnSync(
+      'ffmpeg',
+      [
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-y',
+        '-f',
+        'lavfi',
+        '-i',
+        'color=c=black:s=640x360:d=3',
+        '-f',
+        'lavfi',
+        '-i',
+        'anullsrc=r=16000:cl=mono',
+        '-shortest',
+        '-c:v',
+        'libx264',
+        '-preset',
+        'ultrafast',
+        '-crf',
+        '35',
+        '-c:a',
+        'aac',
+        '-b:a',
+        '24k',
+        fixture,
+      ],
+      {encoding: 'utf8'},
+    );
 
     if (ff.status !== 0) {
-      console.log('Skipping compress dry-run test — ffmpeg lavfi unavailable');
+      t.skip('ffmpeg lavfi unavailable — cannot synthesize fixture video');
       return;
     }
 
@@ -2974,11 +4255,10 @@ test('compress:video dry-run produces manifest without encoding', () => {
 });
 
 test('clipkit compress command is registered', () => {
-  const result = spawnSync(
-    process.execPath,
-    ['bin/clipcaptionai.js', 'compress', '--help'],
-    {cwd: projectRoot, encoding: 'utf8'},
-  );
+  const result = spawnSync(process.execPath, ['bin/clipcaptionai.js', 'compress', '--help'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+  });
 
   assert.equal(result.status, 0, `exit code ${result.status}: ${result.stderr}`);
   assert.ok(

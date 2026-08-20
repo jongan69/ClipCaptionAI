@@ -51,7 +51,12 @@ const writeJson = (file, value) => {
 
 const shellQuote = (value) => `'${String(value).replaceAll("'", "'\\''")}'`;
 const idSet = (value) =>
-  new Set(String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean));
+  new Set(
+    String(value ?? '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
 
 const numberValue = (value, fallback = 0) => {
   const number = Number(value);
@@ -72,17 +77,19 @@ const imagesForProject = (listing, projectDir) => {
     .map((image) => resolveMaybeProjectPath(image.path ?? image.filename, projectDir))
     .filter(Boolean);
   const local = fs.existsSync(projectDir)
-    ? fs.readdirSync(projectDir)
-      .filter((name) => /\.(jpe?g|png|webp)$/i.test(name))
-      .sort((a, b) => a.localeCompare(b))
-      .map((name) => path.join(projectDir, name))
+    ? fs
+        .readdirSync(projectDir)
+        .filter((name) => /\.(jpe?g|png|webp)$/i.test(name))
+        .sort((a, b) => a.localeCompare(b))
+        .map((name) => path.join(projectDir, name))
     : [];
   return [...new Set([...fromListing, ...local])].filter((file) => fs.existsSync(file));
 };
 
 const referenceImagesForJob = ({job, imagePaths}) => {
   if (imagePaths.length === 0) return [];
-  const text = `${job.id ?? ''} ${(job.references ?? []).join(' ')} ${job.purpose ?? ''}`.toLowerCase();
+  const text =
+    `${job.id ?? ''} ${(job.references ?? []).join(' ')} ${job.purpose ?? ''}`.toLowerCase();
   if (/detail|macro|proof/.test(text)) {
     const details = imagePaths.length > 1 ? imagePaths.slice(1, 6) : imagePaths.slice(0, 1);
     return details.length ? details : imagePaths.slice(0, 1);
@@ -126,7 +133,10 @@ const durationForBeat = (beat) => {
 const referencesForBeat = (beat, index) => {
   const sourceAssets = (beat?.source_assets ?? []).map((asset) => String(asset).toLowerCase());
   if (sourceAssets.some((asset) => /image_[2-6]|detail|macro/.test(asset))) {
-    return ['detail listing photos', ...sourceAssets.filter((asset) => asset.startsWith('image_')).slice(0, 3)];
+    return [
+      'detail listing photos',
+      ...sourceAssets.filter((asset) => asset.startsWith('image_')).slice(0, 3),
+    ];
   }
   if (sourceAssets.some((asset) => /all|bundle|included/.test(asset))) {
     return ['all included listing photos'];
@@ -143,7 +153,9 @@ const beatRenderJobsForBlueprint = (blueprint) => {
   const title = blueprint?.listing?.title ?? 'product listing';
   return beats.map((beat, index) => {
     const beatName = String(beat.beat ?? `beat ${index + 1}`);
-    const competitorPattern = String(beat.competitor_pattern ?? beat.imported_structure_note ?? '').trim();
+    const competitorPattern = String(
+      beat.competitor_pattern ?? beat.imported_structure_note ?? '',
+    ).trim();
     const execution = String(beat.original_execution ?? '').trim();
     const captionIntent = String(beat.caption_intent ?? '').trim();
     const importedAudio = String(beat.imported_audio_note ?? '').trim();
@@ -167,15 +179,23 @@ const beatRenderJobsForBlueprint = (blueprint) => {
       },
       prompt: [
         `Vertical premium marketplace product ad shot for the exact eBay item shown in the reference images: ${title}.`,
-        competitorPattern ? `Adapt this competitor structure as timing and camera strategy only: ${competitorPattern}.` : null,
+        competitorPattern
+          ? `Adapt this competitor structure as timing and camera strategy only: ${competitorPattern}.`
+          : null,
         execution ? `Our original execution for this beat: ${execution}` : null,
-        captionIntent ? `The later caption intent is: ${captionIntent}. Do not bake captions or text into the generated video.` : null,
+        captionIntent
+          ? `The later caption intent is: ${captionIntent}. Do not bake captions or text into the generated video.`
+          : null,
         sfx ? `Edit energy to support later SFX accents: ${sfx}.` : null,
-        importedAudio ? `Music/editing feel to support later in assembly: ${importedAudio}. Do not generate or copy audio in this clip.` : null,
+        importedAudio
+          ? `Music/editing feel to support later in assembly: ${importedAudio}. Do not generate or copy audio in this clip.`
+          : null,
         'Use realistic camera movement, strong product focus, clean light, and resale-buyer trust.',
         'Preserve the real product color, condition, geometry, labels, included items, and scale from the references.',
         'Do not copy competitor footage, layouts, captions, audio, watermarks, logos, props, rooms, or exact wording.',
-      ].filter(Boolean).join(' '),
+      ]
+        .filter(Boolean)
+        .join(' '),
     };
   });
 };
@@ -217,7 +237,8 @@ const readListingFromRender = (render, renderManifest) => {
 };
 
 const jobPacketForRender = ({render, roi, maxJobsPerListing, modelDefaults, creditsPerShot}) => {
-  const renderManifest = render.manifest && fs.existsSync(render.manifest) ? readJson(render.manifest) : null;
+  const renderManifest =
+    render.manifest && fs.existsSync(render.manifest) ? readJson(render.manifest) : null;
   const {projectDir, listing} = readListingFromRender(render, renderManifest);
   if (!projectDir || !listing) throw new Error(`Could not infer project dir for ${render.item_id}`);
   const itemId = String(listing.item_id ?? render.item_id);
@@ -226,8 +247,8 @@ const jobPacketForRender = ({render, roi, maxJobsPerListing, modelDefaults, cred
   const blueprint = readJson(blueprintPath);
   const renderJobsPath = path.join(blueprintDir, 'higgsfield-competitive-render-jobs.json');
   const fallbackJobs = fs.existsSync(renderJobsPath)
-    ? readJson(renderJobsPath).jobs ?? []
-    : blueprint.higgsfield_prompts ?? [];
+    ? (readJson(renderJobsPath).jobs ?? [])
+    : (blueprint.higgsfield_prompts ?? []);
   const sourceJobs = renderJobsForBlueprint({blueprint, fallbackJobs});
   const imagePaths = imagesForProject(listing, projectDir);
   const pickedJobs = sourceJobs.slice(0, maxJobsPerListing);
@@ -256,7 +277,11 @@ const jobPacketForRender = ({render, roi, maxJobsPerListing, modelDefaults, cred
       prompt,
       reference_images: referenceImages,
       reference_args: referenceArgsForImages(referenceImages),
-      output_hint: path.join(projectDir, 'higgsfield-renders', `${job.id ?? `competitive-${index + 1}`}.mp4`),
+      output_hint: path.join(
+        projectDir,
+        'higgsfield-renders',
+        `${job.id ?? `competitive-${index + 1}`}.mp4`,
+      ),
     };
   });
 
@@ -267,7 +292,8 @@ const jobPacketForRender = ({render, roi, maxJobsPerListing, modelDefaults, cred
     listing_url: listing.url ?? null,
     blueprint: blueprintPath,
     source_render_jobs: fs.existsSync(renderJobsPath) ? renderJobsPath : null,
-    source_blueprint_beats: Array.isArray(blueprint.beats) && blueprint.beats.length ? blueprintPath : null,
+    source_blueprint_beats:
+      Array.isArray(blueprint.beats) && blueprint.beats.length ? blueprintPath : null,
     preview_video: render.final_video,
     preview_proof_frame: render.proof_frame,
     preview_manifest: render.manifest,
@@ -295,12 +321,14 @@ const referenceQualityForPacket = (packet, {minFitScore = 1, minTrendScore = 0} 
   const fitScore = numberValue(reference.fit_score, 0);
   const trendScore = numberValue(metrics.trend_score ?? reference.trend_score, 0);
   const hasUrl = Boolean(reference.url);
-  const isFallback = platform === 'fallback-template' || String(reference.id ?? '').startsWith('fallback-template');
+  const isFallback =
+    platform === 'fallback-template' || String(reference.id ?? '').startsWith('fallback-template');
   const issues = [];
   if (isFallback) issues.push('selected reference is fallback-template');
   if (!hasUrl && !isFallback) issues.push('selected reference has no URL');
   if (fitScore < minFitScore) issues.push(`fit score ${fitScore} below minimum ${minFitScore}`);
-  if (!isFallback && trendScore < minTrendScore) issues.push(`trend score ${trendScore} below minimum ${minTrendScore}`);
+  if (!isFallback && trendScore < minTrendScore)
+    issues.push(`trend score ${trendScore} below minimum ${minTrendScore}`);
   return {
     status: issues.length ? 'research_review_required' : 'ready',
     issues,
@@ -321,7 +349,8 @@ const writePerListingArtifacts = ({packet}) => {
   const jobsPath = path.join(higgsDir, 'competitive-premium-render-jobs.json');
   writeJson(jobsPath, {
     created_at: new Date().toISOString(),
-    source_policy: 'Approved competitive preview -> original product-preserving generated shots only.',
+    source_policy:
+      'Approved competitive preview -> original product-preserving generated shots only.',
     ...packet,
   });
 
@@ -402,180 +431,202 @@ const writePerListingArtifacts = ({packet}) => {
   return {jobsPath, estimatePath, renderPath, qaPath};
 };
 
-const previewManifestPath = path.resolve(requireArg('preview-manifest'));
-if (!fs.existsSync(previewManifestPath)) throw new Error(`Preview manifest not found: ${previewManifestPath}`);
-const previewManifest = readJson(previewManifestPath);
-const roiPlanPath = args['roi-plan'] ? path.resolve(String(args['roi-plan'])) : null;
-const roiMap = loadRoiMap(roiPlanPath);
-const approvedIds = idSet(args['approved-item-ids']);
-const skippedIds = idSet(args['skip-item-ids']);
-const creditBudget = numberValue(args['credit-budget'], 45);
-const creditsPerShot = numberValue(args['credits-per-shot'], 22.5);
-const maxJobsPerListing = Math.max(1, Math.floor(numberValue(args['max-jobs-per-listing'], 1)));
-const allowWeakResearch = args['allow-weak-research'] === true;
-const minFitScore = numberValue(args['min-fit-score'], 1);
-const minTrendScore = numberValue(args['min-trend-score'], 0);
-const modelDefaults = {
-  model: String(args['higgs-model'] ?? 'seedance_2_0'),
-  resolution: String(args['higgs-resolution'] ?? '720p'),
-  mode: String(args['higgs-mode'] ?? 'std'),
-  aspect_ratio: String(args['aspect-ratio'] ?? '9:16'),
-};
-const outDir = path.resolve(String(
-  args['out-dir'] ?? path.join(path.dirname(previewManifestPath), 'competitive-premium-render-plan'),
-));
-ensureDir(outDir);
+const main = async () => {
+  const previewManifestPath = path.resolve(requireArg('preview-manifest'));
+  if (!fs.existsSync(previewManifestPath))
+    throw new Error(`Preview manifest not found: ${previewManifestPath}`);
+  const previewManifest = readJson(previewManifestPath);
+  const roiPlanPath = args['roi-plan'] ? path.resolve(String(args['roi-plan'])) : null;
+  const roiMap = loadRoiMap(roiPlanPath);
+  const approvedIds = idSet(args['approved-item-ids']);
+  const skippedIds = idSet(args['skip-item-ids']);
+  const creditBudget = numberValue(args['credit-budget'], 45);
+  const creditsPerShot = numberValue(args['credits-per-shot'], 22.5);
+  const maxJobsPerListing = Math.max(1, Math.floor(numberValue(args['max-jobs-per-listing'], 1)));
+  const allowWeakResearch = args['allow-weak-research'] === true;
+  const minFitScore = numberValue(args['min-fit-score'], 1);
+  const minTrendScore = numberValue(args['min-trend-score'], 0);
+  const modelDefaults = {
+    model: String(args['higgs-model'] ?? 'seedance_2_0'),
+    resolution: String(args['higgs-resolution'] ?? '720p'),
+    mode: String(args['higgs-mode'] ?? 'std'),
+    aspect_ratio: String(args['aspect-ratio'] ?? '9:16'),
+  };
+  const outDir = path.resolve(
+    String(
+      args['out-dir'] ??
+        path.join(path.dirname(previewManifestPath), 'competitive-premium-render-plan'),
+    ),
+  );
+  ensureDir(outDir);
 
-const candidates = [];
-const rejected = [];
-for (const render of previewManifest.renders ?? []) {
-  const itemId = String(render.item_id ?? '');
-  if (!render.ok) {
-    rejected.push({item_id: itemId, reason: 'preview render failed'});
-    continue;
+  const candidates = [];
+  const rejected = [];
+  for (const render of previewManifest.renders ?? []) {
+    const itemId = String(render.item_id ?? '');
+    if (!render.ok) {
+      rejected.push({item_id: itemId, reason: 'preview render failed'});
+      continue;
+    }
+    if (approvedIds.size > 0 && !approvedIds.has(itemId)) {
+      rejected.push({item_id: itemId, reason: 'not in approved item list'});
+      continue;
+    }
+    if (skippedIds.has(itemId)) {
+      rejected.push({item_id: itemId, reason: 'skip item list'});
+      continue;
+    }
+    try {
+      const packet = jobPacketForRender({
+        render,
+        roi: roiMap.get(itemId) ?? null,
+        maxJobsPerListing,
+        modelDefaults,
+        creditsPerShot,
+      });
+      packet.reference_quality = referenceQualityForPacket(packet, {minFitScore, minTrendScore});
+      candidates.push(packet);
+    } catch (error) {
+      rejected.push({
+        item_id: itemId,
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
-  if (approvedIds.size > 0 && !approvedIds.has(itemId)) {
-    rejected.push({item_id: itemId, reason: 'not in approved item list'});
-    continue;
-  }
-  if (skippedIds.has(itemId)) {
-    rejected.push({item_id: itemId, reason: 'skip item list'});
-    continue;
-  }
-  try {
-    const packet = jobPacketForRender({
-      render,
-      roi: roiMap.get(itemId) ?? null,
-      maxJobsPerListing,
-      modelDefaults,
-      creditsPerShot,
-    });
-    packet.reference_quality = referenceQualityForPacket(packet, {minFitScore, minTrendScore});
-    candidates.push(packet);
-  } catch (error) {
-    rejected.push({item_id: itemId, reason: error instanceof Error ? error.message : String(error)});
-  }
-}
 
-candidates.sort((a, b) => scoreCandidate(b) - scoreCandidate(a));
+  candidates.sort((a, b) => scoreCandidate(b) - scoreCandidate(a));
 
-let spent = 0;
-const selected = [];
-const held = [];
-for (const candidate of candidates) {
-  if (candidate.reference_quality?.status !== 'ready' && !allowWeakResearch) {
-    held.push({...candidate, hold_reason: 'research quality review required'});
-    continue;
+  let spent = 0;
+  const selected = [];
+  const held = [];
+  for (const candidate of candidates) {
+    if (candidate.reference_quality?.status !== 'ready' && !allowWeakResearch) {
+      held.push({...candidate, hold_reason: 'research quality review required'});
+      continue;
+    }
+    if (spent + candidate.estimated_credits <= creditBudget || selected.length === 0) {
+      selected.push(candidate);
+      spent += candidate.estimated_credits;
+    } else {
+      held.push({...candidate, hold_reason: 'credit budget'});
+    }
   }
-  if (spent + candidate.estimated_credits <= creditBudget || selected.length === 0) {
-    selected.push(candidate);
-    spent += candidate.estimated_credits;
-  } else {
-    held.push({...candidate, hold_reason: 'credit budget'});
-  }
-}
 
-const artifacts = selected.map((packet) => ({
-  item_id: packet.item_id,
-  ...writePerListingArtifacts({packet}),
-}));
-
-const plan = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  preview_manifest: previewManifestPath,
-  roi_plan: roiPlanPath,
-  credit_budget: creditBudget,
-  credits_per_shot: creditsPerShot,
-  estimated_selected_credits: spent,
-  max_jobs_per_listing: maxJobsPerListing,
-  model_defaults: modelDefaults,
-  selected_count: selected.length,
-  held_count: held.length,
-  rejected_count: rejected.length,
-  source_policy: 'Generated shots must preserve real listing photos and copy only competitor structure, never competitor assets.',
-  research_quality_policy: {
-    allow_weak_research: allowWeakResearch,
-    min_fit_score: minFitScore,
-    min_trend_score: minTrendScore,
-  },
-  selected: selected.map((packet) => ({
+  const artifacts = selected.map((packet) => ({
     item_id: packet.item_id,
-    title: packet.title,
-    project_dir: packet.project_dir,
-    preview_video: packet.preview_video,
-    preview_proof_frame: packet.preview_proof_frame,
-    selected_reference: packet.selected_reference,
-    estimated_credits: packet.estimated_credits,
-    reference_quality: packet.reference_quality,
-    roi: packet.roi,
-    jobs: packet.jobs.map((job) => ({
-      id: job.id,
-      purpose: job.purpose,
-      estimated_credits: job.estimated_credits,
-      model: job.model,
-      resolution: job.resolution,
-      mode: job.mode,
-      aspect_ratio: job.aspect_ratio,
-      duration_seconds: job.duration_seconds,
-      reference_images: job.reference_images,
-      reference_args: job.reference_args,
-      output_hint: job.output_hint,
-      prompt: job.prompt,
-      beat: job.beat ?? null,
+    ...writePerListingArtifacts({packet}),
+  }));
+
+  const plan = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
+    preview_manifest: previewManifestPath,
+    roi_plan: roiPlanPath,
+    credit_budget: creditBudget,
+    credits_per_shot: creditsPerShot,
+    estimated_selected_credits: spent,
+    max_jobs_per_listing: maxJobsPerListing,
+    model_defaults: modelDefaults,
+    selected_count: selected.length,
+    held_count: held.length,
+    rejected_count: rejected.length,
+    source_policy:
+      'Generated shots must preserve real listing photos and copy only competitor structure, never competitor assets.',
+    research_quality_policy: {
+      allow_weak_research: allowWeakResearch,
+      min_fit_score: minFitScore,
+      min_trend_score: minTrendScore,
+    },
+    selected: selected.map((packet) => ({
+      item_id: packet.item_id,
+      title: packet.title,
+      project_dir: packet.project_dir,
+      preview_video: packet.preview_video,
+      preview_proof_frame: packet.preview_proof_frame,
+      selected_reference: packet.selected_reference,
+      estimated_credits: packet.estimated_credits,
+      reference_quality: packet.reference_quality,
+      roi: packet.roi,
+      jobs: packet.jobs.map((job) => ({
+        id: job.id,
+        purpose: job.purpose,
+        estimated_credits: job.estimated_credits,
+        model: job.model,
+        resolution: job.resolution,
+        mode: job.mode,
+        aspect_ratio: job.aspect_ratio,
+        duration_seconds: job.duration_seconds,
+        reference_images: job.reference_images,
+        reference_args: job.reference_args,
+        output_hint: job.output_hint,
+        prompt: job.prompt,
+        beat: job.beat ?? null,
+      })),
     })),
-  })),
-  held: held.map((packet) => ({
-    item_id: packet.item_id,
-    title: packet.title,
-    estimated_credits: packet.estimated_credits,
-    hold_reason: packet.hold_reason,
-    reference_quality: packet.reference_quality,
-    roi: packet.roi,
-  })),
-  rejected,
-  artifacts,
+    held: held.map((packet) => ({
+      item_id: packet.item_id,
+      title: packet.title,
+      estimated_credits: packet.estimated_credits,
+      hold_reason: packet.hold_reason,
+      reference_quality: packet.reference_quality,
+      roi: packet.roi,
+    })),
+    rejected,
+    artifacts,
+  };
+
+  const planJson = path.join(outDir, 'competitive-premium-render-plan.json');
+  const planMd = path.join(outDir, 'competitive-premium-render-plan.md');
+  writeJson(planJson, plan);
+
+  const markdown = [
+    '# Competitive Premium Render Plan',
+    '',
+    `Preview manifest: ${previewManifestPath}`,
+    `ROI plan: ${roiPlanPath ?? 'none'}`,
+    `Credit budget: ${creditBudget}`,
+    `Estimated selected credits: ${spent}`,
+    '',
+    '## Selected',
+    '',
+    ...selected.flatMap((packet, index) => [
+      `### ${index + 1}. ${packet.title}`,
+      '',
+      `- Item: ${packet.item_id}`,
+      `- Preview: ${packet.preview_video}`,
+      `- Reference: ${packet.selected_reference?.title ?? packet.selected_reference?.url ?? 'none'}`,
+      `- Reference quality: ${packet.reference_quality?.status ?? 'unknown'}`,
+      `- Estimated credits: ${packet.estimated_credits}`,
+      `- Render script: ${path.join(packet.project_dir, 'higgsfield', 'render-competitive-premium-shots.sh')}`,
+      `- QA: ${path.join(packet.project_dir, 'higgsfield', 'competitive-premium-qa.md')}`,
+      '',
+      ...packet.jobs.map(
+        (job) => `- ${job.id}: ${job.purpose ?? 'premium product shot'} -> ${job.output_hint}`,
+      ),
+      '',
+    ]),
+    held.length ? '## Held By Budget' : '',
+    '',
+    ...held.map(
+      (packet) =>
+        `- ${packet.item_id} ${packet.title} (${packet.estimated_credits} credits): ${packet.hold_reason}${packet.reference_quality?.issues?.length ? ` - ${packet.reference_quality.issues.join('; ')}` : ''}`,
+    ),
+    '',
+  ]
+    .filter((line, index, lines) => line || lines[index - 1])
+    .join('\n');
+
+  fs.writeFileSync(planMd, `${markdown}\n`);
+
+  console.log(`Competitive premium render plan: ${planJson}`);
+  console.log(`Plan markdown: ${planMd}`);
+  console.log(`Selected listings: ${selected.length}`);
+  console.log(`Estimated credits: ${spent}`);
+  console.log(`Held by budget: ${held.length}`);
+  console.log(`Rejected: ${rejected.length}`);
 };
 
-const planJson = path.join(outDir, 'competitive-premium-render-plan.json');
-const planMd = path.join(outDir, 'competitive-premium-render-plan.md');
-writeJson(planJson, plan);
-
-const markdown = [
-  '# Competitive Premium Render Plan',
-  '',
-  `Preview manifest: ${previewManifestPath}`,
-  `ROI plan: ${roiPlanPath ?? 'none'}`,
-  `Credit budget: ${creditBudget}`,
-  `Estimated selected credits: ${spent}`,
-  '',
-  '## Selected',
-  '',
-  ...selected.flatMap((packet, index) => [
-    `### ${index + 1}. ${packet.title}`,
-    '',
-    `- Item: ${packet.item_id}`,
-    `- Preview: ${packet.preview_video}`,
-    `- Reference: ${packet.selected_reference?.title ?? packet.selected_reference?.url ?? 'none'}`,
-    `- Reference quality: ${packet.reference_quality?.status ?? 'unknown'}`,
-    `- Estimated credits: ${packet.estimated_credits}`,
-    `- Render script: ${path.join(packet.project_dir, 'higgsfield', 'render-competitive-premium-shots.sh')}`,
-    `- QA: ${path.join(packet.project_dir, 'higgsfield', 'competitive-premium-qa.md')}`,
-    '',
-    ...packet.jobs.map((job) => `- ${job.id}: ${job.purpose ?? 'premium product shot'} -> ${job.output_hint}`),
-    '',
-  ]),
-  held.length ? '## Held By Budget' : '',
-  '',
-  ...held.map((packet) => `- ${packet.item_id} ${packet.title} (${packet.estimated_credits} credits): ${packet.hold_reason}${packet.reference_quality?.issues?.length ? ` - ${packet.reference_quality.issues.join('; ')}` : ''}`),
-  '',
-].filter((line, index, lines) => line || lines[index - 1]).join('\n');
-
-fs.writeFileSync(planMd, `${markdown}\n`);
-
-console.log(`Competitive premium render plan: ${planJson}`);
-console.log(`Plan markdown: ${planMd}`);
-console.log(`Selected listings: ${selected.length}`);
-console.log(`Estimated credits: ${spent}`);
-console.log(`Held by budget: ${held.length}`);
-console.log(`Rejected: ${rejected.length}`);
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

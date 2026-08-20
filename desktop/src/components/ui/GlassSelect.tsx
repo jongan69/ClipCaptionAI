@@ -1,21 +1,14 @@
-import { type SelectHTMLAttributes } from "react";
+import {type SelectHTMLAttributes} from 'react';
 
 interface GlassSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
-  options: { value: string; label: string }[];
+  options: {value: string; label: string}[];
 }
 
-export default function GlassSelect({
-  label,
-  options,
-  className = "",
-  ...props
-}: GlassSelectProps) {
+export default function GlassSelect({label, options, className = '', ...props}: GlassSelectProps) {
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      {label && (
-        <label className="text-xs text-text-dim font-medium">{label}</label>
-      )}
+      {label && <label className="text-xs text-text-dim font-medium">{label}</label>}
       <select
         className="w-full border border-glass-border bg-glass-bg-strong text-text-main
           rounded-[10px] px-3 py-2 text-sm

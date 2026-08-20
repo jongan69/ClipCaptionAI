@@ -12,7 +12,7 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
-  const brackets = logo.layer('brackets');
+  const frameLayer = logo.layer('frame');
 
   const railY = interpolate(frame, [0, 76], [-140, logo.height + 140], {
     extrapolateLeft: 'clamp',
@@ -34,10 +34,10 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
   });
   const revealOpacity = interpolate(reveal, [0, 0.4, 1], [0.12, 1, 1]);
 
-  const bracketPaths = [...(brackets?.markup.matchAll(/<path[^>]*\\sd="([^"]+)"/g) ?? [])].map(
+  const framePaths = [...(frameLayer?.markup.matchAll(/<path[^>]*\\sd="([^"]+)"/g) ?? [])].map(
     (m) => m[1]
   );
-  const dashLen = Math.max(...(bracketPaths.length ? bracketPaths.map(approxPathLength) : [120]));
+  const dashLen = Math.max(...(framePaths.length ? framePaths.map(approxPathLength) : [120]));
 
   return (
     <LogoSvg logo={logo}>
@@ -49,18 +49,18 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
 
       <g opacity={revealOpacity * railOpacity} clipPath={`url(#scanlineRail-${logo.slug})`}>
         <g opacity={interpolate(frame, [22, 42], [0, 1], {extrapolateLeft: 'clamp'})}>
-          {logo.layer('brackets') ? <RawLayer logo={logo} id="brackets" /> : null}
-          {logo.layer('l-mark') ? <RawLayer logo={logo} id="l-mark" /> : null}
+          {logo.layer('frame') ? <RawLayer logo={logo} id="frame" /> : null}
+          {logo.layer('mark') ? <RawLayer logo={logo} id="mark" /> : null}
           {logo.layer('card') ? <RawLayer logo={logo} id="card" /> : null}
           {logo.layer('wordmark') ? <RawLayer logo={logo} id="wordmark" /> : null}
         </g>
       </g>
 
       <g opacity={settle}>
-        {logo.layer('l-mark') ? (
+        {logo.layer('mark') ? (
           <RawLayer
             logo={logo}
-            id="l-mark"
+            id="mark"
             style={{
               transform: `scale(${interpolate(settle, [0, 1], [1.05, 1])})`,
               transformOrigin: `${logo.width / 2}px ${logo.height / 2}px`,
@@ -71,11 +71,11 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
         {logo.layer('wordmark') ? <RawLayer logo={logo} id="wordmark" /> : null}
       </g>
 
-      {brackets ? (
+      {frameLayer ? (
         <g
           fill="none"
-          stroke={brackets.stroke ?? logo.brand.palette.primary}
-          strokeWidth={(brackets.strokeWidth ?? 14) * 0.95}
+          stroke={frameLayer.stroke ?? logo.brand.palette.primary}
+          strokeWidth={(frameLayer.strokeWidth ?? 14) * 0.95}
           strokeLinecap="round"
           strokeLinejoin="round"
           opacity={interpolate(frame, [56, 72], [0, 0.9], {
@@ -83,7 +83,7 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
             extrapolateRight: 'clamp',
           })}
         >
-          {bracketPaths.map((d, i) => {
+          {framePaths.map((d, i) => {
             const draw = interpolate(frame, [38 + i * 4, 56 + i * 4], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',

@@ -20,15 +20,28 @@ import {
   probeVideo,
   requireArg,
   slugify,
+  emitJsonResult,
 } from './lib.mjs';
 
 // ── Constants ────────────────────────────────────────────────────────────
 
 const QUALITY_PRESETS = {
-  lossless: {crf: 17, label: 'Visually lossless', description: 'Near-perfect quality, largest file'},
-  high: {crf: 20, label: 'High quality', description: 'Excellent quality with meaningful compression'},
+  lossless: {
+    crf: 17,
+    label: 'Visually lossless',
+    description: 'Near-perfect quality, largest file',
+  },
+  high: {
+    crf: 20,
+    label: 'High quality',
+    description: 'Excellent quality with meaningful compression',
+  },
   medium: {crf: 23, label: 'Medium', description: 'Good balance of quality and file size'},
-  aggressive: {crf: 28, label: 'Aggressive', description: 'Smaller file, minor quality loss noticeable on scrutiny'},
+  aggressive: {
+    crf: 28,
+    label: 'Aggressive',
+    description: 'Smaller file, minor quality loss noticeable on scrutiny',
+  },
 };
 
 const CODECS = {
@@ -112,17 +125,13 @@ if (!QUALITY_PRESETS[qualityPreset]) {
 
 const codecKey = String(args.codec ?? 'h264');
 if (!CODECS[codecKey]) {
-  console.error(
-    `Unknown codec: ${codecKey}. Choices: ${Object.keys(CODECS).join(', ')}`,
-  );
+  console.error(`Unknown codec: ${codecKey}. Choices: ${Object.keys(CODECS).join(', ')}`);
   process.exit(1);
 }
 
 const encoderPreset = String(args.preset ?? 'medium');
 if (!ENCODER_PRESETS.includes(encoderPreset)) {
-  console.error(
-    `Unknown encoder preset: ${encoderPreset}. Choices: ${ENCODER_PRESETS.join(', ')}`,
-  );
+  console.error(`Unknown encoder preset: ${encoderPreset}. Choices: ${ENCODER_PRESETS.join(', ')}`);
   process.exit(1);
 }
 
@@ -175,17 +184,27 @@ const outPath = args.out
 
 const ffmpegArgs = [
   '-hide_banner',
-  '-loglevel', 'info',
+  '-loglevel',
+  'info',
   '-y',
-  '-i', absoluteVideo,
-  '-map', '0:v?',
-  '-map', '0:a?',
-  '-map_metadata', '0',
-  '-movflags', '+faststart',
-  '-c:v', codec.encoder,
-  '-crf', String(crf),
-  '-preset', encoderPreset,
-  '-pix_fmt', 'yuv420p',
+  '-i',
+  absoluteVideo,
+  '-map',
+  '0:v?',
+  '-map',
+  '0:a?',
+  '-map_metadata',
+  '0',
+  '-movflags',
+  '+faststart',
+  '-c:v',
+  codec.encoder,
+  '-crf',
+  String(crf),
+  '-preset',
+  encoderPreset,
+  '-pix_fmt',
+  'yuv420p',
 ];
 
 // Optional scaling
@@ -229,13 +248,13 @@ const manifest = {
     encoderPreset,
     scaleWidth,
     audio: audioCopy ? 'copy' : `aac @ ${audioBitrate}`,
-    ffmpegCommand: ['ffmpeg', ...ffmpegArgs.map(a => (/[\s"]/.test(a) ? `"${a}"` : a))].join(' '),
+    ffmpegCommand: ['ffmpeg', ...ffmpegArgs.map((a) => (/[\s"]/.test(a) ? `"${a}"` : a))].join(' '),
   },
   outputPath: outPath,
 };
 
 if (jsonOutput) {
-  console.log(JSON.stringify(manifest, null, 2));
+  emitJsonResult(manifest, true);
 }
 
 if (!jsonOutput) {
@@ -268,9 +287,8 @@ const encodeTimeMs = Date.now() - startTime;
 // Post-compression stats
 
 const compressedBytes = fs.existsSync(outPath) ? fs.statSync(outPath).size : 0;
-const savedPercent = sizeBytes > 0
-  ? Number(((1 - compressedBytes / sizeBytes) * 100).toFixed(1))
-  : 0;
+const savedPercent =
+  sizeBytes > 0 ? Number(((1 - compressedBytes / sizeBytes) * 100).toFixed(1)) : 0;
 
 manifest.result = {
   outputSizeBytes: compressedBytes,
@@ -288,7 +306,9 @@ if (jsonOutput) {
 } else {
   console.log(`\nCompression complete:`);
   console.log(`  Output:  ${outPath}`);
-  console.log(`  Size:    ${manifest.result.outputSizeMB} MB (${savedPercent > 0 ? '-' : '+'}${Math.abs(savedPercent)}%)`);
+  console.log(
+    `  Size:    ${manifest.result.outputSizeMB} MB (${savedPercent > 0 ? '-' : '+'}${Math.abs(savedPercent)}%)`,
+  );
   console.log(`  Saved:   ${Math.abs(manifest.result.savedMB).toFixed(1)} MB`);
   console.log(`  Time:    ${manifest.result.encodeTimeSeconds}s`);
   console.log(`  Manifest: ${manifestPath}`);

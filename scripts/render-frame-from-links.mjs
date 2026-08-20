@@ -3,7 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {downloadYoutubeVideo, readLinkEntriesFromLinksFile} from './lib-youtube-download.mjs';
-import {ensureDir, parseArgs, outputsRoot, projectRoot} from './lib.mjs';
+import {
+  ensureDir,
+  parseArgs,
+  outputsRoot,
+  projectRoot,
+  slugify as canonicalSlugify,
+} from './lib.mjs';
+import {timestampSlug} from './clipkit-lib.mjs';
 
 const defaultLinks = path.join(projectRoot, 'links.txt');
 const defaultFrame = path.join(path.dirname(projectRoot), 'Frame.png');
@@ -37,17 +44,6 @@ if (args.help || args.h) {
   process.exit(0);
 }
 
-const pad = (value) => String(value).padStart(2, '0');
-const timestampSlug = () => {
-  const now = new Date();
-  return [
-    now.getFullYear(),
-    pad(now.getMonth() + 1),
-    pad(now.getDate()),
-    `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`,
-  ].join('-');
-};
-
 const uniqueDir = (parent, preferredName) => {
   let candidate = path.join(parent, preferredName);
   let suffix = 2;
@@ -60,13 +56,7 @@ const uniqueDir = (parent, preferredName) => {
   return candidate;
 };
 
-const slugify = (value) => {
-  return String(value ?? 'video')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 72) || 'video';
-};
+const slugify = (value) => canonicalSlugify(value, 'video');
 
 const numberArg = (key, fallback) => {
   const value = args[key] === undefined ? fallback : Number(args[key]);
@@ -92,8 +82,7 @@ const writeRoundedMask = (maskPath, width, height, radius, feather = 3) => {
       const py = Math.abs(y + 0.5 - halfHeight) - innerY;
       const outsideX = Math.max(px, 0);
       const outsideY = Math.max(py, 0);
-      const distance =
-        Math.hypot(outsideX, outsideY) + Math.min(Math.max(px, py), 0) - radius;
+      const distance = Math.hypot(outsideX, outsideY) + Math.min(Math.max(px, py), 0) - radius;
       const alpha = clamp((-distance + feather / 2) / feather, 0, 1);
       pixels[y * width + x] = Math.round(alpha * 255);
     }
@@ -190,7 +179,10 @@ ensureDir(assetRoot);
 fs.copyFileSync(linksPath, path.join(runDir, 'links.txt'));
 fs.copyFileSync(framePath, path.join(assetRoot, path.basename(framePath)));
 
-const maskPath = path.join(assetRoot, `rounded-mask-${slot.width}x${slot.height}-r${slot.radius}.pgm`);
+const maskPath = path.join(
+  assetRoot,
+  `rounded-mask-${slot.width}x${slot.height}-r${slot.radius}.pgm`,
+);
 writeRoundedMask(maskPath, slot.width, slot.height, slot.radius);
 
 const entries = readLinkEntriesFromLinksFile(linksPath);

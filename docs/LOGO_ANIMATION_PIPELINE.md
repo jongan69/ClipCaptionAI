@@ -68,6 +68,28 @@ variants port between logos for free.
 Add `assets/logos/acme/brand.json` with the palette, wordmark text, and a one-line
 note on what the brand should *feel* like.
 
+#### Canonical layer ids
+
+Use these standard `id` values so your logo works with every existing variant and
+every variant you generate works for every future brand:
+
+| id | role | Description |
+|---|---|---|
+| `background` | `backdrop` | Background/backdrop rect |
+| `mark` | `symbol` | Primary icon/symbol |
+| `mark-left` | `symbol-part` | Left component of a compound mark |
+| `mark-right` | `symbol-part` | Right component of a compound mark |
+| `mark-center` | `symbol-part` | Center/bridge component |
+| `card` | `card` | Card/floating-rectangle accent element |
+| `wordmark` | `text` | Brand name text |
+| `frame` | `frame` | Brackets, borders, scan-frames |
+| `connector` | `connector` | Lines/arcs connecting mark elements |
+| `accent` | `accent` | Decorative dots, underlines, sparkles |
+
+A variant calls `logo.layer('frame')`. If the brand has no `frame`, it returns
+`null` and the variant gracefully skips that element. You never need every id —
+only the ones that make sense for your logo.
+
 ### 2. Generate the spec
 
 ```bash

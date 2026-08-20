@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 720" width="1080" height="720">
+  <!--
+    PrepAI logo — LAYERED source.
+    Every animatable unit is a <g> with a stable id and a data-layer attribute.
+    Do not flatten. The spec generator and the Remotion harness both key off these ids.
+
+    Layer contract:
+      background  — dark backdrop
+      mark        — the complete brand icon: heart + health bars + ECG pulse line
+      wordmark    — "prepai" text below the mark
+  -->
+  <defs>
+    <linearGradient id="brandGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#11518F"/>
+      <stop offset="100%" stop-color="#08B8AE"/>
+    </linearGradient>
+    <radialGradient id="bgGlow" cx="0.5" cy="0.38" r="0.62">
+      <stop offset="0%" stop-color="#142240"/>
+      <stop offset="100%" stop-color="#0a1628"/>
+    </radialGradient>
+  </defs>
+
+  <g id="background" data-layer="background" data-role="backdrop">
+    <rect x="0" y="0" width="1080" height="720" fill="url(#bgGlow)"/>
+  </g>
+
+  <!--
+    mark — the complete brand icon.
+    All three visual elements (heart outline, health bars, ECG pulse line)
+    live in one layer so variants that render "mark" get the full logo.
+    The original 256×256 artwork is scaled 2.5× and centred near (540, 310).
+  -->
+  <g id="mark" data-layer="mark" data-role="letterform"
+     transform="translate(231, -5) scale(2.5)">
+
+    <!-- Heart outline -->
+    <path id="heart-path"
+          fill="none" stroke="url(#brandGradient)" stroke-width="11"
+          stroke-linecap="round" stroke-linejoin="round"
+          d="M128 226 C111 209 52 161 34 113 C18 71 43 36 79 34 C101 33 117 47 128 64 C139 47 155 33 177 34 C213 36 238 71 222 113 C204 161 145 209 128 226"/>
+
+    <!-- Health monitoring bars (left side) -->
+    <rect id="bar-short" x="9" y="106" width="13" height="45" rx="4"
+          fill="url(#brandGradient)" stroke="none"/>
+    <rect id="bar-tall"  x="28" y="95" width="16" height="67" rx="4"
+          fill="url(#brandGradient)" stroke="none"/>
+
+    <!-- ECG pulse line through the heart -->
+    <path id="pulse-path"
+          fill="none" stroke="url(#brandGradient)" stroke-width="11"
+          stroke-linecap="round" stroke-linejoin="round"
+          d="M44 128 H84 L93 128 L101 116 L111 143 L123 83 L136 169 L148 118 L158 128 H209"/>
+  </g>
+
+  <g id="wordmark" data-layer="wordmark" data-role="text"
+     data-text="prepai" data-center-x="540" data-baseline-y="640"
+     data-font-size="96" data-fill="#ffffff">
+    <text x="540" y="640"
+          fill="#ffffff"
+          font-family="Inter, -apple-system, sans-serif"
+          font-size="96"
+          font-weight="300"
+          letter-spacing="-3"
+          text-anchor="middle">prepai</text>
+  </g>
+</svg>

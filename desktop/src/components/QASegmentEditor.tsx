@@ -1,4 +1,4 @@
-import GlassCard from "./ui/GlassCard";
+import GlassCard from './ui/GlassCard';
 
 interface QAPair {
   index: number;
@@ -20,10 +20,10 @@ interface QASegmentEditorProps {
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function QASegmentEditor({ segment, onToggle }: QASegmentEditorProps) {
+export default function QASegmentEditor({segment, onToggle}: QASegmentEditorProps) {
   return (
     <GlassCard
       hover
@@ -35,12 +35,21 @@ export default function QASegmentEditor({ segment, onToggle }: QASegmentEditorPr
       <div className="flex-shrink-0 pt-1">
         <div
           className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all
-            ${segment.included
-              ? "bg-accent-cyan border-accent-cyan text-surface-dark"
-              : "border-glass-border-strong"}`}
+            ${
+              segment.included
+                ? 'bg-accent-cyan border-accent-cyan text-surface-dark'
+                : 'border-glass-border-strong'
+            }`}
         >
           {segment.included && (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+            >
               <path d="M20 6L9 17l-5-5" />
             </svg>
           )}
@@ -58,9 +67,7 @@ export default function QASegmentEditor({ segment, onToggle }: QASegmentEditorPr
             {formatTime(segment.startSeconds)} – {formatTime(segment.endSeconds)}
           </span>
           <span className="text-xs text-text-muted">·</span>
-          <span className="text-xs text-text-muted">
-            {Math.floor(segment.durationSeconds)}s
-          </span>
+          <span className="text-xs text-text-muted">{Math.floor(segment.durationSeconds)}s</span>
         </div>
 
         {/* Question */}
@@ -68,9 +75,7 @@ export default function QASegmentEditor({ segment, onToggle }: QASegmentEditorPr
           <span className="text-[10px] font-semibold uppercase tracking-wider text-accent-blue">
             {segment.speakerQ}
           </span>
-          <p className="text-sm text-text-main leading-relaxed mt-0.5">
-            ❓ {segment.question}
-          </p>
+          <p className="text-sm text-text-main leading-relaxed mt-0.5">❓ {segment.question}</p>
         </div>
 
         {/* Answer */}

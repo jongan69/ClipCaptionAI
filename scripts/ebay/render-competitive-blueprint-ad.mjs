@@ -93,7 +93,10 @@ const findListingProjectDir = (blueprintPath, blueprint) => {
     path.resolve(blueprintDir, '..', 'projects', String(itemId)),
     path.resolve(blueprintDir, '..', '..', '..', 'projects', String(itemId)),
   ];
-  return candidates.find((candidate) => fs.existsSync(path.join(candidate, 'listing.json'))) ?? blueprintDir;
+  return (
+    candidates.find((candidate) => fs.existsSync(path.join(candidate, 'listing.json'))) ??
+    blueprintDir
+  );
 };
 
 const imageListForListing = (listing, projectDir) => {
@@ -108,16 +111,19 @@ const imageListForListing = (listing, projectDir) => {
     })
     .filter(Boolean);
   const local = fs.existsSync(projectDir)
-    ? fs.readdirSync(projectDir)
-      .filter((name) => /\.(jpe?g|png|webp)$/i.test(name))
-      .sort((a, b) => a.localeCompare(b))
-      .map((name) => path.join(projectDir, name))
+    ? fs
+        .readdirSync(projectDir)
+        .filter((name) => /\.(jpe?g|png|webp)$/i.test(name))
+        .sort((a, b) => a.localeCompare(b))
+        .map((name) => path.join(projectDir, name))
     : [];
   return [...new Set([...fromListing, ...local])].filter((file) => fs.existsSync(file));
 };
 
 const truncate = (value, max = 38) => {
-  const text = String(value ?? '').replace(/\s+/g, ' ').trim();
+  const text = String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (text.length <= max) return text;
   const cut = text.slice(0, max + 1);
   const space = cut.lastIndexOf(' ');
@@ -130,10 +136,11 @@ const plainCaption = (value) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const captionForShot = ({shot, listingTitle}) => {
+const captionForShot = ({shot}) => {
   const role = shot.role ?? shot.beat ?? 'shot';
   const candidate = shot.original_asset_plan?.caption_strategy ?? shot.caption_intent;
-  const genericIntent = /^(one-line pattern interrupt|what is for sale|condition and included items|buyer outcome|view on ebay\s*\/\s*check listing details)$/i;
+  const genericIntent =
+    /^(one-line pattern interrupt|what is for sale|condition and included items|buyer outcome|view on ebay\s*\/\s*check listing details)$/i;
   if (/hook/i.test(role)) return 'Before you buy';
   if (candidate && !genericIntent.test(String(candidate).trim())) return plainCaption(candidate);
   if (/hero/i.test(role)) return 'Actual listing item';
@@ -177,9 +184,10 @@ const fitShotsToDuration = (shots, duration) => {
   const sourceTotal = valid.reduce((sum, shot) => sum + shot.duration, 0) || 1;
   let cursor = 0;
   return valid.map((shot, index) => {
-    const scaledDuration = index === valid.length - 1
-      ? Math.max(0.5, duration - cursor)
-      : Math.max(0.5, (shot.duration / sourceTotal) * duration);
+    const scaledDuration =
+      index === valid.length - 1
+        ? Math.max(0.5, duration - cursor)
+        : Math.max(0.5, (shot.duration / sourceTotal) * duration);
     const normalized = {
       ...shot,
       start: Number(cursor.toFixed(3)),
@@ -193,7 +201,10 @@ const fitShotsToDuration = (shots, duration) => {
 
 const createCaptionPng = ({file, width, height, text, subtext, role}) => {
   const specPath = `${file}.json`;
-  fs.writeFileSync(specPath, `${JSON.stringify({file, width, height, text, subtext, role}, null, 2)}\n`);
+  fs.writeFileSync(
+    specPath,
+    `${JSON.stringify({file, width, height, text, subtext, role}, null, 2)}\n`,
+  );
   run('python3', [
     '-c',
     String.raw`
@@ -272,9 +283,8 @@ img.save(out)
 
 const renderImageSegment = ({image, captionPng, out, duration, width, height, fps, index}) => {
   const frames = Math.max(1, Math.round(duration * fps));
-  const zoomExpr = index % 2 === 0
-    ? `min(1.095,1+0.075*on/${frames})`
-    : `max(1.0,1.075-0.075*on/${frames})`;
+  const zoomExpr =
+    index % 2 === 0 ? `min(1.095,1+0.075*on/${frames})` : `max(1.0,1.075-0.075*on/${frames})`;
   run('ffmpeg', [
     '-hide_banner',
     '-loglevel',
@@ -369,15 +379,29 @@ const categoriesForRole = (role) => {
   return ['money', 'impact', 'pop'];
 };
 
-const muxAudio = ({inputVideo, outVideo, shots, musicTrack, musicEnabled, musicVolume, voiceoverPath, voiceoverVolume, sfxEnabled, sfxLibraryDir, sfxVolume}) => {
+const muxAudio = ({
+  inputVideo,
+  outVideo,
+  shots,
+  musicTrack,
+  musicEnabled,
+  musicVolume,
+  voiceoverPath,
+  voiceoverVolume,
+  sfxEnabled,
+  sfxLibraryDir,
+  sfxVolume,
+}) => {
   const duration = ffprobeDuration(inputVideo);
   const library = sfxEnabled ? readSfxLibrary(sfxLibraryDir) : [];
   const sfxEvents = sfxEnabled
-    ? shots.map((shot, index) => ({
-      shot,
-      sound: pickSfx(library, categoriesForRole(shot.role), index * 17),
-      startSeconds: Math.min(Math.max(0.03, shot.start + 0.03), Math.max(0, duration - 0.2)),
-    })).filter((event) => event.sound)
+    ? shots
+        .map((shot, index) => ({
+          shot,
+          sound: pickSfx(library, categoriesForRole(shot.role), index * 17),
+          startSeconds: Math.min(Math.max(0.03, shot.start + 0.03), Math.max(0, duration - 0.2)),
+        }))
+        .filter((event) => event.sound)
     : [];
   const hasMusic = musicEnabled && musicTrack && fs.existsSync(musicTrack);
   const hasVoiceover = voiceoverPath && fs.existsSync(voiceoverPath);
@@ -385,25 +409,34 @@ const muxAudio = ({inputVideo, outVideo, shots, musicTrack, musicEnabled, musicV
 
   if (!hasMusic && !hasVoiceover && sfxEvents.length === 0) {
     fs.copyFileSync(inputVideo, outVideo);
-    fs.writeFileSync(planPath, `${JSON.stringify({music: null, voiceover: null, sfx_events: []}, null, 2)}\n`);
+    fs.writeFileSync(
+      planPath,
+      `${JSON.stringify({music: null, voiceover: null, sfx_events: []}, null, 2)}\n`,
+    );
     return {planPath, events: []};
   }
 
   const inputArgs = ['-i', inputVideo];
-  const filters = [`anullsrc=channel_layout=stereo:sample_rate=48000,atrim=duration=${duration.toFixed(3)}[base]`];
+  const filters = [
+    `anullsrc=channel_layout=stereo:sample_rate=48000,atrim=duration=${duration.toFixed(3)}[base]`,
+  ];
   const mixLabels = ['[base]'];
   let inputIndex = 1;
 
   if (hasMusic) {
     inputArgs.push('-stream_loop', '-1', '-i', musicTrack);
-    filters.push(`[${inputIndex}:a]aformat=channel_layouts=stereo,atrim=0:${duration.toFixed(3)},asetpts=PTS-STARTPTS,volume=${musicVolume}[music]`);
+    filters.push(
+      `[${inputIndex}:a]aformat=channel_layouts=stereo,atrim=0:${duration.toFixed(3)},asetpts=PTS-STARTPTS,volume=${musicVolume}[music]`,
+    );
     mixLabels.push('[music]');
     inputIndex += 1;
   }
 
   if (hasVoiceover) {
     inputArgs.push('-i', voiceoverPath);
-    filters.push(`[${inputIndex}:a]aformat=channel_layouts=stereo,atrim=0:${duration.toFixed(3)},asetpts=PTS-STARTPTS,volume=${voiceoverVolume}[voiceover]`);
+    filters.push(
+      `[${inputIndex}:a]aformat=channel_layouts=stereo,atrim=0:${duration.toFixed(3)},asetpts=PTS-STARTPTS,volume=${voiceoverVolume}[voiceover]`,
+    );
     mixLabels.push('[voiceover]');
     inputIndex += 1;
   }
@@ -413,10 +446,14 @@ const muxAudio = ({inputVideo, outVideo, shots, musicTrack, musicEnabled, musicV
     const delayMs = Math.max(0, Math.round(event.startSeconds * 1000));
     const sourceIndex = inputIndex + index;
     const sfxDuration = Math.min(0.7, Number(event.sound.durationSeconds ?? 0.7));
-    filters.push(`[${sourceIndex}:a]aformat=channel_layouts=stereo,atrim=0:${sfxDuration.toFixed(3)},asetpts=PTS-STARTPTS,volume=${sfxVolume},adelay=${delayMs}|${delayMs}[sfx${index}]`);
+    filters.push(
+      `[${sourceIndex}:a]aformat=channel_layouts=stereo,atrim=0:${sfxDuration.toFixed(3)},asetpts=PTS-STARTPTS,volume=${sfxVolume},adelay=${delayMs}|${delayMs}[sfx${index}]`,
+    );
     mixLabels.push(`[sfx${index}]`);
   });
-  filters.push(`${mixLabels.join('')}amix=inputs=${mixLabels.length}:duration=first:normalize=0:dropout_transition=0,alimiter=limit=0.96[aout]`);
+  filters.push(
+    `${mixLabels.join('')}amix=inputs=${mixLabels.length}:duration=first:normalize=0:dropout_transition=0,alimiter=limit=0.96[aout]`,
+  );
 
   run('ffmpeg', [
     '-hide_banner',
@@ -444,160 +481,213 @@ const muxAudio = ({inputVideo, outVideo, shots, musicTrack, musicEnabled, musicV
     outVideo,
   ]);
 
-  fs.writeFileSync(planPath, `${JSON.stringify({
-    music: hasMusic ? {file: musicTrack, volume: musicVolume} : null,
-    voiceover: hasVoiceover ? {file: voiceoverPath, volume: voiceoverVolume} : null,
-    sfx_events: sfxEvents.map((event) => ({
-      start_seconds: event.startSeconds,
-      role: event.shot.role,
-      sound_id: event.sound.id,
-      sound_file: event.sound.file,
-      volume: sfxVolume,
-    })),
-  }, null, 2)}\n`);
+  fs.writeFileSync(
+    planPath,
+    `${JSON.stringify(
+      {
+        music: hasMusic ? {file: musicTrack, volume: musicVolume} : null,
+        voiceover: hasVoiceover ? {file: voiceoverPath, volume: voiceoverVolume} : null,
+        sfx_events: sfxEvents.map((event) => ({
+          start_seconds: event.startSeconds,
+          role: event.shot.role,
+          sound_id: event.sound.id,
+          sound_file: event.sound.file,
+          volume: sfxVolume,
+        })),
+      },
+      null,
+      2,
+    )}\n`,
+  );
   return {planPath, events: sfxEvents};
 };
 
-const blueprintPath = path.resolve(requireArg('blueprint'));
-if (!fs.existsSync(blueprintPath)) throw new Error(`Blueprint not found: ${blueprintPath}`);
-const blueprint = readJson(blueprintPath);
-const projectDir = findListingProjectDir(blueprintPath, blueprint);
-const listingPath = path.join(projectDir, 'listing.json');
-const listing = fs.existsSync(listingPath)
-  ? readJson(listingPath)
-  : {item_id: blueprint.listing?.item_id, title: blueprint.listing?.title};
-const itemId = String(listing.item_id ?? listing.itemId ?? blueprint.listing?.item_id ?? path.basename(projectDir));
-const width = Number(args.width ?? 1080);
-const height = Number(args.height ?? 1920);
-const fps = Number(args.fps ?? 30);
-const musicVolume = Number(args['music-volume'] ?? 0.035);
-const voiceoverVolume = Number(args['voiceover-volume'] ?? 1);
-const sfxVolume = Number(args['sfx-volume'] ?? 0.095);
-const finalDir = path.join(projectDir, 'final');
-const workDir = path.join(projectDir, 'outputs', `competitive-preview-${timestampSlug()}`);
-ensureDir(finalDir);
-ensureDir(workDir);
+const main = async () => {
+  const blueprintPath = path.resolve(requireArg('blueprint'));
+  if (!fs.existsSync(blueprintPath)) throw new Error(`Blueprint not found: ${blueprintPath}`);
+  const blueprint = readJson(blueprintPath);
+  const projectDir = findListingProjectDir(blueprintPath, blueprint);
+  const listingPath = path.join(projectDir, 'listing.json');
+  const listing = fs.existsSync(listingPath)
+    ? readJson(listingPath)
+    : {item_id: blueprint.listing?.item_id, title: blueprint.listing?.title};
+  const itemId = String(
+    listing.item_id ?? listing.itemId ?? blueprint.listing?.item_id ?? path.basename(projectDir),
+  );
+  const width = Number(args.width ?? 1080);
+  const height = Number(args.height ?? 1920);
+  const fps = Number(args.fps ?? 30);
+  const musicVolume = Number(args['music-volume'] ?? 0.035);
+  const voiceoverVolume = Number(args['voiceover-volume'] ?? 1);
+  const sfxVolume = Number(args['sfx-volume'] ?? 0.095);
+  const finalDir = path.join(projectDir, 'final');
+  const workDir = path.join(projectDir, 'outputs', `competitive-preview-${timestampSlug()}`);
+  ensureDir(finalDir);
+  ensureDir(workDir);
 
-const outPath = path.resolve(String(args.out ?? path.join(finalDir, `${itemId}-competitive-preview-ad.mp4`)));
-const images = imageListForListing(listing, projectDir);
-if (images.length === 0) throw new Error(`No listing images found for ${itemId} in ${projectDir}`);
-const brollClips = listFiles(path.join(projectDir, 'story-broll'), /\.(mp4|mov|m4v|webm)$/i);
-const rawShots = normalizeShots(blueprint);
-const targetDuration = Number(args.duration ?? blueprint.target_duration_seconds ?? rawShots.at(-1)?.end ?? 16);
-const shots = fitShotsToDuration(rawShots, Math.min(45, Math.max(8, targetDuration)));
-const imageByLabel = new Map(images.map((file, index) => [`image_${index + 1}`, file]));
+  const outPath = path.resolve(
+    String(args.out ?? path.join(finalDir, `${itemId}-competitive-preview-ad.mp4`)),
+  );
+  const images = imageListForListing(listing, projectDir);
+  if (images.length === 0)
+    throw new Error(`No listing images found for ${itemId} in ${projectDir}`);
+  const brollClips = listFiles(path.join(projectDir, 'story-broll'), /\.(mp4|mov|m4v|webm)$/i);
+  const rawShots = normalizeShots(blueprint);
+  const targetDuration = Number(
+    args.duration ?? blueprint.target_duration_seconds ?? rawShots.at(-1)?.end ?? 16,
+  );
+  const shots = fitShotsToDuration(rawShots, Math.min(45, Math.max(8, targetDuration)));
+  const imageByLabel = new Map(images.map((file, index) => [`image_${index + 1}`, file]));
 
-const renderedSegments = shots.map((shot, index) => {
-  const captionPng = path.join(workDir, `${String(index + 1).padStart(2, '0')}-caption.png`);
-  const role = shot.role ?? `shot-${index + 1}`;
-  const caption = captionForShot({shot: {...shot, original_asset_plan: {caption_strategy: shot.caption}}, listingTitle: listing.title});
-  const subtext = index === 0 ? truncate(listing.title ?? blueprint.listing?.title ?? 'eBay listing', 48) : '';
-  createCaptionPng({file: captionPng, width, height, text: caption, subtext, role});
+  const renderedSegments = shots.map((shot, index) => {
+    const captionPng = path.join(workDir, `${String(index + 1).padStart(2, '0')}-caption.png`);
+    const role = shot.role ?? `shot-${index + 1}`;
+    const caption = captionForShot({
+      shot: {...shot, original_asset_plan: {caption_strategy: shot.caption}},
+      listingTitle: listing.title,
+    });
+    const subtext =
+      index === 0 ? truncate(listing.title ?? blueprint.listing?.title ?? 'eBay listing', 48) : '';
+    createCaptionPng({file: captionPng, width, height, text: caption, subtext, role});
 
-  const labels = (shot.sourceAssets ?? []).map((asset) => asset.label ?? asset).filter(Boolean);
-  const wantsBroll = labels.includes('cleared_story_broll') || /broll|use-case/i.test(role);
-  const broll = wantsBroll && brollClips.length > 0 ? brollClips[index % brollClips.length] : null;
-  const imageLabel = labels.find((label) => imageByLabel.has(label)) ?? 'image_1';
-  const image = imageByLabel.get(imageLabel) ?? images[index % images.length] ?? images[0];
-  const segmentPath = path.join(workDir, `${String(index + 1).padStart(2, '0')}-${role.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.mp4`);
+    const labels = (shot.sourceAssets ?? []).map((asset) => asset.label ?? asset).filter(Boolean);
+    const wantsBroll = labels.includes('cleared_story_broll') || /broll|use-case/i.test(role);
+    const broll =
+      wantsBroll && brollClips.length > 0 ? brollClips[index % brollClips.length] : null;
+    const imageLabel = labels.find((label) => imageByLabel.has(label)) ?? 'image_1';
+    const image = imageByLabel.get(imageLabel) ?? images[index % images.length] ?? images[0];
+    const segmentPath = path.join(
+      workDir,
+      `${String(index + 1).padStart(2, '0')}-${role.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.mp4`,
+    );
 
-  if (broll) {
-    renderVideoSegment({video: broll, captionPng, out: segmentPath, duration: shot.duration, width, height, fps});
-  } else {
-    renderImageSegment({image, captionPng, out: segmentPath, duration: shot.duration, width, height, fps, index});
-  }
+    if (broll) {
+      renderVideoSegment({
+        video: broll,
+        captionPng,
+        out: segmentPath,
+        duration: shot.duration,
+        width,
+        height,
+        fps,
+      });
+    } else {
+      renderImageSegment({
+        image,
+        captionPng,
+        out: segmentPath,
+        duration: shot.duration,
+        width,
+        height,
+        fps,
+        index,
+      });
+    }
 
-  return {
-    ...shot,
-    rendered_segment: segmentPath,
-    source_kind: broll ? 'cleared_story_broll' : 'listing_image',
-    source_file: broll ?? image,
-    caption,
+    return {
+      ...shot,
+      rendered_segment: segmentPath,
+      source_kind: broll ? 'cleared_story_broll' : 'listing_image',
+      source_file: broll ?? image,
+      caption,
+    };
+  });
+
+  const concatFile = path.join(workDir, 'segments.txt');
+  fs.writeFileSync(
+    concatFile,
+    `${renderedSegments.map((segment) => shellFile(segment.rendered_segment)).join('\n')}\n`,
+  );
+  const silentVideo = path.join(workDir, `${itemId}-competitive-preview-silent.mp4`);
+  run('ffmpeg', [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-f',
+    'concat',
+    '-safe',
+    '0',
+    '-i',
+    concatFile,
+    '-c',
+    'copy',
+    silentVideo,
+  ]);
+
+  const musicTrack = args['music-track']
+    ? path.resolve(String(args['music-track']))
+    : path.join(projectRoot, 'music-library', 'lofi-house', '01-dmca-free-lofi-chilled-beats.mp3');
+  const voiceoverPath = args.voiceover ? path.resolve(String(args.voiceover)) : null;
+  if (voiceoverPath && !fs.existsSync(voiceoverPath))
+    throw new Error(`Voiceover not found: ${voiceoverPath}`);
+  const audio = muxAudio({
+    inputVideo: silentVideo,
+    outVideo: outPath,
+    shots: renderedSegments,
+    musicTrack,
+    musicEnabled: args['no-music'] !== true,
+    musicVolume,
+    voiceoverPath,
+    voiceoverVolume,
+    sfxEnabled: args['no-sfx'] !== true,
+    sfxLibraryDir: path.resolve(
+      String(args['sfx-library'] ?? path.join(projectRoot, 'sfx-library')),
+    ),
+    sfxVolume,
+  });
+
+  const proofFrame = path.join(finalDir, `${itemId}-competitive-preview-proof-frame.jpg`);
+  run('ffmpeg', [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-y',
+    '-ss',
+    '1',
+    '-i',
+    outPath,
+    '-frames:v',
+    '1',
+    proofFrame,
+  ]);
+
+  const manifest = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
+    item_id: itemId,
+    title: listing.title ?? blueprint.listing?.title ?? null,
+    blueprint: blueprintPath,
+    project_dir: projectDir,
+    final_video: outPath,
+    proof_frame: proofFrame,
+    duration_seconds: ffprobeDuration(outPath),
+    width,
+    height,
+    fps,
+    selected_reference: blueprint.selected_reference ?? null,
+    source_policy:
+      'structure-only competitor analysis; final video uses listing images, local/cleared B-roll if present, local music, and local SFX',
+    audio_plan: audio.planPath,
+    shots: renderedSegments.map((shot) => ({
+      role: shot.role,
+      start_seconds: shot.start,
+      end_seconds: shot.end,
+      duration_seconds: shot.duration,
+      source_kind: shot.source_kind,
+      source_file: shot.source_file,
+      caption: shot.caption,
+    })),
   };
-});
+  const manifestPath = path.join(finalDir, `${itemId}-competitive-preview-manifest.json`);
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
-const concatFile = path.join(workDir, 'segments.txt');
-fs.writeFileSync(concatFile, `${renderedSegments.map((segment) => shellFile(segment.rendered_segment)).join('\n')}\n`);
-const silentVideo = path.join(workDir, `${itemId}-competitive-preview-silent.mp4`);
-run('ffmpeg', [
-  '-hide_banner',
-  '-loglevel',
-  'error',
-  '-y',
-  '-f',
-  'concat',
-  '-safe',
-  '0',
-  '-i',
-  concatFile,
-  '-c',
-  'copy',
-  silentVideo,
-]);
-
-const musicTrack = args['music-track']
-  ? path.resolve(String(args['music-track']))
-  : path.join(projectRoot, 'music-library', 'lofi-house', '01-dmca-free-lofi-chilled-beats.mp3');
-const voiceoverPath = args.voiceover ? path.resolve(String(args.voiceover)) : null;
-if (voiceoverPath && !fs.existsSync(voiceoverPath)) throw new Error(`Voiceover not found: ${voiceoverPath}`);
-const audio = muxAudio({
-  inputVideo: silentVideo,
-  outVideo: outPath,
-  shots: renderedSegments,
-  musicTrack,
-  musicEnabled: args['no-music'] !== true,
-  musicVolume,
-  voiceoverPath,
-  voiceoverVolume,
-  sfxEnabled: args['no-sfx'] !== true,
-  sfxLibraryDir: path.resolve(String(args['sfx-library'] ?? path.join(projectRoot, 'sfx-library'))),
-  sfxVolume,
-});
-
-const proofFrame = path.join(finalDir, `${itemId}-competitive-preview-proof-frame.jpg`);
-run('ffmpeg', [
-  '-hide_banner',
-  '-loglevel',
-  'error',
-  '-y',
-  '-ss',
-  '1',
-  '-i',
-  outPath,
-  '-frames:v',
-  '1',
-  proofFrame,
-]);
-
-const manifest = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  item_id: itemId,
-  title: listing.title ?? blueprint.listing?.title ?? null,
-  blueprint: blueprintPath,
-  project_dir: projectDir,
-  final_video: outPath,
-  proof_frame: proofFrame,
-  duration_seconds: ffprobeDuration(outPath),
-  width,
-  height,
-  fps,
-  selected_reference: blueprint.selected_reference ?? null,
-  source_policy: 'structure-only competitor analysis; final video uses listing images, local/cleared B-roll if present, local music, and local SFX',
-  audio_plan: audio.planPath,
-  shots: renderedSegments.map((shot) => ({
-    role: shot.role,
-    start_seconds: shot.start,
-    end_seconds: shot.end,
-    duration_seconds: shot.duration,
-    source_kind: shot.source_kind,
-    source_file: shot.source_file,
-    caption: shot.caption,
-  })),
+  console.log(`Competitive preview ad: ${outPath}`);
+  console.log(`Proof frame: ${proofFrame}`);
+  console.log(`Manifest: ${manifestPath}`);
 };
-const manifestPath = path.join(finalDir, `${itemId}-competitive-preview-manifest.json`);
-fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
-console.log(`Competitive preview ad: ${outPath}`);
-console.log(`Proof frame: ${proofFrame}`);
-console.log(`Manifest: ${manifestPath}`);
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from 'react-router-dom';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -14,27 +14,27 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { path: "/", label: "Home", icon: "🏠", section: "Main" },
-  { path: "/interview", label: "Interview Q&A", icon: "🎙️", section: "Quick Actions" },
-  { path: "/transcribe", label: "Transcribe", icon: "📝", section: "Core Pipeline" },
-  { path: "/caption", label: "Caption", icon: "✏️", section: "Core Pipeline" },
-  { path: "/workflow/tighten", label: "Tighten", icon: "✂️", section: "Core Pipeline" },
-  { path: "/workflow/chapter", label: "Chapters", icon: "📑", section: "Core Pipeline" },
-  { path: "/workflow/enhance", label: "Enhance", icon: "🎬", section: "Core Pipeline" },
-  { path: "/workflow/compress", label: "Compress", icon: "📦", section: "Core Pipeline" },
-  { path: "/workflow/auto-clips", label: "Smart Clips", icon: "🧠", section: "AI Features" },
-  { path: "/workflow/moments", label: "Find Moments", icon: "💎", section: "AI Features" },
-  { path: "/workflow/video", label: "Video Run", icon: "🤖", section: "AI Features" },
-  { path: "/outputs", label: "Outputs", icon: "📂", section: "Main" },
-  { path: "/settings", label: "Settings", icon: "⚙️", section: "Main" },
+  {path: '/', label: 'Home', icon: '🏠', section: 'Main'},
+  {path: '/interview', label: 'Interview Q&A', icon: '🎙️', section: 'Quick Actions'},
+  {path: '/transcribe', label: 'Transcribe', icon: '📝', section: 'Core Pipeline'},
+  {path: '/caption', label: 'Caption', icon: '✏️', section: 'Core Pipeline'},
+  {path: '/workflow/tighten', label: 'Tighten', icon: '✂️', section: 'Core Pipeline'},
+  {path: '/workflow/chapter', label: 'Chapters', icon: '📑', section: 'Core Pipeline'},
+  {path: '/workflow/enhance', label: 'Enhance', icon: '🎬', section: 'Core Pipeline'},
+  {path: '/workflow/compress', label: 'Compress', icon: '📦', section: 'Core Pipeline'},
+  {path: '/workflow/auto-clips', label: 'Smart Clips', icon: '🧠', section: 'AI Features'},
+  {path: '/workflow/moments', label: 'Find Moments', icon: '💎', section: 'AI Features'},
+  {path: '/workflow/video', label: 'Video Run', icon: '🤖', section: 'AI Features'},
+  {path: '/outputs', label: 'Outputs', icon: '📂', section: 'Main'},
+  {path: '/settings', label: 'Settings', icon: '⚙️', section: 'Main'},
 ];
 
 function isActive(currentPath: string, itemPath: string): boolean {
-  if (itemPath === "/") return currentPath === "/";
+  if (itemPath === '/') return currentPath === '/';
   return currentPath.startsWith(itemPath);
 }
 
-export default function Sidebar({ collapsed, onToggle, currentPath }: SidebarProps) {
+export default function Sidebar({collapsed, onToggle, currentPath}: SidebarProps) {
   const navigate = useNavigate();
 
   const sections = [...new Set(NAV_ITEMS.map((item) => item.section))];
@@ -43,7 +43,7 @@ export default function Sidebar({ collapsed, onToggle, currentPath }: SidebarPro
     <aside
       className={`flex flex-col glass border-0 rounded-none border-r border-glass-border
         transition-all duration-300 ease-out shrink-0
-        ${collapsed ? "w-[60px]" : "w-[240px]"}`}
+        ${collapsed ? 'w-[60px]' : 'w-[240px]'}`}
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-4 h-14 border-b border-glass-border shrink-0">
@@ -52,7 +52,14 @@ export default function Sidebar({ collapsed, onToggle, currentPath }: SidebarPro
           className="text-text-dim hover:text-text-main transition-colors p-1"
           aria-label="Toggle sidebar"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M3 12h18M3 6h18M3 18h18" />
           </svg>
         </button>
@@ -80,8 +87,8 @@ export default function Sidebar({ collapsed, onToggle, currentPath }: SidebarPro
                   transition-all duration-150 ease-out
                   ${
                     isActive(currentPath, item.path)
-                      ? "bg-glass-bg-strong text-text-main border border-glass-border"
-                      : "text-text-dim hover:text-text-main hover:bg-glass-bg border border-transparent"
+                      ? 'bg-glass-bg-strong text-text-main border border-glass-border'
+                      : 'text-text-dim hover:text-text-main hover:bg-glass-bg border border-transparent'
                   }`}
                 title={collapsed ? item.label : undefined}
               >

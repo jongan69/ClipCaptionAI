@@ -13,9 +13,9 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
-  const brackets = logo.layer('brackets');
+  const frameLayer = logo.layer('frame');
   const card = logo.layer('card');
-  const mark = logo.layer('l-mark');
+  const mark = logo.layer('mark');
   const wordmark = logo.layer('wordmark');
 
   const deal = spring({frame: frame - 10, fps, config: {damping: 14, stiffness: 180}});
@@ -47,10 +47,10 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
     extrapolateRight: 'clamp',
   });
 
-  const bracketPaths = [...(brackets?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map(
+  const framePaths = [...(frameLayer?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map(
     (m) => m[1]
   );
-  const dashLen = Math.max(...(bracketPaths.length ? bracketPaths.map(approxPathLength) : [120]));
+  const dashLen = Math.max(...(framePaths.length ? framePaths.map(approxPathLength) : [120]));
 
   return (
     <LogoSvg logo={logo}>
@@ -67,8 +67,8 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
       <g opacity={markOpacity} style={{transform: `translateY(${markY}px) scale(${markScale})`}}>
         <RawLayer
           logo={logo}
-          id="l-mark"
-          style={{transformOrigin: originOf(logo, 'l-mark')}}
+          id="mark"
+          style={{transformOrigin: originOf(logo, 'mark')}}
         />
       </g>
 
@@ -81,15 +81,15 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
         </g>
       ) : null}
 
-      {brackets ? (
+      {frameLayer ? (
         <g
           fill="none"
-          stroke={brackets.stroke ?? logo.brand.palette.primary}
-          strokeWidth={brackets.strokeWidth ?? 14}
+          stroke={frameLayer.stroke ?? logo.brand.palette.primary}
+          strokeWidth={frameLayer.strokeWidth ?? 14}
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          {bracketPaths.map((d, i) => {
+          {framePaths.map((d, i) => {
             const draw = interpolate(frame, [58 + i * 3, 58 + i * 3 + 12], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',

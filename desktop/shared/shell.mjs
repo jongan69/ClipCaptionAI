@@ -1,5 +1,4 @@
-import { spawn } from "node:child_process";
-import { EventEmitter } from "node:events";
+import {spawn} from 'node:child_process';
 
 /**
  * Async spawn with progress parsing and cancellation support.
@@ -12,28 +11,19 @@ import { EventEmitter } from "node:events";
  *   const { code, stdout, stderr } = await proc;
  */
 export function spawnAsync(command, args = [], options = {}) {
-  const {
-    cwd,
-    env,
-    onProgress,
-    signal,
-    progressParser,
-    timeout = 0,
-    ...spawnOptions
-  } = options;
+  const {cwd, env, onProgress, signal, progressParser, timeout = 0, ...spawnOptions} = options;
 
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      env: { ...process.env, ...env },
-      stdio: ["ignore", "pipe", "pipe"],
+      env: {...process.env, ...env},
+      stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
       ...spawnOptions,
     });
 
-    const emitter = new EventEmitter();
-    let stdout = "";
-    let stderr = "";
+    let stdout = '';
+    let stderr = '';
     let killed = false;
     let timer = null;
 
@@ -45,7 +35,7 @@ export function spawnAsync(command, args = [], options = {}) {
     }
 
     // Progress parsing from stderr (ffmpeg convention)
-    child.stderr?.on("data", (chunk) => {
+    child.stderr?.on('data', (chunk) => {
       const text = chunk.toString();
       stderr += text;
 
@@ -55,18 +45,18 @@ export function spawnAsync(command, args = [], options = {}) {
       }
     });
 
-    child.stdout?.on("data", (chunk) => {
+    child.stdout?.on('data', (chunk) => {
       stdout += chunk.toString();
     });
 
-    child.on("error", (err) => {
+    child.on('error', (err) => {
       if (timer) clearTimeout(timer);
       reject(err);
     });
 
-    child.on("close", (code, signal) => {
+    child.on('close', (code, signal) => {
       if (timer) clearTimeout(timer);
-      resolve({ code, signal, stdout, stderr, killed });
+      resolve({code, signal, stdout, stderr, killed});
     });
 
     // Cancellation
@@ -75,10 +65,14 @@ export function spawnAsync(command, args = [], options = {}) {
         killLadder(child);
         killed = true;
       } else {
-        signal.addEventListener("abort", () => {
-          killLadder(child);
-          killed = true;
-        }, { once: true });
+        signal.addEventListener(
+          'abort',
+          () => {
+            killLadder(child);
+            killed = true;
+          },
+          {once: true},
+        );
       }
     }
   });
@@ -89,17 +83,29 @@ export function spawnAsync(command, args = [], options = {}) {
  */
 export function killLadder(child) {
   if (child.killed) return;
-  try { child.kill("SIGINT"); } catch {}
+  try {
+    child.kill('SIGINT');
+  } catch {
+    /* best-effort — child may already be gone */
+  }
 
   setTimeout(() => {
     if (!child.killed) {
-      try { child.kill("SIGTERM"); } catch {}
+      try {
+        child.kill('SIGTERM');
+      } catch {
+        /* best-effort — child may already be gone */
+      }
     }
   }, 900);
 
   setTimeout(() => {
     if (!child.killed) {
-      try { child.kill("SIGKILL"); } catch {}
+      try {
+        child.kill('SIGKILL');
+      } catch {
+        /* best-effort — child may already be gone */
+      }
     }
   }, 1700);
 }
@@ -110,10 +116,10 @@ export function killLadder(child) {
 export function parseFfmpegProgress(line) {
   const timeMatch = line.match(/^out_time_ms=(\d+)/m);
   const endMatch = line.match(/^progress=end/m);
-  if (endMatch) return { percent: 100, message: "Complete" };
+  if (endMatch) return {percent: 100, message: 'Complete'};
   if (timeMatch) {
     // Percent is relative — caller must provide total duration
-    return { timeMs: parseInt(timeMatch[1], 10) };
+    return {timeMs: parseInt(timeMatch[1], 10)};
   }
   return null;
 }
@@ -123,6 +129,6 @@ export function parseFfmpegProgress(line) {
  */
 export function parseYtDlpProgress(line) {
   const match = line.match(/download:([\d.]+)%/);
-  if (match) return { percent: parseFloat(match[1]), message: "Downloading" };
+  if (match) return {percent: parseFloat(match[1]), message: 'Downloading'};
   return null;
 }

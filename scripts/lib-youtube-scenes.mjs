@@ -1,16 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {ensureDir, probeVideo} from './lib.mjs';
+import {ensureDir, probeVideo, slugify as canonicalSlugify} from './lib.mjs';
 
 const youtubeWatchUrl = (videoId) => `https://www.youtube.com/watch?v=${videoId}`;
 
-const slugify = (value) =>
-  String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 80);
+const slugify = (value) => canonicalSlugify(value, '');
 
 const normalizeToken = (value) =>
   String(value ?? '')
@@ -61,9 +56,7 @@ const genericQueryTokens = new Set([
 
 const normalizeStringList = (value, fallback = []) => {
   const raw = Array.isArray(value) ? value : fallback;
-  return raw
-    .map((item) => String(item ?? '').trim())
-    .filter(Boolean);
+  return raw.map((item) => String(item ?? '').trim()).filter(Boolean);
 };
 
 const buildQueryStyle = (queryStyle = {}) => ({
@@ -194,7 +187,9 @@ const buildFallbackQueries = (query, queryStyle = {}) => {
   }
   if (
     /\b(scene|clip)\b/.test(lowerBase) &&
-    /\b(movie|film|tv|show|series|netflix|hbo|disney|warner|paramount|sony|universal|fox|amc|fx|bbc)\b/.test(lowerBase)
+    /\b(movie|film|tv|show|series|netflix|hbo|disney|warner|paramount|sony|universal|fox|amc|fx|bbc)\b/.test(
+      lowerBase,
+    )
   ) {
     return [base];
   }
@@ -244,20 +239,13 @@ const buildFallbackQueries = (query, queryStyle = {}) => {
 
 const scoreCandidate = (candidate, query, queryStyle = {}) => {
   const style = buildQueryStyle(queryStyle);
-  const text = [
-    candidate.title,
-    candidate.description,
-    candidate.channelTitle,
-  ].join(' ').toLowerCase();
-  const titleChannelText = [candidate.title, candidate.channelTitle]
+  const text = [candidate.title, candidate.description, candidate.channelTitle]
     .join(' ')
     .toLowerCase();
+  const titleChannelText = [candidate.title, candidate.channelTitle].join(' ').toLowerCase();
   const queryTokens = normalizeToken(query);
   const styleTokens = new Set(
-    [
-      ...style.styleModifiers,
-      ...style.themeBoosts,
-    ].flatMap(normalizeToken),
+    [...style.styleModifiers, ...style.themeBoosts].flatMap(normalizeToken),
   );
   const coreQueryTokens = queryTokens.filter(
     (token) => !genericQueryTokens.has(token) && !styleTokens.has(token),
@@ -308,7 +296,11 @@ const scoreCandidate = (candidate, query, queryStyle = {}) => {
     }
   }
 
-  if (/\b(watermark|watermarked|preview only|storyblocks?|shutterstock|alamy|pond5|envato|videohive|depositphotos|123rf)\b/i.test(text)) {
+  if (
+    /\b(watermark|watermarked|preview only|storyblocks?|shutterstock|alamy|pond5|envato|videohive|depositphotos|123rf)\b/i.test(
+      text,
+    )
+  ) {
     score -= style.watermarkPenalty;
   }
 
@@ -316,7 +308,11 @@ const scoreCandidate = (candidate, query, queryStyle = {}) => {
     score -= 6;
   }
 
-  if (/\b(edit|fan edit|sigma|green screen|greenscreen|tribute|recap|explained|ending|last scene|reunion|shorts?)\b/i.test(text)) {
+  if (
+    /\b(edit|fan edit|sigma|green screen|greenscreen|tribute|recap|explained|ending|last scene|reunion|shorts?)\b/i.test(
+      text,
+    )
+  ) {
     score -= 8;
   }
 
@@ -336,33 +332,57 @@ const scoreCandidate = (candidate, query, queryStyle = {}) => {
     score -= 3;
   }
 
-  if (style.preferMovieScenes && /\b(stock|stock footage|b-?roll|royalty free|no copyright|free footage|background video|commercial|advertisement|ad\b)\b/i.test(text)) {
-    score -= style.stockFootagePenalty;
-  }
-
-  if (style.preferMovieScenes && /\b(free to use|free download|cc free|copyright free|download cc|free stock|stock video|rent an apartment|apartment tour|home tour)\b/i.test(text)) {
+  if (
+    style.preferMovieScenes &&
+    /\b(stock|stock footage|b-?roll|royalty free|no copyright|free footage|background video|commercial|advertisement|ad\b)\b/i.test(
+      text,
+    )
+  ) {
     score -= style.stockFootagePenalty;
   }
 
   if (
     style.preferMovieScenes &&
-    !/\b(official clip|movieclips|filmclips|movie clip|film clip|clip from|scene from|movie scene|film scene|tv scene|show scene|iconic scene|famous scene|netflix|hbo|disney|warner|paramount|universal|sony pictures|20th century|amc|fx|bbc|movie|film|series)\b/i.test(titleChannelText)
+    /\b(free to use|free download|cc free|copyright free|download cc|free stock|stock video|rent an apartment|apartment tour|home tour)\b/i.test(
+      text,
+    )
+  ) {
+    score -= style.stockFootagePenalty;
+  }
+
+  if (
+    style.preferMovieScenes &&
+    !/\b(official clip|movieclips|filmclips|movie clip|film clip|clip from|scene from|movie scene|film scene|tv scene|show scene|iconic scene|famous scene|netflix|hbo|disney|warner|paramount|universal|sony pictures|20th century|amc|fx|bbc|movie|film|series)\b/i.test(
+      titleChannelText,
+    )
   ) {
     score -= style.nonScenePenalty;
   }
 
-  if (/\b(top 10|best scenes|best movies|explained|recap|review|analysis|essay|reaction|fan edit|amv|tribute|shorts?)\b/i.test(text)) {
+  if (
+    /\b(top 10|best scenes|best movies|explained|recap|review|analysis|essay|reaction|fan edit|amv|tribute|shorts?)\b/i.test(
+      text,
+    )
+  ) {
     score -= style.lowQualityPenalty;
   }
 
   if (style.quality === 'high') {
-    if (/\b(8k|6k|5k|4k|uhd|2160p|cinematic|b-?roll|slow motion|macro|close up|commercial|professionally shot|film look|color graded)\b/i.test(text)) {
+    if (
+      /\b(8k|6k|5k|4k|uhd|2160p|cinematic|b-?roll|slow motion|macro|close up|commercial|professionally shot|film look|color graded)\b/i.test(
+        text,
+      )
+    ) {
       score += 4;
     }
     if (/\b(1080p|hd|high definition)\b/i.test(text)) {
       score += 1.5;
     }
-    if (/\b(low quality|low resolution|template|slideshow|screen recording|shorts?|tiktok|vertical video|ai generated|generated video|watermark)\b/i.test(text)) {
+    if (
+      /\b(low quality|low resolution|template|slideshow|screen recording|shorts?|tiktok|vertical video|ai generated|generated video|watermark)\b/i.test(
+        text,
+      )
+    ) {
       score -= 8;
     }
   }
@@ -375,9 +395,7 @@ const scoreCandidate = (candidate, query, queryStyle = {}) => {
 };
 
 export const parseIso8601DurationToSeconds = (iso) => {
-  const match = String(iso ?? '').match(
-    /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/,
-  );
+  const match = String(iso ?? '').match(/^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
 
   if (!match) {
     return 0;
@@ -517,11 +535,7 @@ const searchVideosViaYtDlp = async ({
   const searchTarget = channelId
     ? `https://www.youtube.com/channel/${channelId}/search?query=${encodeURIComponent(query)}`
     : `ytsearch${maxResults}:${query}`;
-  const searchResults = ytDlpJson([
-    '--flat-playlist',
-    '--dump-single-json',
-    searchTarget,
-  ]);
+  const searchResults = ytDlpJson(['--flat-playlist', '--dump-single-json', searchTarget]);
   const variantEntries = Array.isArray(searchResults?.entries) ? searchResults.entries : [];
   entries.push(...variantEntries);
 
@@ -529,7 +543,8 @@ const searchVideosViaYtDlp = async ({
   const results = [];
 
   for (const entry of entries) {
-    const videoId = entry?.id ?? (/^[a-zA-Z0-9_-]{8,}$/.test(String(entry?.url ?? '')) ? entry.url : null);
+    const videoId =
+      entry?.id ?? (/^[a-zA-Z0-9_-]{8,}$/.test(String(entry?.url ?? '')) ? entry.url : null);
     const url = /^https?:\/\//.test(String(entry?.url ?? ''))
       ? entry.url
       : videoId
@@ -573,10 +588,7 @@ const ytdlpFormatArgsForQuality = (quality) => {
   }
 
   if (quality === 'fast') {
-    return [
-      '--format',
-      'bv*[height<=720][ext=mp4]+ba[ext=m4a]/best[height<=720]/best',
-    ];
+    return ['--format', 'bv*[height<=720][ext=mp4]+ba[ext=m4a]/best[height<=720]/best'];
   }
 
   return [
@@ -585,13 +597,13 @@ const ytdlpFormatArgsForQuality = (quality) => {
   ];
 };
 
-const ytDlpDownload = (url, outputTemplate, {maxSectionSeconds = null, quality = 'standard'} = {}) => {
-  const clientArgs = quality === 'high'
-    ? []
-    : [
-      '--extractor-args',
-      'youtube:player_client=android,web',
-    ];
+const ytDlpDownload = (
+  url,
+  outputTemplate,
+  {maxSectionSeconds = null, quality = 'standard'} = {},
+) => {
+  const clientArgs =
+    quality === 'high' ? [] : ['--extractor-args', 'youtube:player_client=android,web'];
   const baseArgs = [
     '--no-playlist',
     ...clientArgs,
@@ -623,7 +635,7 @@ const ytDlpDownload = (url, outputTemplate, {maxSectionSeconds = null, quality =
 
   baseArgs.push(url);
 
-  let stdout = '';
+  let stdout;
   try {
     stdout = execFileSync('yt-dlp', baseArgs, {
       encoding: 'utf8',
@@ -687,7 +699,9 @@ export const ingestYouTubeScenes = async ({
     ...queryStyle,
     quality: queryStyle.quality ?? resolvedQuality,
   });
-  const dedupedQueries = [...new Set((queries ?? []).map((query) => String(query ?? '').trim()).filter(Boolean))];
+  const dedupedQueries = [
+    ...new Set((queries ?? []).map((query) => String(query ?? '').trim()).filter(Boolean)),
+  ];
   if (dedupedQueries.length === 0) {
     return {downloaded: [], skipped: []};
   }
@@ -728,18 +742,22 @@ export const ingestYouTubeScenes = async ({
       }
     }
 
-    const results = [...resultByUrl.values()]
-      .sort((a, b) => b.searchScore - a.searchScore);
+    const results = [...resultByUrl.values()].sort((a, b) => b.searchScore - a.searchScore);
     let downloadedForQuery = 0;
 
     for (const result of results) {
       const sceneId = `yt-${result.videoId}`;
 
-      if (sceneIsBlacklisted({
-        id: sceneId,
-        videoId: result.videoId,
-        url: result.url,
-      }, blacklist)) {
+      if (
+        sceneIsBlacklisted(
+          {
+            id: sceneId,
+            videoId: result.videoId,
+            url: result.url,
+          },
+          blacklist,
+        )
+      ) {
         skipped.push({
           query,
           searchQuery: result.searchQuery ?? query,
@@ -779,8 +797,8 @@ export const ingestYouTubeScenes = async ({
       log.log?.(
         `Ingesting YouTube scene: ${result.title} (${result.url}) [query="${result.searchQuery}", score=${result.searchScore.toFixed(1)}]`,
       );
-      let downloadedPath = null;
-      let metadata = null;
+      let downloadedPath;
+      let metadata;
       try {
         downloadedPath = ytDlpDownload(result.url, outputTemplate, {
           maxSectionSeconds: maxDurationSeconds,

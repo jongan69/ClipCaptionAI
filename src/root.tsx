@@ -1,7 +1,35 @@
 import {Composition} from 'remotion';
+import {z} from 'zod';
 import {CaptionedClip, captionedClipDefaultProps} from './captioned-clip';
 import type {CaptionedClipProps} from './types';
 import {PromptVideo, promptVideoDefaultProps, type PromptVideoProps} from './prompt-video';
+import {warnOnMissingFonts} from './fonts';
+
+// Fail loudly on malformed caption payloads at the composition boundary —
+// a missing startMs/endMs used to propagate NaN into interpolation and
+// produce broken frames instead of an error.
+const captionsSchema = z
+  .array(
+    z
+      .object({
+        text: z.string(),
+        startMs: z.number(),
+        endMs: z.number(),
+      })
+      .passthrough(),
+  )
+  .min(1);
+
+const validateCaptionedClipProps = (props: CaptionedClipProps) => {
+  const parsed = captionsSchema.safeParse(props.captions);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    throw new Error(
+      `Invalid captions payload (${issue?.path.join('.') ?? 'root'}: ${issue?.message}): ` +
+        'each caption needs a text string and finite startMs/endMs numbers.',
+    );
+  }
+};
 
 export const Root = () => {
   return (
@@ -15,6 +43,8 @@ export const Root = () => {
       durationInFrames={450}
       defaultProps={captionedClipDefaultProps}
       calculateMetadata={({props}: {props: CaptionedClipProps}) => {
+        warnOnMissingFonts();
+        validateCaptionedClipProps(props);
         return {
           fps: props.fps,
           width: props.width,

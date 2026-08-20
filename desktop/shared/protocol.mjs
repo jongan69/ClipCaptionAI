@@ -9,53 +9,48 @@
 
 export const CHANNELS = {
   // Workflow
-  LIST_WORKFLOWS: "cca:list-workflows",
-  GET_ENVIRONMENT: "cca:get-environment",
-  RUN_WORKFLOW: "cca:run-workflow",
-  RUN_RAW_COMMAND: "cca:run-raw-command",
-  STOP_WORKFLOW: "cca:stop-workflow",
+  LIST_WORKFLOWS: 'cca:list-workflows',
+  GET_ENVIRONMENT: 'cca:get-environment',
+  RUN_WORKFLOW: 'cca:run-workflow',
+  RUN_RAW_COMMAND: 'cca:run-raw-command',
+  STOP_WORKFLOW: 'cca:stop-workflow',
 
   // Preferences & secrets
-  GET_PREFERENCES: "cca:get-preferences",
-  SET_PREFERENCE: "cca:set-preference",
-  GET_SECRET_STATE: "cca:get-secret-state",
-  SET_SECRET: "cca:set-secret",
-  CLEAR_SECRET: "cca:clear-secret",
+  GET_PREFERENCES: 'cca:get-preferences',
+  SET_PREFERENCE: 'cca:set-preference',
+  GET_SECRET_STATE: 'cca:get-secret-state',
+  SET_SECRET: 'cca:set-secret',
+  CLEAR_SECRET: 'cca:clear-secret',
 
   // File dialogs & shell
-  PICK_PATH: "cca:pick-path",
-  OPEN_PATH: "cca:open-path",
-  PROJECT_ROOT: "cca:project-root",
-  LOG_PATH: "cca:log-path",
-  GET_PATHS: "cca:get-paths",
+  PICK_PATH: 'cca:pick-path',
+  OPEN_PATH: 'cca:open-path',
+  PROJECT_ROOT: 'cca:project-root',
+  LOG_PATH: 'cca:log-path',
+  GET_PATHS: 'cca:get-paths',
 
   // Output browsing
-  LIST_OUTPUTS: "cca:list-outputs",
-  OPEN_OUTPUT: "cca:open-output",
+  LIST_OUTPUTS: 'cca:list-outputs',
 
   // Project files (allowlist only)
-  READ_PROJECT_FILE: "cca:read-project-file",
-  WRITE_PROJECT_FILE: "cca:write-project-file",
+  READ_PROJECT_FILE: 'cca:read-project-file',
+  WRITE_PROJECT_FILE: 'cca:write-project-file',
 
-  // Studio
-  START_STUDIO: "cca:start-studio",
+  // Video probing (read-only ffprobe)
+  PROBE_VIDEO: 'cca:probe-video',
 
   // Cleanup
-  CLEANUP: "cca:cleanup",
+  CLEANUP: 'cca:cleanup',
 };
 
 // ─── Push channels (main → renderer) ─────────────────────────────
 
 export const EVENTS = {
-  JOB_LOG: "cca:job-log",
-  JOB_PROGRESS: "cca:job-progress",
-  JOB_COMPLETE: "cca:job-complete",
-  ENVIRONMENT: "cca:environment",
-  SETTINGS_CHANGED: "cca:settings-changed",
+  ENVIRONMENT: 'cca:environment',
 
-  // Legacy aliases (keep during migration)
-  WORKFLOW_LOG: "cca:workflow-log",
-  WORKFLOW_COMPLETE: "cca:workflow-complete",
+  // Workflow job events
+  WORKFLOW_LOG: 'cca:workflow-log',
+  WORKFLOW_COMPLETE: 'cca:workflow-complete',
 };
 
 // ─── Runtime validators ───────────────────────────────────────────
@@ -64,36 +59,36 @@ export const EVENTS = {
  * Validate a workflow run request payload.
  */
 export function validateRunRequest(payload) {
-  if (!payload || typeof payload !== "object") {
-    throw new Error("Invalid run request: payload must be an object");
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('Invalid run request: payload must be an object');
   }
-  if (typeof payload.workflowId !== "string" || !payload.workflowId.trim()) {
-    throw new Error("Invalid run request: workflowId is required");
+  if (typeof payload.workflowId !== 'string' || !payload.workflowId.trim()) {
+    throw new Error('Invalid run request: workflowId is required');
   }
   return {
     workflowId: payload.workflowId.trim(),
     argValues: payload.argValues || {},
-    extraArgs: payload.extraArgs || "",
+    extraArgs: payload.extraArgs || '',
   };
 }
 
 /**
  * Validate a settings preference key/value.
  */
-export function validatePreference(key, value) {
+export function validatePreference(key) {
   const allowedKeys = [
-    "lastWorkflowId",
-    "lastRawCommand",
-    "runnerMode",
-    "lastExtraArgs",
-    "formDrafts",
-    "windowBounds",
-    "version",
+    'lastWorkflowId',
+    'lastRawCommand',
+    'runnerMode',
+    'lastExtraArgs',
+    'formDrafts',
+    'windowBounds',
+    'version',
   ];
-  if (typeof key !== "string" || !key.trim()) {
-    throw new Error("Invalid preference key");
+  if (typeof key !== 'string' || !key.trim()) {
+    throw new Error('Invalid preference key');
   }
-  if (!allowedKeys.includes(key) && !key.startsWith("form:")) {
+  if (!allowedKeys.includes(key) && !key.startsWith('form:')) {
     throw new Error(`Unknown preference key: ${key}`);
   }
 }
@@ -103,12 +98,13 @@ export function validatePreference(key, value) {
  */
 export function validateSecretKey(key) {
   const allowed = [
-    "OPENAI_API_KEY",
-    "DEEPSEEK_API_KEY",
-    "YOUTUBE_API_KEY",
-    "FAL_KEY",
-    "ELEVENLABS_API_KEY",
-    "ELEVENLABS_VOICE_ID",
+    'OPENAI_API_KEY',
+    'DEEPSEEK_API_KEY',
+    'YOUTUBE_API_KEY',
+    'FAL_KEY',
+    'ELEVENLABS_API_KEY',
+    'ELEVENLABS_VOICE_ID',
+    'EBAY_MCP_TOKEN',
   ];
   if (!allowed.includes(key)) {
     throw new Error(`Unknown secret key: ${key}`);

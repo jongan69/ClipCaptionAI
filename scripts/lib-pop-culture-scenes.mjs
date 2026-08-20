@@ -7,9 +7,7 @@ const formatSeconds = (seconds) => `${Number(seconds ?? 0).toFixed(2)}s`;
 
 const normalizeStringList = (value, fallback = []) => {
   const raw = Array.isArray(value) ? value : fallback;
-  return raw
-    .map((item) => String(item ?? '').trim())
-    .filter(Boolean);
+  return raw.map((item) => String(item ?? '').trim()).filter(Boolean);
 };
 
 const transcriptForWindow = (captions, startSeconds, endSeconds) => {
@@ -26,11 +24,7 @@ const transcriptForWindow = (captions, startSeconds, endSeconds) => {
 
 export const buildResearchSegments = ({insertions, captions}) =>
   insertions.map((insertion, index) => {
-    const transcript = transcriptForWindow(
-      captions,
-      insertion.startSeconds,
-      insertion.endSeconds,
-    );
+    const transcript = transcriptForWindow(captions, insertion.startSeconds, insertion.endSeconds);
     const visualBrief = insertion.visualBrief ?? {};
     const fallbackSegment = [
       insertion.query,
@@ -62,83 +56,6 @@ export const buildResearchSegments = ({insertions, captions}) =>
       avoidTerms: normalizeStringList(insertion.avoidTerms),
     };
   });
-
-const buildSchema = (candidatesPerSegment) => ({
-  type: 'object',
-  additionalProperties: false,
-  required: ['segments'],
-  properties: {
-    segments: {
-      type: 'array',
-      minItems: 1,
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: [
-          'segment',
-          'intent',
-          'bestSceneMatches',
-          'saferAlternatives',
-          'searchExpansionTerms',
-          'avoid',
-        ],
-        properties: {
-          segment: {type: 'string'},
-          intent: {type: 'string'},
-          bestSceneMatches: {
-            type: 'array',
-            minItems: 5,
-            maxItems: candidatesPerSegment,
-            items: {
-              type: 'object',
-              additionalProperties: false,
-              required: [
-                'title',
-                'sceneName',
-                'whyItWorks',
-                'youtubeSearch',
-                'alternateSearch',
-                'visualDescription',
-                'tone',
-                'confidenceScore',
-                'rightsStatus',
-              ],
-              properties: {
-                title: {type: 'string'},
-                sceneName: {type: 'string'},
-                whyItWorks: {type: 'string'},
-                youtubeSearch: {type: 'string'},
-                alternateSearch: {type: 'string'},
-                visualDescription: {type: 'string'},
-                tone: {type: 'string'},
-                confidenceScore: {type: 'number'},
-                rightsStatus: {type: 'string'},
-              },
-            },
-          },
-          saferAlternatives: {
-            type: 'array',
-            minItems: 3,
-            maxItems: 8,
-            items: {type: 'string'},
-          },
-          searchExpansionTerms: {
-            type: 'array',
-            minItems: 5,
-            maxItems: 14,
-            items: {type: 'string'},
-          },
-          avoid: {
-            type: 'array',
-            minItems: 3,
-            maxItems: 10,
-            items: {type: 'string'},
-          },
-        },
-      },
-    },
-  },
-});
 
 const renderMarkdown = (research) => {
   const lines = [
@@ -199,8 +116,9 @@ const blockedListValues = new Set([
 ]);
 
 const cleanList = (items, fallback) => {
-  const cleaned = normalizeStringList(items)
-    .filter((item) => !blockedListValues.has(item.replace(/[^a-z0-9]+/gi, '').toLowerCase()));
+  const cleaned = normalizeStringList(items).filter(
+    (item) => !blockedListValues.has(item.replace(/[^a-z0-9]+/gi, '').toLowerCase()),
+  );
   return [...new Set([...cleaned, ...fallback])];
 };
 
@@ -211,7 +129,11 @@ const matchSearchQueries = (match) =>
     `${match.title} ${match.sceneName} official clip`,
     `${match.title} ${match.sceneName} scene`,
   ]
-    .map((query) => String(query ?? '').replace(/\s+/g, ' ').trim())
+    .map((query) =>
+      String(query ?? '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
     .filter(Boolean);
 
 export const popCultureSearchQueriesForResearch = (
@@ -223,10 +145,7 @@ export const popCultureSearchQueriesForResearch = (
       .filter((match) => Number(match.confidenceScore ?? 0) >= minConfidence)
       .flatMap(matchSearchQueries);
     return [
-      ...new Set([
-        ...matchQueries,
-        ...normalizeStringList(segment.searchExpansionTerms),
-      ]),
+      ...new Set([...matchQueries, ...normalizeStringList(segment.searchExpansionTerms)]),
     ].slice(0, Math.max(1, Number(maxQueriesPerSegment ?? 16)));
   });
 
@@ -260,12 +179,10 @@ export const enrichInsertionsWithPopCultureQueries = (
           ...popCultureSearchQueries,
         ]),
       ],
-      keywords: [
-        ...new Set([
-          ...normalizeStringList(insertion.keywords),
-          ...matchKeywords,
-        ]),
-      ].slice(0, 40),
+      keywords: [...new Set([...normalizeStringList(insertion.keywords), ...matchKeywords])].slice(
+        0,
+        40,
+      ),
     };
   });
 };
@@ -290,9 +207,8 @@ const normalizeResearch = (research, sourceSegments) => ({
       segment: sourceSegment.segment ?? String(segment.segment ?? ''),
       bestSceneMatches: (segment.bestSceneMatches ?? []).map((match) => {
         const rawConfidence = Number(match.confidenceScore ?? 0);
-        const confidenceScore = rawConfidence > 0 && rawConfidence <= 1
-          ? rawConfidence * 10
-          : rawConfidence;
+        const confidenceScore =
+          rawConfidence > 0 && rawConfidence <= 1 ? rawConfidence * 10 : rawConfidence;
         return {
           ...match,
           confidenceScore: clamp(confidenceScore, 1, 10),
@@ -372,7 +288,9 @@ export const researchPopCultureScenes = async ({
   ]
 }`;
 
-  const systemPrompt = 'You are a sharp short-form video editor and pop-culture reference researcher. For each transcript or B-roll cue, infer the emotional meaning, situation, visual metaphor, meme value, and cultural shorthand. Recommend famous movie, TV, cartoon, anime, reality TV, sports-doc, or viral TV scenes that viewers can understand visually in 1-3 seconds. Do not merely match literal keywords. Prefer mainstream recognizable scenes, memeable moments, underdog/comeback/villain-arc/chaos/luxury/focus metaphors, and scenes with obvious visual action. Do not recommend commercials, product ads, music videos, podcasts, influencer videos, or ordinary YouTube videos as best scene matches. This is query enrichment only: do not claim a public YouTube upload is cleared. Use conservative rights/status labels such as official clip, trailer clip, fan upload, unclear, or needs manual licensing review.\n\nReturn ONLY a valid JSON object with this structure:\n' + jsonExample;
+  const systemPrompt =
+    'You are a sharp short-form video editor and pop-culture reference researcher. For each transcript or B-roll cue, infer the emotional meaning, situation, visual metaphor, meme value, and cultural shorthand. Recommend famous movie, TV, cartoon, anime, reality TV, sports-doc, or viral TV scenes that viewers can understand visually in 1-3 seconds. Do not merely match literal keywords. Prefer mainstream recognizable scenes, memeable moments, underdog/comeback/villain-arc/chaos/luxury/focus metaphors, and scenes with obvious visual action. Do not recommend commercials, product ads, music videos, podcasts, influencer videos, or ordinary YouTube videos as best scene matches. This is query enrichment only: do not claim a public YouTube upload is cleared. Use conservative rights/status labels such as official clip, trailer clip, fan upload, unclear, or needs manual licensing review.\n\nReturn ONLY a valid JSON object with this structure:\n' +
+    jsonExample;
 
   const userPrompt = `Create pop-culture B-roll scene candidates for these planned insertions.
 
@@ -399,7 +317,9 @@ Clip context:
 Segments:
 ${segments
   .map(
-    (segment) => `Segment ${segment.index} [${formatSeconds(segment.startSeconds)}-${formatSeconds(segment.endSeconds)}]
+    (
+      segment,
+    ) => `Segment ${segment.index} [${formatSeconds(segment.startSeconds)}-${formatSeconds(segment.endSeconds)}]
 Transcript/cue: "${segment.segment}"
 Planner query: ${segment.query}
 Planner reason: ${segment.reason}

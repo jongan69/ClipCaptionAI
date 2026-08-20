@@ -9,7 +9,7 @@
     "wordmark": {
       "text": "OS",
       "accentText": "OS",
-      "accentSplitIndex": 7
+      "accentSplitIndex": 0
     },
     "palette": {
       "background": "#05071c",
@@ -25,7 +25,7 @@
       "wordmark": "Poppins, Montserrat, Inter, sans-serif",
       "weight": 700
     },
-    "notes": "Scan-frame brackets imply capture/scanning. The card is the 'listing'. Animations should read as 'capture -> listing -> published'."
+    "notes": "The `frame` (corner brackets) implies capture/scanning. The `card` is the 'listing'. The `mark` (L-shape) is the brand icon. Animations should read as 'capture -> listing -> published'."
   },
   "gradients": [
     {
@@ -111,7 +111,7 @@
       "markup": "<g id=\"background\" data-layer=\"background\" data-role=\"backdrop\">\n    <rect x=\"0\" y=\"0\" width=\"1080\" height=\"720\" fill=\"url(#bgGlow)\"/>\n  </g>"
     },
     {
-      "id": "brackets",
+      "id": "frame",
       "role": "scan-frame",
       "box": {
         "x": 420,
@@ -129,13 +129,13 @@
         "bracket-br"
       ],
       "data": {
-        "layer": "brackets",
+        "layer": "frame",
         "role": "scan-frame"
       },
-      "markup": "<g id=\"brackets\" data-layer=\"brackets\" data-role=\"scan-frame\"\n     fill=\"none\" stroke=\"url(#bracketGradient)\" stroke-width=\"15\"\n     stroke-linecap=\"round\" stroke-linejoin=\"round\">\n    <path id=\"bracket-tl\" data-corner=\"top-left\"     d=\"M 420 205 L 420 176 Q 420 157 439 157 L 468 157\"/>\n    <path id=\"bracket-tr\" data-corner=\"top-right\"    d=\"M 620 157 L 649 157 Q 668 157 668 176 L 668 205\"/>\n    <path id=\"bracket-bl\" data-corner=\"bottom-left\"  d=\"M 420 385 L 420 414 Q 420 433 439 433 L 468 433\"/>\n    <path id=\"bracket-br\" data-corner=\"bottom-right\" d=\"M 620 433 L 649 433 Q 668 433 668 414 L 668 385\"/>\n  </g>"
+      "markup": "<g id=\"frame\" data-layer=\"frame\" data-role=\"scan-frame\"\n     fill=\"none\" stroke=\"url(#bracketGradient)\" stroke-width=\"15\"\n     stroke-linecap=\"round\" stroke-linejoin=\"round\">\n    <path id=\"bracket-tl\" data-corner=\"top-left\"     d=\"M 420 205 L 420 176 Q 420 157 439 157 L 468 157\"/>\n    <path id=\"bracket-tr\" data-corner=\"top-right\"    d=\"M 620 157 L 649 157 Q 668 157 668 176 L 668 205\"/>\n    <path id=\"bracket-bl\" data-corner=\"bottom-left\"  d=\"M 420 385 L 420 414 Q 420 433 439 433 L 468 433\"/>\n    <path id=\"bracket-br\" data-corner=\"bottom-right\" d=\"M 620 433 L 649 433 Q 668 433 668 414 L 668 385\"/>\n  </g>"
     },
     {
-      "id": "l-mark",
+      "id": "mark",
       "role": "letterform",
       "box": {
         "x": 452,
@@ -150,10 +150,10 @@
         "l-shape"
       ],
       "data": {
-        "layer": "l-mark",
+        "layer": "mark",
         "role": "letterform"
       },
-      "markup": "<g id=\"l-mark\" data-layer=\"l-mark\" data-role=\"letterform\">\n    <path id=\"l-shape\"\n          fill=\"url(#brandGradient)\"\n          d=\"M 452 224 Q 452 200 476 200 L 486 200 Q 510 200 510 224 L 510 352 L 624 352 Q 648 352 648 376 L 648 386 Q 648 410 624 410 L 476 410 Q 452 410 452 386 Z\"/>\n  </g>"
+      "markup": "<g id=\"mark\" data-layer=\"mark\" data-role=\"letterform\">\n    <path id=\"l-shape\"\n          fill=\"url(#brandGradient)\"\n          d=\"M 452 224 Q 452 200 476 200 L 486 200 Q 510 200 510 224 L 510 352 L 624 352 Q 648 352 648 376 L 648 386 Q 648 410 624 410 L 476 410 Q 452 410 452 386 Z\"/>\n  </g>"
     },
     {
       "id": "card",
@@ -186,9 +186,9 @@
       "id": "wordmark",
       "role": "text",
       "box": {
-        "x": 282.6,
+        "x": 482.8,
         "y": 479,
-        "w": 514.8,
+        "w": 114.4,
         "h": 99.8
       },
       "fill": "#ffffff",

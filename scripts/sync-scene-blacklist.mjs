@@ -39,7 +39,9 @@ const sceneLibraryDir = path.resolve(
   String(args['scene-library'] ?? path.join(projectRoot, 'scene-library')),
 );
 const dryRun = Boolean(args['dry-run']);
-const pruneIndex = args['keep-index'] ? false : args['prune-index'] === undefined || Boolean(args['prune-index']);
+const pruneIndex = args['keep-index']
+  ? false
+  : args['prune-index'] === undefined || Boolean(args['prune-index']);
 const deleteSidecars = !args['keep-sidecars'];
 
 const readJson = (filePath) => JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -54,8 +56,7 @@ const sceneIdFromSidecarName = (fileName, metadata) => {
   return match ? `yt-${match[1]}` : fileName.replace(/\.scene\.json$/, '');
 };
 
-const sidecarVideoPath = (sidecarPath) =>
-  sidecarPath.replace(/\.scene\.json$/, '');
+const sidecarVideoPath = (sidecarPath) => sidecarPath.replace(/\.scene\.json$/, '');
 
 const sidecarFiles = () => {
   if (!fs.existsSync(sceneLibraryDir)) {
@@ -167,7 +168,10 @@ const orphanEntries = sidecarFiles()
   }));
 
 const currentBlacklist = loadSceneBlacklist(sceneLibraryDir);
-const mergedEntries = mergeEntries(currentBlacklist.entries, orphanEntries.map((item) => item.entry));
+const mergedEntries = mergeEntries(
+  currentBlacklist.entries,
+  orphanEntries.map((item) => item.entry),
+);
 const nextBlacklist = {
   version: 1,
   updatedAt: new Date().toISOString(),
@@ -197,7 +201,9 @@ if (deleteSidecars) {
   console.log('Orphaned sidecars kept because --keep-sidecars was passed.');
 }
 if (indexResult) {
-  console.log(`Index scenes pruned: ${indexResult.removed} (${indexResult.before} -> ${indexResult.after})`);
+  console.log(
+    `Index scenes pruned: ${indexResult.removed} (${indexResult.before} -> ${indexResult.after})`,
+  );
 }
 if (dryRun) {
   console.log('Dry run only. Nothing written.');

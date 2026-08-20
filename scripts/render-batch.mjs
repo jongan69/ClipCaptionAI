@@ -25,8 +25,7 @@ if (args.help || args.h) {
 const clipsDir = path.resolve(requireArg(args, 'clips-dir', usage));
 const outDir = path.resolve(requireArg(args, 'out-dir', usage));
 const captionsDir = path.resolve(
-  args['captions-dir'] ??
-    path.join(path.dirname(clipsDir), 'captions'),
+  args['captions-dir'] ?? path.join(path.dirname(clipsDir), 'captions'),
 );
 const autoTranscribe = Boolean(args['auto-transcribe']);
 
@@ -54,15 +53,7 @@ for (const clip of clips) {
       continue;
     }
 
-    run('npm', [
-      'run',
-      'transcribe',
-      '--',
-      '--video',
-      videoPath,
-      '--out',
-      captionsPath,
-    ]);
+    run('npm', ['run', 'transcribe', '--', '--video', videoPath, '--out', captionsPath]);
   }
 
   const renderArgs = [

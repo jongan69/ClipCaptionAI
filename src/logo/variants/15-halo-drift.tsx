@@ -13,10 +13,10 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
-  const mark = logo.layer('l-mark');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
-  const brackets = logo.layer('brackets');
+  const frameLayer = logo.layer('frame');
 
   const markIn = spring({frame: frame - 10, fps, config: {damping: 16, stiffness: 170}});
   const cardIn = spring({frame: frame - 24, fps, config: {damping: 14, stiffness: 150}});
@@ -71,17 +71,17 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
           extrapolateLeft: 'clamp',
           extrapolateRight: 'clamp',
         })}
-        style={{transform: `scale(${settlePulse})`, transformOrigin: originOf(logo, 'l-mark')}}
+        style={{transform: `scale(${settlePulse})`, transformOrigin: originOf(logo, 'mark')}}
       >
         {mark ? (
           <g
             opacity={markOpacity}
             style={{
               transform: `translateY(${markY}px) scale(${markScale})`,
-              transformOrigin: originOf(logo, 'l-mark'),
+              transformOrigin: originOf(logo, 'mark'),
             }}
           >
-            <RawLayer logo={logo} id="l-mark" />
+            <RawLayer logo={logo} id="mark" />
           </g>
         ) : null}
 
@@ -109,7 +109,7 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
           </g>
         ) : null}
 
-        {brackets ? <RawLayer logo={logo} id="brackets" /> : null}
+        {frameLayer ? <RawLayer logo={logo} id="frame" /> : null}
       </g>
 
       <g opacity={haloOpacity}>

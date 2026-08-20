@@ -8,11 +8,10 @@ import {
   outputsRoot,
   probeVideo,
   projectRoot,
+  slugify as canonicalSlugify,
 } from './lib.mjs';
-import {
-  downloadYoutubeVideo,
-  readLinkEntriesFromLinksFile,
-} from './lib-youtube-download.mjs';
+import {downloadYoutubeVideo, readLinkEntriesFromLinksFile} from './lib-youtube-download.mjs';
+import {timestampSlug} from './clipkit-lib.mjs';
 
 const defaultLinks = path.join(projectRoot, 'links.txt');
 
@@ -42,25 +41,7 @@ if (args.help || args.h) {
   process.exit(0);
 }
 
-const slugify = (value, fallback = 'video') => {
-  const slug = String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 80);
-  return slug || fallback;
-};
-
-const pad = (value) => String(value).padStart(2, '0');
-const timestampSlug = () => {
-  const now = new Date();
-  return [
-    now.getFullYear(),
-    pad(now.getMonth() + 1),
-    pad(now.getDate()),
-    `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`,
-  ].join('-');
-};
+const slugify = (value, fallback = 'video') => canonicalSlugify(value, fallback);
 
 const uniqueDir = (parent, preferredName) => {
   let candidate = path.join(parent, preferredName);

@@ -12,8 +12,8 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
-  const brackets = logo.layer('brackets');
-  const mark = logo.layer('l-mark');
+  const frameLayer = logo.layer('frame');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
 
@@ -50,22 +50,22 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
     extrapolateRight: 'clamp',
   });
 
-  const bracketPaths = [...(brackets?.markup.matchAll(/<path[^>]*\\sd="([^"]+)"/g) ?? [])].map(
+  const framePaths = [...(frameLayer?.markup.matchAll(/<path[^>]*\\sd="([^"]+)"/g) ?? [])].map(
     (m) => m[1]
   );
-  const dashLen = Math.max(...(bracketPaths.length ? bracketPaths.map(approxPathLength) : [120]));
+  const dashLen = Math.max(...(framePaths.length ? framePaths.map(approxPathLength) : [120]));
 
   return (
     <LogoSvg logo={logo}>
-      {brackets ? (
+      {frameLayer ? (
         <g
           fill="none"
-          stroke={brackets.stroke ?? logo.brand.palette.primary}
-          strokeWidth={brackets.strokeWidth ?? 14}
+          stroke={frameLayer.stroke ?? logo.brand.palette.primary}
+          strokeWidth={frameLayer.strokeWidth ?? 14}
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          {bracketPaths.map((d, i) => {
+          {framePaths.map((d, i) => {
             const draw = interpolate(frame, [28 + i * 4, 28 + i * 4 + 18], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',
@@ -84,10 +84,10 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
               [0, 1],
               [-8, 0]
             )}deg)`,
-            transformOrigin: originOf(logo, 'l-mark'),
+            transformOrigin: originOf(logo, 'mark'),
           }}
         >
-          <RawLayer logo={logo} id="l-mark" />
+          <RawLayer logo={logo} id="mark" />
         </g>
       ) : null}
 
@@ -117,7 +117,7 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
         >
           <g
             opacity={lock}
-            style={{transform: `scale(${pulse})`, transformOrigin: originOf(logo, 'l-mark')}}
+            style={{transform: `scale(${pulse})`, transformOrigin: originOf(logo, 'mark')}}
           >
             <RawLayer logo={logo} id="wordmark" />
           </g>

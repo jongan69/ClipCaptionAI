@@ -12,7 +12,7 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
-  const mark = logo.layer('l-mark');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
 
@@ -48,10 +48,10 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
           opacity={markOpacity}
           style={{
             transform: `translateY(${markY}px) scale(${markScale}) rotate(${markR}deg)`,
-            transformOrigin: originOf(logo, 'l-mark'),
+            transformOrigin: originOf(logo, 'mark'),
           }}
         >
-          <RawLayer logo={logo} id="l-mark" />
+          <RawLayer logo={logo} id="mark" />
         </g>
       ) : null}
 

@@ -1,6 +1,6 @@
 {
   "name": "clipcaptionai",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI-first local AI video editor and model harness for planning, rendering, captioning, and QA of production video assets.",
   "author": {
     "name": "Jonathan Gan",
@@ -9,6 +9,7 @@
   "license": "MIT",
   "type": "module",
   "packageManager": "bun@1.3.14",
+  "main": "desktop/main.mjs",
   "bin": {
     "clipcaptionai": "./bin/clipcaptionai.js",
     "cca": "./bin/clipcaptionai.js"
@@ -45,6 +46,7 @@
     "assets/icon.svg",
     "bin/",
     "caption-style.json",
+    "CHANGELOG.md",
     "docs/AGENT_GUIDE.md",
     "docs/AI_PROVIDERS.md",
     "docs/PRODUCTION_SUPPORT.md",
@@ -54,11 +56,16 @@
     "remotion.config.ts",
     "scripts/*.mjs",
     "scripts/*.mts",
+    "scripts/ebay/",
+    "scripts/logo/",
+    "assets/logos/",
     "src/captioned-clip.tsx",
     "src/index.tsx",
     "src/prompt-video.tsx",
     "src/root.tsx",
     "src/types.ts",
+    "src/logo/",
+    "src/listingos-deck-scenes.tsx",
     "styles/",
     "tsconfig.json"
   ],
@@ -68,7 +75,10 @@
     "doctor": "node scripts/clipkit.mjs doctor",
     "rotato": "node scripts/rotato-cli.mjs",
     "test": "node --test",
-    "check": "bun run typecheck && bun run test",
+    "check": "bun run typecheck && bun run typecheck:desktop && bun run lint && bun run test",
+    "lint": "eslint scripts/ desktop/ tests/",
+    "format": "prettier --write \"scripts/**/*.mjs\" \"desktop/**/*.{mjs,cjs,js,ts,tsx}\" \"tests/**/*.mjs\"",
+    "format:check": "prettier --check \"scripts/**/*.mjs\" \"desktop/**/*.{mjs,cjs,js,ts,tsx}\" \"tests/**/*.mjs\"",
     "cleanup": "node scripts/cleanup.mjs",
     "studio": "remotion studio src/index.tsx",
     "logo:vectorize": "node scripts/logo/vectorize.mjs",
@@ -136,6 +146,7 @@
     "fal:reference-video": "node scripts/fal-reference-video.mjs",
     "interview:qa": "node scripts/interview-qa.mjs",
     "typecheck": "tsc --noEmit",
+    "typecheck:desktop": "tsc -p desktop/tsconfig.json",
     "desktop:env-check": "node desktop/check-environment.mjs",
     "desktop:env-check:json": "node desktop/check-environment.mjs --json",
     "desktop:build": "vite build --config desktop/vite.config.ts && node desktop/lib/fix-crossorigin.mjs",
@@ -169,6 +180,8 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@electron/notarize": "^3.1.1",
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "24.0.3",
     "@types/react": "^19.1.8",
@@ -176,8 +189,13 @@
     "@vitejs/plugin-react": "^6.0.5",
     "electron": "^43.3.0",
     "electron-builder": "^26.15.3",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.11.0",
+    "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
     "typescript": "5.8.3",
+    "typescript-eslint": "^8.67.0",
     "vite": "^8.2.0"
   },
   "build": {
@@ -215,8 +233,23 @@
     ],
     "asar": true,
     "asarUnpack": [
-      "**/node_modules/**/*"
+      "**/node_modules/**/*",
+      "bin/**/*",
+      "scripts/**/*",
+      "src/**/*",
+      "styles/**/*",
+      "public/**/*",
+      "scene-library/**/*",
+      "custom-scenes-library/**/*",
+      "sfx-library/**/*",
+      "music-library/**/*",
+      "models/**/*",
+      "caption-style.json",
+      "remotion.config.ts",
+      "tsconfig.json",
+      "package.json"
     ],
+    "afterSign": "desktop/scripts/notarize.cjs",
     "mac": {
       "category": "public.app-category.video",
       "icon": "assets/icon.icns",

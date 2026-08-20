@@ -48,10 +48,10 @@ Usage: node scripts/logo/vectorize.mjs --in <logo.png> --slug <brand-slug> [--co
 let ImageTracer, PNG;
 try {
   ImageTracer = (await import('imagetracerjs')).default;
-  ({ PNG } = await import('pngjs'));
+  ({PNG} = await import('pngjs'));
 } catch {
   console.error(
-    'Missing tracer dependencies. Install them once with:\n\n  npm i -D imagetracerjs pngjs\n'
+    'Missing tracer dependencies. Install them once with:\n\n  npm i -D imagetracerjs pngjs\n',
   );
   process.exit(1);
 }
@@ -70,18 +70,18 @@ const upscale = (src, factor) => {
       src.data.copy(data, (y * w + x) * 4, s, s + 4);
     }
   }
-  return { width: w, height: h, data };
+  return {width: w, height: h, data};
 };
 
 const img = upscale(raw, scale);
-const imgd = { width: img.width, height: img.height, data: img.data };
+const imgd = {width: img.width, height: img.height, data: img.data};
 
 const traced = ImageTracer.imagedataToSVG(imgd, {
   numberofcolors: colors,
   colorquantcycles: 5,
-  pathomit: 12,        // drop specks
-  ltres: 0.6,          // straight-line fidelity
-  qtres: 0.6,          // curve fidelity
+  pathomit: 12, // drop specks
+  ltres: 0.6, // straight-line fidelity
+  qtres: 0.6, // curve fidelity
   rightangleenhance: true,
   strokewidth: 0,
   linefilter: true,
@@ -96,12 +96,7 @@ const traced = ImageTracer.imagedataToSVG(imgd, {
 const toHex = (fill) => {
   const m = fill.match(/rgb\((\d+),(\d+),(\d+)\)/i);
   if (!m) return fill;
-  return (
-    '#' +
-    [m[1], m[2], m[3]]
-      .map((n) => Number(n).toString(16).padStart(2, '0'))
-      .join('')
-  );
+  return '#' + [m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, '0')).join('');
 };
 
 const viewBox = (traced.match(/viewBox="([^"]+)"/) || [])[1] || `0 0 ${img.width} ${img.height}`;
@@ -122,15 +117,15 @@ while ((m = pathRe.exec(traced)) !== null) {
 
 // Biggest ink area first — usually background, then the mark, then details.
 const layers = [...buckets.entries()]
-  .map(([fill, ds]) => ({ fill, ds, weight: ds.join('').length }))
+  .map(([fill, ds]) => ({fill, ds, weight: ds.join('').length}))
   .sort((a, b) => b.weight - a.weight);
 
 const body = layers
   .map(
-    ({ fill, ds }, i) =>
+    ({fill, ds}, i) =>
       `  <g id="layer-${i}" data-layer="layer-${i}" data-fill="${fill}" fill="${fill}">\n` +
       ds.map((d) => `    <path d="${d}"/>`).join('\n') +
-      `\n  </g>`
+      `\n  </g>`,
   )
   .join('\n');
 
@@ -146,7 +141,7 @@ ${body}
 `;
 
 const outDir = path.join('assets', 'logos', slug);
-fs.mkdirSync(outDir, { recursive: true });
+fs.mkdirSync(outDir, {recursive: true});
 const outPath = path.join(outDir, 'logo.traced.svg');
 fs.writeFileSync(outPath, svg);
 

@@ -20,5 +20,5 @@
     "wordmark": "Poppins, Montserrat, Inter, sans-serif",
     "weight": 700
   },
-  "notes": "Scan-frame brackets imply capture/scanning. The card is the 'listing'. Animations should read as 'capture -> listing -> published'."
+  "notes": "The `frame` (corner brackets) implies capture/scanning. The `card` is the 'listing'. The `mark` (L-shape) is the brand icon. Animations should read as 'capture -> listing -> published'."
 }

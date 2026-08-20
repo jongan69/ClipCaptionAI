@@ -4,16 +4,7 @@ import path from 'node:path';
 import {createRequire} from 'node:module';
 import {spawnSync} from 'node:child_process';
 import {Command} from 'commander';
-import {
-  cancel,
-  confirm,
-  intro,
-  isCancel,
-  note,
-  outro,
-  select,
-  text,
-} from '@clack/prompts';
+import {cancel, confirm, intro, isCancel, note, outro, select, text} from '@clack/prompts';
 import pc from 'picocolors';
 import {
   defaultCaptionStylePath,
@@ -25,16 +16,12 @@ import {
   outputsRoot,
   readCaptionStyleConfig,
 } from './lib.mjs';
-import {
-  buildBrollCaptionArgs,
-  mergeStyleConfig,
-  slugify,
-  timestampSlug,
-} from './clipkit-lib.mjs';
+import {buildBrollCaptionArgs, mergeStyleConfig, slugify, timestampSlug} from './clipkit-lib.mjs';
 import {commandExists} from './command-utils.mjs';
 const require = createRequire(import.meta.url);
 const packageJson = require('../package.json');
-const defaultFramePath = path.join(path.dirname(projectRoot), 'Frame.png');
+const defaultFramePath =
+  process.env.CCA_FRAME_PATH || path.join(path.dirname(projectRoot), 'Frame.png');
 
 const stylePresets = [
   {label: 'Main default', path: defaultCaptionStylePath},
@@ -162,15 +149,13 @@ const askOptionalNumber = async (message, {min = null, max = null} = {}) => {
   return Number(answer);
 };
 
-const askRenderOverrideBundle = async (
-  {
-    workflowLabel,
-    defaultStylePath,
-    allowContextScenes = false,
-    allowSoundEffects = false,
-    allowMovieScenes = false,
-  },
-) => {
+const askRenderOverrideBundle = async ({
+  workflowLabel,
+  defaultStylePath,
+  allowContextScenes = false,
+  allowSoundEffects = false,
+  allowMovieScenes = false,
+}) => {
   const useAdvanced = await askYesNo('Open advanced render settings for this run?', false);
   if (!useAdvanced) {
     return {extraArgs: []};
@@ -246,7 +231,11 @@ const askRenderOverrideBundle = async (
       options: [
         {value: 'keep-default', label: 'Keep workflow default'},
         {value: 'vertical', label: 'Vertical crop', hint: '1080x1920 fill'},
-        {value: 'vertical-contain', label: 'Vertical contain', hint: 'black bars, full frame visible'},
+        {
+          value: 'vertical-contain',
+          label: 'Vertical contain',
+          hint: 'black bars, full frame visible',
+        },
       ],
     }),
   );
@@ -413,7 +402,9 @@ const printDoctor = () => {
       console.log('Fix the missing required items above before running the full workflows.');
     }
     if (!transcriptionReady) {
-      console.log('Transcription needs either whisper-cli installed locally or OPENAI_API_KEY in .env.');
+      console.log(
+        'Transcription needs either whisper-cli installed locally or OPENAI_API_KEY in .env.',
+      );
     }
     process.exit(1);
   }
@@ -440,16 +431,22 @@ const runAutoClips = (args = []) => {
     return;
   }
 
-  npmRun('process', withDefaultArgs([
-    '--links',
-    linksPath,
-    '--out-dir',
-    outputsRoot,
-    '--max-clips',
-    process.env.MAX_CLIPS ?? '6',
-    '--padding-seconds',
-    process.env.PADDING_SECONDS ?? '2',
-  ], args));
+  npmRun(
+    'process',
+    withDefaultArgs(
+      [
+        '--links',
+        linksPath,
+        '--out-dir',
+        outputsRoot,
+        '--max-clips',
+        process.env.MAX_CLIPS ?? '6',
+        '--padding-seconds',
+        process.env.PADDING_SECONDS ?? '2',
+      ],
+      args,
+    ),
+  );
 };
 
 const runMomentsOnly = (args = []) => {
@@ -465,17 +462,23 @@ const runMomentsOnly = (args = []) => {
     return;
   }
 
-  npmRun('process', withDefaultArgs([
-    '--links',
-    linksPath,
-    '--out-dir',
-    outputsRoot,
-    '--max-clips',
-    process.env.MAX_CLIPS ?? '6',
-    '--padding-seconds',
-    process.env.PADDING_SECONDS ?? '2',
-    '--raw-clips-only',
-  ], args));
+  npmRun(
+    'process',
+    withDefaultArgs(
+      [
+        '--links',
+        linksPath,
+        '--out-dir',
+        outputsRoot,
+        '--max-clips',
+        process.env.MAX_CLIPS ?? '6',
+        '--padding-seconds',
+        process.env.PADDING_SECONDS ?? '2',
+        '--raw-clips-only',
+      ],
+      args,
+    ),
+  );
 };
 
 const runReviewMoments = (args = []) => {
@@ -519,12 +522,10 @@ const runDownloadOnly = (args = []) => {
     return;
   }
 
-  npmRun('download:youtube', withDefaultArgs([
-    '--links',
-    linksPath,
-    '--out-dir',
-    outputsRoot,
-  ], args));
+  npmRun(
+    'download:youtube',
+    withDefaultArgs(['--links', linksPath, '--out-dir', outputsRoot], args),
+  );
 };
 
 const runFrameLinks = (args = []) => {
@@ -540,12 +541,7 @@ const runFrameLinks = (args = []) => {
     return;
   }
 
-  const defaults = [
-    '--links',
-    linksPath,
-    '--out-dir',
-    outputsRoot,
-  ];
+  const defaults = ['--links', linksPath, '--out-dir', outputsRoot];
 
   if (fs.existsSync(defaultFramePath)) {
     defaults.push('--frame', defaultFramePath);
@@ -575,14 +571,20 @@ const runFixedClips = (args = []) => {
     return;
   }
 
-  npmRun('download:split', withDefaultArgs([
-    '--links',
-    linksPath,
-    '--out-dir',
-    outputsRoot,
-    '--segment-seconds',
-    process.env.FIXED_SEGMENT_SECONDS ?? '15',
-  ], args));
+  npmRun(
+    'download:split',
+    withDefaultArgs(
+      [
+        '--links',
+        linksPath,
+        '--out-dir',
+        outputsRoot,
+        '--segment-seconds',
+        process.env.FIXED_SEGMENT_SECONDS ?? '15',
+      ],
+      args,
+    ),
+  );
 };
 
 const runLocalFixedClips = (args = []) => {
@@ -602,12 +604,7 @@ const runBroll = (args = []) => {
     return;
   }
 
-  npmRun('broll:find', withDefaultArgs([
-    '--prompts',
-    promptsPath,
-    '--out-dir',
-    outputsRoot,
-  ], args));
+  npmRun('broll:find', withDefaultArgs(['--prompts', promptsPath, '--out-dir', outputsRoot], args));
 };
 
 const askForVideo = async (label) => {
@@ -638,9 +635,7 @@ const askOptionalValue = async (message, placeholder = 'Leave blank to keep the 
 const askFrameLinksOptions = async () => {
   const framePath = await askOptionalValue(
     'Frame image path',
-    fs.existsSync(defaultFramePath)
-      ? defaultFramePath
-      : '/absolute/path/to/frame.png',
+    fs.existsSync(defaultFramePath) ? defaultFramePath : '/absolute/path/to/frame.png',
   );
   const frameArgs = ['--frame', framePath ?? defaultFramePath];
 
@@ -651,7 +646,7 @@ const askFrameLinksOptions = async () => {
 
   note(
     [
-      'Defaults are tuned for /Users/jonathangan/Desktop/Frame.png.',
+      'Frame defaults resolve via $CCA_FRAME_PATH or the Frame.png beside the project.',
       'Use these when a future frame has a different opening or corner radius.',
     ].join('\n'),
     'Frame slot',
@@ -697,22 +692,78 @@ const interactiveMenu = async () => {
     await select({
       message: 'Pick a workflow',
       options: [
-        {value: 'download', label: 'Download YouTube videos and stop', hint: 'outputs/download-run-*/downloads/'},
-        {value: 'frame-links', label: 'Download YouTube videos into a frame', hint: 'uses links.txt + a desktop frame image'},
-        {value: 'ebay-cinematic-ads', label: 'eBay cinematic listing ads', hint: 'Higgsfield briefs + final ad assembly/upload'},
-        {value: 'ebay-creative-intel', label: 'eBay competitor creative blueprints', hint: 'Kalodata/TikTok/YouTube structure into original ads'},
-        {value: 'fixed-clips', label: 'Download full videos and chop fixed 15s clips', hint: 'whole-source slicing'},
-        {value: 'split-video', label: 'Cut one local video into fixed 15s clips', hint: 'no YouTube needed'},
-        {value: 'moments', label: 'Find important moments only', hint: 'clean source clips for manual edits'},
-        {value: 'auto-clips', label: 'Full auto-clips pipeline', hint: 'download, transcribe, select, caption, render'},
-        {value: 'broll-captions', label: 'B-roll-heavy labeled workflow', hint: 'local custom scenes + captions'},
+        {
+          value: 'download',
+          label: 'Download YouTube videos and stop',
+          hint: 'outputs/download-run-*/downloads/',
+        },
+        {
+          value: 'frame-links',
+          label: 'Download YouTube videos into a frame',
+          hint: 'uses links.txt + a desktop frame image',
+        },
+        {
+          value: 'ebay-cinematic-ads',
+          label: 'eBay cinematic listing ads',
+          hint: 'Higgsfield briefs + final ad assembly/upload',
+        },
+        {
+          value: 'ebay-creative-intel',
+          label: 'eBay competitor creative blueprints',
+          hint: 'Kalodata/TikTok/YouTube structure into original ads',
+        },
+        {
+          value: 'fixed-clips',
+          label: 'Download full videos and chop fixed 15s clips',
+          hint: 'whole-source slicing',
+        },
+        {
+          value: 'split-video',
+          label: 'Cut one local video into fixed 15s clips',
+          hint: 'no YouTube needed',
+        },
+        {
+          value: 'moments',
+          label: 'Find important moments only',
+          hint: 'clean source clips for manual edits',
+        },
+        {
+          value: 'auto-clips',
+          label: 'Full auto-clips pipeline',
+          hint: 'download, transcribe, select, caption, render',
+        },
+        {
+          value: 'broll-captions',
+          label: 'B-roll-heavy labeled workflow',
+          hint: 'local custom scenes + captions',
+        },
         {value: 'caption', label: 'Caption one existing video', hint: 'keep the base edit intact'},
-        {value: 'chapter', label: 'Auto-chapter a conversation video', hint: 'detect topics, split into titled sections'},
-        {value: 'tighten', label: 'Tighten a conversation — remove filler and repetition', hint: 'AI finds dead air, repetition, tangents to cut'},
-        {value: 'compress', label: 'Compress a video — reduce file size with minimal quality loss', hint: 'CRF encoding, h264/h265, lossless-to-aggressive presets'},
-        {value: 'enhance', label: 'Enhance an existing edit with B-roll', hint: 'timed cutaways + captions'},
+        {
+          value: 'chapter',
+          label: 'Auto-chapter a conversation video',
+          hint: 'detect topics, split into titled sections',
+        },
+        {
+          value: 'tighten',
+          label: 'Tighten a conversation — remove filler and repetition',
+          hint: 'AI finds dead air, repetition, tangents to cut',
+        },
+        {
+          value: 'compress',
+          label: 'Compress a video — reduce file size with minimal quality loss',
+          hint: 'CRF encoding, h264/h265, lossless-to-aggressive presets',
+        },
+        {
+          value: 'enhance',
+          label: 'Enhance an existing edit with B-roll',
+          hint: 'timed cutaways + captions',
+        },
         {value: 'broll', label: 'Find standalone B-roll from prompts', hint: 'no final render'},
-        {value: 'rerender', label: 'Rerender or list a generated clip', hint: 'fix text or style and rerender'},
+        {
+          value: 'rerender',
+          label: 'Rerender or list a generated clip',
+          hint: 'fix text or style and rerender',
+        },
         {value: 'cleanup', label: 'Clean temp files / old outputs'},
         {value: 'studio', label: 'Open Remotion Studio'},
         {value: 'open-latest', label: 'Open newest output folder'},
@@ -737,21 +788,49 @@ const interactiveMenu = async () => {
       await select({
         message: 'Pick an eBay ad step',
         options: [
-          {value: 'roi-plan', label: 'Plan Higgsfield credit spend', hint: 'rank listings before rendering'},
-          {value: 'prepare', label: 'Prepare Higgsfield briefs', hint: 'pull listing photos and write shot prompts'},
-          {value: 'seed-local-broll', label: 'Seed owned local B-roll', hint: 'use local footage before searching'},
-          {value: 'find-broll', label: 'Find listing story B-roll', hint: 'context clips for the ad finish'},
-          {value: 'assemble', label: 'Assemble rendered clips', hint: 'turn Higgsfield clips into an eBay MP4'},
-          {value: 'upload', label: 'Upload final video', hint: 'create eBay video and optionally attach'},
+          {
+            value: 'roi-plan',
+            label: 'Plan Higgsfield credit spend',
+            hint: 'rank listings before rendering',
+          },
+          {
+            value: 'prepare',
+            label: 'Prepare Higgsfield briefs',
+            hint: 'pull listing photos and write shot prompts',
+          },
+          {
+            value: 'seed-local-broll',
+            label: 'Seed owned local B-roll',
+            hint: 'use local footage before searching',
+          },
+          {
+            value: 'find-broll',
+            label: 'Find listing story B-roll',
+            hint: 'context clips for the ad finish',
+          },
+          {
+            value: 'assemble',
+            label: 'Assemble rendered clips',
+            hint: 'turn Higgsfield clips into an eBay MP4',
+          },
+          {
+            value: 'upload',
+            label: 'Upload final video',
+            hint: 'create eBay video and optionally attach',
+          },
         ],
       }),
     );
 
     if (mode === 'roi-plan') {
       const creditBudget = await askOptionalNumber('Higgsfield credit budget', {min: 1});
-      const creditsPerShot = await askOptionalNumber('Estimated credits per generated shot', {min: 1});
+      const creditsPerShot = await askOptionalNumber('Estimated credits per generated shot', {
+        min: 1,
+      });
       const maxListings = await askOptionalNumber('Maximum listings to queue', {min: 1});
-      const maxHiggsShots = await askOptionalNumber('Maximum paid Higgs shots per listing', {min: 1});
+      const maxHiggsShots = await askOptionalNumber('Maximum paid Higgs shots per listing', {
+        min: 1,
+      });
       const skipItemIds = await askOptionalValue(
         'Optional listing IDs to skip',
         'Comma-separated item IDs, for example 398166069187',
@@ -857,7 +936,10 @@ const interactiveMenu = async () => {
         'Optional Kalodata/competitor export',
         '/absolute/path/to/kalodata-export.csv',
       );
-      const discoverYoutube = await askYesNo('Also seed public YouTube competitor metadata with yt-dlp?', false);
+      const discoverYoutube = await askYesNo(
+        'Also seed public YouTube competitor metadata with yt-dlp?',
+        false,
+      );
       runEbayCreativeIntel([
         'plan',
         '--project-dir',
@@ -936,8 +1018,16 @@ const interactiveMenu = async () => {
           message: 'How aggressively should we tighten?',
           options: [
             {value: 'light', label: 'Light', hint: 'only clear filler words and dead air'},
-            {value: 'medium', label: 'Medium (recommended)', hint: 'filler, repetition, obvious tangents'},
-            {value: 'heavy', label: 'Heavy', hint: 'tight edit — any non-essential content removed'},
+            {
+              value: 'medium',
+              label: 'Medium (recommended)',
+              hint: 'filler, repetition, obvious tangents',
+            },
+            {
+              value: 'heavy',
+              label: 'Heavy',
+              hint: 'tight edit — any non-essential content removed',
+            },
           ],
         }),
       );
@@ -962,10 +1052,26 @@ const interactiveMenu = async () => {
         await select({
           message: 'Compression quality:',
           options: [
-            {value: 'lossless', label: 'Lossless', hint: 'CRF 17 — visually lossless, minimal size reduction'},
-            {value: 'high', label: 'High (recommended)', hint: 'CRF 20 — excellent quality with meaningful savings'},
-            {value: 'medium', label: 'Medium', hint: 'CRF 23 — good balance of quality and file size'},
-            {value: 'aggressive', label: 'Aggressive', hint: 'CRF 28 — smaller file, minor quality loss'},
+            {
+              value: 'lossless',
+              label: 'Lossless',
+              hint: 'CRF 17 — visually lossless, minimal size reduction',
+            },
+            {
+              value: 'high',
+              label: 'High (recommended)',
+              hint: 'CRF 20 — excellent quality with meaningful savings',
+            },
+            {
+              value: 'medium',
+              label: 'Medium',
+              hint: 'CRF 23 — good balance of quality and file size',
+            },
+            {
+              value: 'aggressive',
+              label: 'Aggressive',
+              hint: 'CRF 28 — smaller file, minor quality loss',
+            },
           ],
         }),
       );
@@ -973,7 +1079,11 @@ const interactiveMenu = async () => {
         await select({
           message: 'Video codec:',
           options: [
-            {value: 'h264', label: 'H.264 (recommended)', hint: 'Best compatibility, widely supported'},
+            {
+              value: 'h264',
+              label: 'H.264 (recommended)',
+              hint: 'Best compatibility, widely supported',
+            },
             {value: 'h265', label: 'H.265 / HEVC', hint: '~30-50% smaller files at same quality'},
           ],
         }),
@@ -1106,7 +1216,9 @@ const createProgram = () => {
   const program = new Command();
   program
     .name('clipcaptionai')
-    .description('CLI-first AI video editor and model harness for planning, rendering, captioning, B-roll, and QA.')
+    .description(
+      'CLI-first AI video editor and model harness for planning, rendering, captioning, B-roll, and QA.',
+    )
     .version(packageJson.version)
     .showHelpAfterError()
     .showSuggestionAfterError();
@@ -1119,7 +1231,7 @@ Examples:
   clipcaptionai video run --brief-file brief.txt --assets-dir assets --json
   clipcaptionai video qa --run outputs/video-runs/brief
   clipcaptionai download --links links.txt
-  clipcaptionai frame --links links.txt --frame /Users/jonathangan/Desktop/Frame.png
+  clipcaptionai frame --links links.txt --frame ~/Desktop/Frame.png
   clipcaptionai ebay-ads prepare --item-ids 398160795273
   clipcaptionai ebay-intel plan --project-dir outputs/ebay-cinematic-ads/.../398160795273 --competitors kalodata.csv
   clipcaptionai ebay-ads assemble --project-dir outputs/ebay-cinematic-ads/.../398160795273
@@ -1139,40 +1251,177 @@ Examples:
 `,
   );
 
-  program.command('menu').description('Open the interactive workflow menu.').action(interactiveMenu);
-  configurePassthroughCommand(program, 'download', 'Download YouTube links from a text file and stop.', runDownloadOnly, ['dl']);
-  configurePassthroughCommand(program, 'frame', 'Download YouTube links and render each video inside a frame image.', runFrameLinks, ['framed', 'frame-links']);
-  configurePassthroughCommand(program, 'ebay-ads', 'Create cinematic eBay listing ad briefs, assemblies, and uploads.', runEbayCinematicAds, ['ebay-cinematic-ads']);
-  configurePassthroughCommand(program, 'ebay-intel', 'Turn competitor/trend references into original eBay video blueprints.', runEbayCreativeIntel, ['ebay-creative-intel']);
-  configurePassthroughCommand(program, 'fixed-clips', 'Download YouTube links, then chop each full source into fixed clips.', runFixedClips, ['fixed']);
-  configurePassthroughCommand(program, 'split-video', 'Cut one local video into fixed clips without using YouTube.', runLocalFixedClips, ['slice-video']);
-  configurePassthroughCommand(program, 'moments', 'Download YouTube links, pick the strongest moments, and export clean source clips.', runMomentsOnly);
-  configurePassthroughCommand(program, 'review-moments', 'Review why moments were flagged as viral and optionally persist scorecards.', runReviewMoments, ['review']);
-  configurePassthroughCommand(program, 'auto-clips', 'Download YouTube links, pick viral clips, caption, and render.', runAutoClips, ['auto']);
-  configurePassthroughCommand(program, 'broll-captions', 'Run the B-roll-heavy labeled workflow.', runBrollCaptions, ['heavy']);
-  configurePassthroughCommand(program, 'caption', 'Caption any existing video with the current caption style.', (args) => npmRun('caption:auto', args));
-  configurePassthroughCommand(program, 'chapter', 'Auto-detect chapters in a conversation video with topic descriptions.', (args) => npmRun('chapter:auto', args));
-  configurePassthroughCommand(program, 'tighten', 'Analyze a conversation video for filler, repetition, and tangents to cut.', (args) => npmRun('tighten:auto', args));
-  configurePassthroughCommand(program, 'compress', 'Compress a video with minimal quality loss using CRF encoding.', (args) => npmRun('compress:video', args), ['crush']);
-  configurePassthroughCommand(program, 'enhance', 'Add contextual B-roll and captions to an existing edit.', (args) => npmRun('broll:enhance', args));
-  configurePassthroughCommand(program, 'broll', 'Find reusable B-roll clips from a text prompt file.', runBroll, ['finder']);
-  configurePassthroughCommand(program, 'video', 'Plan, render, inspect, and QA model-directed videos.', (args) => run('node', ['scripts/video.mjs', ...args]));
-  configurePassthroughCommand(program, 'rotato', 'Inspect or render Rotato mockup projects through the local Rotato CLI.', (args) => npmRun('rotato', args), ['mockup']);
-  configurePassthroughCommand(program, 'voiceover', 'Generate a local ElevenLabs narration file and non-secret manifest.', (args) => npmRun('voiceover:elevenlabs', args), ['elevenlabs']);
-  configurePassthroughCommand(program, 'fal-image-edit', 'Create a reviewed marketing/B-roll image edit through fal GPT Image 2.', (args) => npmRun('fal:image-edit', args));
-  configurePassthroughCommand(program, 'fal-reference-video', 'Create a muted, human-reviewed Veo 3.1 reference-video proof through fal.', (args) => npmRun('fal:reference-video', args));
-  configurePassthroughCommand(program, 'rerender', 'Rerender an existing generated clip after caption/style edits.', (args) => npmRun('rerender:clip', args));
-  configurePassthroughCommand(program, 'cleanup', 'Clean temp files or old output folders.', (args) => npmRun('cleanup', args));
-  program.command('studio').description('Open Remotion Studio.').action(() => npmRun('studio'));
-  program.command('open-latest').description('Open the newest output folder in Finder.').action(() => {
-    const latest = latestOutputDir();
-    if (!latest) {
-      console.log('No output folders found yet.');
-      return;
-    }
-    openPath(latest);
-    console.log(`Opened ${latest}`);
-  });
+  program
+    .command('menu')
+    .description('Open the interactive workflow menu.')
+    .action(interactiveMenu);
+  configurePassthroughCommand(
+    program,
+    'download',
+    'Download YouTube links from a text file and stop.',
+    runDownloadOnly,
+    ['dl'],
+  );
+  configurePassthroughCommand(
+    program,
+    'frame',
+    'Download YouTube links and render each video inside a frame image.',
+    runFrameLinks,
+    ['framed', 'frame-links'],
+  );
+  configurePassthroughCommand(
+    program,
+    'ebay-ads',
+    'Create cinematic eBay listing ad briefs, assemblies, and uploads.',
+    runEbayCinematicAds,
+    ['ebay-cinematic-ads'],
+  );
+  configurePassthroughCommand(
+    program,
+    'ebay-intel',
+    'Turn competitor/trend references into original eBay video blueprints.',
+    runEbayCreativeIntel,
+    ['ebay-creative-intel'],
+  );
+  configurePassthroughCommand(
+    program,
+    'fixed-clips',
+    'Download YouTube links, then chop each full source into fixed clips.',
+    runFixedClips,
+    ['fixed'],
+  );
+  configurePassthroughCommand(
+    program,
+    'split-video',
+    'Cut one local video into fixed clips without using YouTube.',
+    runLocalFixedClips,
+    ['slice-video'],
+  );
+  configurePassthroughCommand(
+    program,
+    'moments',
+    'Download YouTube links, pick the strongest moments, and export clean source clips.',
+    runMomentsOnly,
+  );
+  configurePassthroughCommand(
+    program,
+    'review-moments',
+    'Review why moments were flagged as viral and optionally persist scorecards.',
+    runReviewMoments,
+    ['review'],
+  );
+  configurePassthroughCommand(
+    program,
+    'auto-clips',
+    'Download YouTube links, pick viral clips, caption, and render.',
+    runAutoClips,
+    ['auto'],
+  );
+  configurePassthroughCommand(
+    program,
+    'broll-captions',
+    'Run the B-roll-heavy labeled workflow.',
+    runBrollCaptions,
+    ['heavy'],
+  );
+  configurePassthroughCommand(
+    program,
+    'caption',
+    'Caption any existing video with the current caption style.',
+    (args) => npmRun('caption:auto', args),
+  );
+  configurePassthroughCommand(
+    program,
+    'chapter',
+    'Auto-detect chapters in a conversation video with topic descriptions.',
+    (args) => npmRun('chapter:auto', args),
+  );
+  configurePassthroughCommand(
+    program,
+    'tighten',
+    'Analyze a conversation video for filler, repetition, and tangents to cut.',
+    (args) => npmRun('tighten:auto', args),
+  );
+  configurePassthroughCommand(
+    program,
+    'compress',
+    'Compress a video with minimal quality loss using CRF encoding.',
+    (args) => npmRun('compress:video', args),
+    ['crush'],
+  );
+  configurePassthroughCommand(
+    program,
+    'enhance',
+    'Add contextual B-roll and captions to an existing edit.',
+    (args) => npmRun('broll:enhance', args),
+  );
+  configurePassthroughCommand(
+    program,
+    'broll',
+    'Find reusable B-roll clips from a text prompt file.',
+    runBroll,
+    ['finder'],
+  );
+  configurePassthroughCommand(
+    program,
+    'video',
+    'Plan, render, inspect, and QA model-directed videos.',
+    (args) => run('node', ['scripts/video.mjs', ...args]),
+  );
+  configurePassthroughCommand(
+    program,
+    'rotato',
+    'Inspect or render Rotato mockup projects through the local Rotato CLI.',
+    (args) => npmRun('rotato', args),
+    ['mockup'],
+  );
+  configurePassthroughCommand(
+    program,
+    'voiceover',
+    'Generate a local ElevenLabs narration file and non-secret manifest.',
+    (args) => npmRun('voiceover:elevenlabs', args),
+    ['elevenlabs'],
+  );
+  configurePassthroughCommand(
+    program,
+    'fal-image-edit',
+    'Create a reviewed marketing/B-roll image edit through fal GPT Image 2.',
+    (args) => npmRun('fal:image-edit', args),
+  );
+  configurePassthroughCommand(
+    program,
+    'fal-reference-video',
+    'Create a muted, human-reviewed Veo 3.1 reference-video proof through fal.',
+    (args) => npmRun('fal:reference-video', args),
+  );
+  configurePassthroughCommand(
+    program,
+    'rerender',
+    'Rerender an existing generated clip after caption/style edits.',
+    (args) => npmRun('rerender:clip', args),
+  );
+  configurePassthroughCommand(
+    program,
+    'cleanup',
+    'Clean temp files or old output folders.',
+    (args) => npmRun('cleanup', args),
+  );
+  program
+    .command('studio')
+    .description('Open Remotion Studio.')
+    .action(() => npmRun('studio'));
+  program
+    .command('open-latest')
+    .description('Open the newest output folder in Finder.')
+    .action(() => {
+      const latest = latestOutputDir();
+      if (!latest) {
+        console.log('No output folders found yet.');
+        return;
+      }
+      openPath(latest);
+      console.log(`Opened ${latest}`);
+    });
   program.command('doctor').description('Check local dependencies and config.').action(printDoctor);
 
   return program;

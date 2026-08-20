@@ -118,7 +118,8 @@ const normalizeSourceMap = (value) => {
 };
 
 const sourceForJob = ({sourceEntries, itemId, jobId}) =>
-  sourceEntries.find((entry) => entry.item_id === String(itemId) && entry.job_id === String(jobId))?.source ?? null;
+  sourceEntries.find((entry) => entry.item_id === String(itemId) && entry.job_id === String(jobId))
+    ?.source ?? null;
 
 const collectStrings = (value, context = [], results = []) => {
   if (typeof value === 'string') {
@@ -130,7 +131,8 @@ const collectStrings = (value, context = [], results = []) => {
     return results;
   }
   if (value && typeof value === 'object') {
-    for (const [key, child] of Object.entries(value)) collectStrings(child, [...context, key], results);
+    for (const [key, child] of Object.entries(value))
+      collectStrings(child, [...context, key], results);
   }
   return results;
 };
@@ -198,103 +200,120 @@ const importSource = async ({source, outPath}) => {
   }
 };
 
-const premiumPlanPath = path.resolve(requireArg('premium-plan'));
-if (!fs.existsSync(premiumPlanPath)) throw new Error(`Premium plan not found: ${premiumPlanPath}`);
-const premiumPlan = readJson(premiumPlanPath);
-const sourceEntries = args['url-map']
-  ? normalizeSourceMap(readJson(path.resolve(String(args['url-map']))))
-  : [];
-const outManifest = path.resolve(String(
-  args['out-manifest'] ?? path.join(path.dirname(premiumPlanPath), 'competitive-premium-collect-manifest.json'),
-));
-const dryRun = args['dry-run'] === true;
-const overwrite = args.overwrite === true;
-const probeEnabled = args['no-probe'] !== true;
+const main = async () => {
+  const premiumPlanPath = path.resolve(requireArg('premium-plan'));
+  if (!fs.existsSync(premiumPlanPath))
+    throw new Error(`Premium plan not found: ${premiumPlanPath}`);
+  const premiumPlan = readJson(premiumPlanPath);
+  const sourceEntries = args['url-map']
+    ? normalizeSourceMap(readJson(path.resolve(String(args['url-map']))))
+    : [];
+  const outManifest = path.resolve(
+    String(
+      args['out-manifest'] ??
+        path.join(path.dirname(premiumPlanPath), 'competitive-premium-collect-manifest.json'),
+    ),
+  );
+  const dryRun = args['dry-run'] === true;
+  const overwrite = args.overwrite === true;
+  const probeEnabled = args['no-probe'] !== true;
 
-const results = [];
-for (const packet of premiumPlan.selected ?? []) {
-  for (const job of packet.jobs ?? []) {
-    const outPath = job.output_hint;
-    const jobJsonPath = path.join(packet.project_dir, 'higgsfield', `${job.id}.competitive-job.json`);
-    const mappedSource = sourceForJob({sourceEntries, itemId: packet.item_id, jobId: job.id});
-    const jobJsonCandidates = mappedSource ? [] : candidateSourcesFromJobJson({jobJsonPath, projectDir: packet.project_dir});
-    const source = mappedSource ?? jobJsonCandidates[0]?.source ?? null;
-    const entry = {
-      item_id: packet.item_id,
-      title: packet.title,
-      job_id: job.id,
-      output_hint: outPath,
-      existing: Boolean(outPath && fs.existsSync(outPath)),
-      source,
-      source_kind: source ? (isHttpUrl(source) ? 'url' : 'file') : null,
-      job_json: fs.existsSync(jobJsonPath) ? jobJsonPath : null,
-      imported: false,
-      skipped: false,
-      missing_source: false,
-      probe: null,
-      error: null,
-    };
+  const results = [];
+  for (const packet of premiumPlan.selected ?? []) {
+    for (const job of packet.jobs ?? []) {
+      const outPath = job.output_hint;
+      const jobJsonPath = path.join(
+        packet.project_dir,
+        'higgsfield',
+        `${job.id}.competitive-job.json`,
+      );
+      const mappedSource = sourceForJob({sourceEntries, itemId: packet.item_id, jobId: job.id});
+      const jobJsonCandidates = mappedSource
+        ? []
+        : candidateSourcesFromJobJson({jobJsonPath, projectDir: packet.project_dir});
+      const source = mappedSource ?? jobJsonCandidates[0]?.source ?? null;
+      const entry = {
+        item_id: packet.item_id,
+        title: packet.title,
+        job_id: job.id,
+        output_hint: outPath,
+        existing: Boolean(outPath && fs.existsSync(outPath)),
+        source,
+        source_kind: source ? (isHttpUrl(source) ? 'url' : 'file') : null,
+        job_json: fs.existsSync(jobJsonPath) ? jobJsonPath : null,
+        imported: false,
+        skipped: false,
+        missing_source: false,
+        probe: null,
+        error: null,
+      };
 
-    try {
-      if (entry.existing && !overwrite) {
-        entry.skipped = true;
+      try {
+        if (entry.existing && !overwrite) {
+          entry.skipped = true;
+          entry.probe = probeEnabled ? ffprobeStreams(outPath) : null;
+          results.push(entry);
+          continue;
+        }
+        if (!source) {
+          entry.missing_source = true;
+          results.push(entry);
+          continue;
+        }
+        if (!isHttpUrl(source) && !fs.existsSync(source)) {
+          entry.error = `Source file does not exist: ${source}`;
+          results.push(entry);
+          continue;
+        }
+        if (dryRun) {
+          entry.skipped = true;
+          results.push(entry);
+          continue;
+        }
+        await importSource({source, outPath});
+        entry.imported = true;
         entry.probe = probeEnabled ? ffprobeStreams(outPath) : null;
-        results.push(entry);
-        continue;
+        if (probeEnabled && !entry.probe?.has_video) {
+          entry.error = 'Imported file did not pass video probe.';
+        }
+      } catch (error) {
+        entry.error = error instanceof Error ? error.message : String(error);
       }
-      if (!source) {
-        entry.missing_source = true;
-        results.push(entry);
-        continue;
-      }
-      if (!isHttpUrl(source) && !fs.existsSync(source)) {
-        entry.error = `Source file does not exist: ${source}`;
-        results.push(entry);
-        continue;
-      }
-      if (dryRun) {
-        entry.skipped = true;
-        results.push(entry);
-        continue;
-      }
-      await importSource({source, outPath});
-      entry.imported = true;
-      entry.probe = probeEnabled ? ffprobeStreams(outPath) : null;
-      if (probeEnabled && !entry.probe?.has_video) {
-        entry.error = 'Imported file did not pass video probe.';
-      }
-    } catch (error) {
-      entry.error = error instanceof Error ? error.message : String(error);
+      results.push(entry);
     }
-    results.push(entry);
   }
-}
 
-const manifest = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  premium_plan: premiumPlanPath,
-  url_map: args['url-map'] ? path.resolve(String(args['url-map'])) : null,
-  dry_run: dryRun,
-  overwrite,
-  probe_enabled: probeEnabled,
-  expected_count: results.length,
-  existing_count: results.filter((entry) => entry.existing).length,
-  imported_count: results.filter((entry) => entry.imported && !entry.error).length,
-  missing_source_count: results.filter((entry) => entry.missing_source).length,
-  failed_count: results.filter((entry) => entry.error).length,
-  ready_count: results.filter((entry) => fs.existsSync(entry.output_hint) && !entry.error).length,
-  results,
+  const manifest = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
+    premium_plan: premiumPlanPath,
+    url_map: args['url-map'] ? path.resolve(String(args['url-map'])) : null,
+    dry_run: dryRun,
+    overwrite,
+    probe_enabled: probeEnabled,
+    expected_count: results.length,
+    existing_count: results.filter((entry) => entry.existing).length,
+    imported_count: results.filter((entry) => entry.imported && !entry.error).length,
+    missing_source_count: results.filter((entry) => entry.missing_source).length,
+    failed_count: results.filter((entry) => entry.error).length,
+    ready_count: results.filter((entry) => fs.existsSync(entry.output_hint) && !entry.error).length,
+    results,
+  };
+
+  writeJson(outManifest, manifest);
+
+  console.log(`Competitive premium collect manifest: ${outManifest}`);
+  console.log(`Expected: ${manifest.expected_count}`);
+  console.log(`Existing: ${manifest.existing_count}`);
+  console.log(`Imported: ${manifest.imported_count}`);
+  console.log(`Ready: ${manifest.ready_count}`);
+  console.log(`Missing source: ${manifest.missing_source_count}`);
+  console.log(`Failed: ${manifest.failed_count}`);
+
+  if (manifest.failed_count > 0) process.exitCode = 1;
 };
 
-writeJson(outManifest, manifest);
-
-console.log(`Competitive premium collect manifest: ${outManifest}`);
-console.log(`Expected: ${manifest.expected_count}`);
-console.log(`Existing: ${manifest.existing_count}`);
-console.log(`Imported: ${manifest.imported_count}`);
-console.log(`Ready: ${manifest.ready_count}`);
-console.log(`Missing source: ${manifest.missing_source_count}`);
-console.log(`Failed: ${manifest.failed_count}`);
-
-if (manifest.failed_count > 0) process.exitCode = 1;
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

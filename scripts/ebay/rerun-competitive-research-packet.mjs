@@ -105,16 +105,16 @@ const inferProjectDir = () => {
   const statusPath = packet.source_status;
   const status = statusPath && fs.existsSync(statusPath) ? readJson(statusPath) : null;
   const previewManifestPath = status?.manifests?.preview;
-  const previewManifest = previewManifestPath && fs.existsSync(previewManifestPath)
-    ? readJson(previewManifestPath)
-    : null;
-  const matchingRender = (previewManifest?.renders ?? []).find((render) =>
-    String(render.item_id) === String(packet.item_id),
+  const previewManifest =
+    previewManifestPath && fs.existsSync(previewManifestPath)
+      ? readJson(previewManifestPath)
+      : null;
+  const matchingRender = (previewManifest?.renders ?? []).find(
+    (render) => String(render.item_id) === String(packet.item_id),
   );
   const renderManifestPath = matchingRender?.manifest;
-  const renderManifest = renderManifestPath && fs.existsSync(renderManifestPath)
-    ? readJson(renderManifestPath)
-    : null;
+  const renderManifest =
+    renderManifestPath && fs.existsSync(renderManifestPath) ? readJson(renderManifestPath) : null;
   if (renderManifest?.project_dir && fs.existsSync(renderManifest.project_dir)) {
     return renderManifest.project_dir;
   }
@@ -135,109 +135,146 @@ const inferProjectDir = () => {
   return null;
 };
 
-const projectDir = inferProjectDir();
-if (!projectDir || !fs.existsSync(path.join(projectDir, 'listing.json'))) {
-  throw new Error(`Could not infer listing project folder for ${packet.item_id}; pass --project-dir.`);
-}
+const main = async () => {
+  const projectDir = inferProjectDir();
+  if (!projectDir || !fs.existsSync(path.join(projectDir, 'listing.json'))) {
+    throw new Error(
+      `Could not infer listing project folder for ${packet.item_id}; pass --project-dir.`,
+    );
+  }
 
-const sourceBlueprint = packet.source_blueprint && fs.existsSync(packet.source_blueprint)
-  ? packet.source_blueprint
-  : null;
-const blueprintOutDir = path.resolve(String(args['out-dir'] ?? (
-  sourceBlueprint ? path.dirname(sourceBlueprint) : path.join(projectDir, 'competitive-creative')
-)));
-ensureDir(blueprintOutDir);
+  const sourceBlueprint =
+    packet.source_blueprint && fs.existsSync(packet.source_blueprint)
+      ? packet.source_blueprint
+      : null;
+  const blueprintOutDir = path.resolve(
+    String(
+      args['out-dir'] ??
+        (sourceBlueprint
+          ? path.dirname(sourceBlueprint)
+          : path.join(projectDir, 'competitive-creative')),
+    ),
+  );
+  ensureDir(blueprintOutDir);
 
-const runManifest = path.join(blueprintOutDir, 'competitive-research-rerun-manifest.json');
-const steps = [];
-const run = (step) => {
-  const executed = runStep(step);
-  steps.push(executed);
-  return executed;
-};
+  const runManifest = path.join(blueprintOutDir, 'competitive-research-rerun-manifest.json');
+  const steps = [];
+  const run = (step) => {
+    const executed = runStep(step);
+    steps.push(executed);
+    return executed;
+  };
 
-const architectArgs = [
-  'scripts/ebay/competitive-listing-video-architect.mjs',
-  'plan',
-  '--project-dir',
-  projectDir,
-  '--competitors',
-  competitors,
-  '--out-dir',
-  blueprintOutDir,
-];
-if (args['analyze-reference-video'] === true) architectArgs.push('--analyze-reference-video');
-pushOption(architectArgs, 'analysis-max-seconds');
-
-const previewManifest = path.join(blueprintOutDir, 'competitive-preview-render-manifest.json');
-const premiumPlan = path.join(blueprintOutDir, 'competitive-premium-render-plan', 'competitive-premium-render-plan.json');
-const statusReport = path.join(blueprintOutDir, 'competitive-premium-render-plan', 'competitive-video-pipeline-status.json');
-const reviewBoard = path.join(blueprintOutDir, 'competitive-premium-render-plan', 'competitive-review-board.html');
-
-try {
-  run({
-    name: 'rerun_competitive_architect',
-    commandArgs: architectArgs,
-    expectedFiles: [path.join(blueprintOutDir, 'creative-blueprint.json')],
-  });
-
-  const loopArgs = [
-    'scripts/ebay/run-competitive-video-control-loop.mjs',
-    '--blueprints-dir',
+  const architectArgs = [
+    'scripts/ebay/competitive-listing-video-architect.mjs',
+    'plan',
+    '--project-dir',
+    projectDir,
+    '--competitors',
+    competitors,
+    '--out-dir',
     blueprintOutDir,
-    '--credit-budget',
-    String(args['credit-budget'] ?? 45),
-    '--credits-per-shot',
-    String(args['credits-per-shot'] ?? 22.5),
-    '--max-jobs-per-listing',
-    String(args['max-jobs-per-listing'] ?? 1),
-    '--min-fit-score',
-    String(args['min-fit-score'] ?? 1),
-    '--min-trend-score',
-    String(args['min-trend-score'] ?? 0),
   ];
-  if (args['allow-weak-research'] === true) loopArgs.push('--allow-weak-research');
+  if (args['analyze-reference-video'] === true) architectArgs.push('--analyze-reference-video');
+  pushOption(architectArgs, 'analysis-max-seconds');
 
-  run({
-    name: 'rerun_competitive_control_loop',
-    commandArgs: loopArgs,
-    expectedFiles: [previewManifest, premiumPlan, statusReport, reviewBoard],
-  });
-} catch (error) {
-  if (error?.step) steps.push(error.step);
+  const previewManifest = path.join(blueprintOutDir, 'competitive-preview-render-manifest.json');
+  const premiumPlan = path.join(
+    blueprintOutDir,
+    'competitive-premium-render-plan',
+    'competitive-premium-render-plan.json',
+  );
+  const statusReport = path.join(
+    blueprintOutDir,
+    'competitive-premium-render-plan',
+    'competitive-video-pipeline-status.json',
+  );
+  const reviewBoard = path.join(
+    blueprintOutDir,
+    'competitive-premium-render-plan',
+    'competitive-review-board.html',
+  );
+
+  try {
+    run({
+      name: 'rerun_competitive_architect',
+      commandArgs: architectArgs,
+      expectedFiles: [path.join(blueprintOutDir, 'creative-blueprint.json')],
+    });
+
+    const loopArgs = [
+      'scripts/ebay/run-competitive-video-control-loop.mjs',
+      '--blueprints-dir',
+      blueprintOutDir,
+      '--credit-budget',
+      String(args['credit-budget'] ?? 45),
+      '--credits-per-shot',
+      String(args['credits-per-shot'] ?? 22.5),
+      '--max-jobs-per-listing',
+      String(args['max-jobs-per-listing'] ?? 1),
+      '--min-fit-score',
+      String(args['min-fit-score'] ?? 1),
+      '--min-trend-score',
+      String(args['min-trend-score'] ?? 0),
+    ];
+    if (args['allow-weak-research'] === true) loopArgs.push('--allow-weak-research');
+
+    run({
+      name: 'rerun_competitive_control_loop',
+      commandArgs: loopArgs,
+      expectedFiles: [previewManifest, premiumPlan, statusReport, reviewBoard],
+    });
+  } catch (error) {
+    if (error?.step) steps.push(error.step);
+    writeJson(runManifest, {
+      created_at: new Date().toISOString(),
+      script: scriptName,
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+      packet_json: packetJson,
+      packet_dir: packetDir,
+      project_dir: projectDir,
+      competitors,
+      blueprint_out_dir: blueprintOutDir,
+      paths: {
+        preview_manifest: previewManifest,
+        premium_plan: premiumPlan,
+        status_report: statusReport,
+        review_board: reviewBoard,
+      },
+      steps,
+    });
+    throw error;
+  }
+
   writeJson(runManifest, {
     created_at: new Date().toISOString(),
     script: scriptName,
-    ok: false,
-    error: error instanceof Error ? error.message : String(error),
+    ok: steps.every((step) => step.status === 'ok' || step.status === 'planned'),
+    dry_run: args['dry-run'] === true,
     packet_json: packetJson,
     packet_dir: packetDir,
+    item_id: packet.item_id,
+    title: packet.title,
     project_dir: projectDir,
     competitors,
     blueprint_out_dir: blueprintOutDir,
-    paths: {preview_manifest: previewManifest, premium_plan: premiumPlan, status_report: statusReport, review_board: reviewBoard},
+    paths: {
+      preview_manifest: previewManifest,
+      premium_plan: premiumPlan,
+      status_report: statusReport,
+      review_board: reviewBoard,
+    },
     steps,
   });
-  throw error;
-}
 
-writeJson(runManifest, {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  ok: steps.every((step) => step.status === 'ok' || step.status === 'planned'),
-  dry_run: args['dry-run'] === true,
-  packet_json: packetJson,
-  packet_dir: packetDir,
-  item_id: packet.item_id,
-  title: packet.title,
-  project_dir: projectDir,
-  competitors,
-  blueprint_out_dir: blueprintOutDir,
-  paths: {preview_manifest: previewManifest, premium_plan: premiumPlan, status_report: statusReport, review_board: reviewBoard},
-  steps,
+  console.log(`Competitive research rerun manifest: ${runManifest}`);
+  console.log(`Project: ${projectDir}`);
+  console.log(`Blueprint dir: ${blueprintOutDir}`);
+  console.log(`Status report: ${statusReport}`);
+};
+
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
 });
-
-console.log(`Competitive research rerun manifest: ${runManifest}`);
-console.log(`Project: ${projectDir}`);
-console.log(`Blueprint dir: ${blueprintOutDir}`);
-console.log(`Status report: ${statusReport}`);
