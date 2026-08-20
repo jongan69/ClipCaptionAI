@@ -53,19 +53,19 @@ the animation calls for something else.
 <g id="mark" data-layer="mark" data-role="letterform"
      transform="translate(231, -5) scale(2.5)">
 
-    
+
     <path id="heart-path"
           fill="none" stroke="url(#brandGradient)" stroke-width="11"
           stroke-linecap="round" stroke-linejoin="round"
           d="M128 226 C111 209 52 161 34 113 C18 71 43 36 79 34 C101 33 117 47 128 64 C139 47 155 33 177 34 C213 36 238 71 222 113 C204 161 145 209 128 226"/>
 
-    
+
     <rect id="bar-short" x="9" y="106" width="13" height="45" rx="4"
           fill="url(#brandGradient)" stroke="none"/>
     <rect id="bar-tall"  x="28" y="95" width="16" height="67" rx="4"
           fill="url(#brandGradient)" stroke="none"/>
 
-    
+
     <path id="pulse-path"
           fill="none" stroke="url(#brandGradient)" stroke-width="11"
           stroke-linecap="round" stroke-linejoin="round"
