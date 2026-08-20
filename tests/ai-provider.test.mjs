@@ -4,9 +4,30 @@ import {
   PROVIDERS,
   resolveProvider,
   resolveModel,
-  providerSupports,
-  resolveTranscriptionProvider,
+  createClient,
+  chatCompletion,
+  structuredChatCompletion,
 } from '../scripts/ai-provider.mjs';
+
+// Restore process.env after a mutating test, even on failure.
+const withEnv = (mutator, fn) => {
+  const prev = {...process.env};
+  try {
+    mutator();
+    return fn();
+  } finally {
+    process.env = prev;
+  }
+};
+
+// Fake OpenAI-compatible client for exercising the request-shaping path.
+const mockClient = (handler) => ({
+  chat: {completions: {create: handler}},
+});
+
+const jsonResponse = (content) => ({
+  choices: [{message: {content}}],
+});
 
 // ── Provider registry ─────────────────────────────────────────────────
 
@@ -27,106 +48,92 @@ describe('PROVIDERS registry', () => {
     assert.strictEqual(o.apiKeyEnv, 'OPENAI_API_KEY');
     assert.strictEqual(o.defaultModel, 'gpt-4.1-mini');
   });
-
-  it('deepseek supports chatCompletions but not transcription', () => {
-    assert.strictEqual(providerSupports('deepseek', 'chatCompletions'), true);
-    assert.strictEqual(providerSupports('deepseek', 'jsonMode'), true);
-    assert.strictEqual(providerSupports('deepseek', 'transcription'), false);
-    assert.strictEqual(providerSupports('deepseek', 'responsesApi'), false);
-    assert.strictEqual(providerSupports('deepseek', 'strictJsonSchema'), false);
-  });
-
-  it('openai supports chatCompletions and transcription', () => {
-    assert.strictEqual(providerSupports('openai', 'chatCompletions'), true);
-    assert.strictEqual(providerSupports('openai', 'jsonMode'), true);
-    assert.strictEqual(providerSupports('openai', 'transcription'), true);
-    assert.strictEqual(providerSupports('openai', 'responsesApi'), true);
-    assert.strictEqual(providerSupports('openai', 'strictJsonSchema'), true);
-  });
-
-  it('unknown provider returns false for all capabilities', () => {
-    assert.strictEqual(providerSupports('nonexistent', 'chatCompletions'), false);
-  });
 });
 
 // ── Provider resolution ───────────────────────────────────────────────
 
 describe('resolveProvider', () => {
   it('returns null when no keys are set', () => {
-    const prev = {...process.env};
-    delete process.env.DEEPSEEK_API_KEY;
-    delete process.env.OPENAI_API_KEY;
-
-    const result = resolveProvider();
-    assert.strictEqual(result.provider, null);
-    assert.strictEqual(result.config, null);
-
-    process.env = prev;
+    withEnv(
+      () => {
+        delete process.env.DEEPSEEK_API_KEY;
+        delete process.env.OPENAI_API_KEY;
+      },
+      () => {
+        const result = resolveProvider();
+        assert.strictEqual(result.provider, null);
+        assert.strictEqual(result.config, null);
+      },
+    );
   });
 
   it('prefers deepseek when both keys are set', () => {
-    const prev = {...process.env};
-    process.env.DEEPSEEK_API_KEY = 'sk-test-ds';
-    process.env.OPENAI_API_KEY = 'sk-test-oai';
-
-    const result = resolveProvider();
-    assert.strictEqual(result.provider, 'deepseek');
-    assert.strictEqual(result.config.id, 'deepseek');
-
-    process.env = prev;
+    withEnv(
+      () => {
+        process.env.DEEPSEEK_API_KEY = 'sk-test-ds';
+        process.env.OPENAI_API_KEY = 'sk-test-oai';
+      },
+      () => {
+        const result = resolveProvider();
+        assert.strictEqual(result.provider, 'deepseek');
+        assert.strictEqual(result.config.id, 'deepseek');
+      },
+    );
   });
 
   it('returns openai when only OPENAI_API_KEY is set', () => {
-    const prev = {...process.env};
-    delete process.env.DEEPSEEK_API_KEY;
-    process.env.OPENAI_API_KEY = 'sk-test-oai';
-
-    const result = resolveProvider();
-    assert.strictEqual(result.provider, 'openai');
-    assert.strictEqual(result.config.id, 'openai');
-
-    process.env = prev;
+    withEnv(
+      () => {
+        delete process.env.DEEPSEEK_API_KEY;
+        process.env.OPENAI_API_KEY = 'sk-test-oai';
+      },
+      () => {
+        const result = resolveProvider();
+        assert.strictEqual(result.provider, 'openai');
+        assert.strictEqual(result.config.id, 'openai');
+      },
+    );
   });
 
   it('returns deepseek when only DEEPSEEK_API_KEY is set', () => {
-    const prev = {...process.env};
-    process.env.DEEPSEEK_API_KEY = 'sk-test-ds';
-    delete process.env.OPENAI_API_KEY;
-
-    const result = resolveProvider();
-    assert.strictEqual(result.provider, 'deepseek');
-
-    process.env = prev;
+    withEnv(
+      () => {
+        process.env.DEEPSEEK_API_KEY = 'sk-test-ds';
+        delete process.env.OPENAI_API_KEY;
+      },
+      () => {
+        const result = resolveProvider();
+        assert.strictEqual(result.provider, 'deepseek');
+      },
+    );
   });
 
   it('respects explicit --provider flag', () => {
-    const prev = {...process.env};
-    process.env.DEEPSEEK_API_KEY = 'sk-test-ds';
-    process.env.OPENAI_API_KEY = 'sk-test-oai';
-
-    const result = resolveProvider({provider: 'openai'});
-    assert.strictEqual(result.provider, 'openai');
-
-    process.env = prev;
+    withEnv(
+      () => {
+        process.env.DEEPSEEK_API_KEY = 'sk-test-ds';
+        process.env.OPENAI_API_KEY = 'sk-test-oai';
+      },
+      () => {
+        const result = resolveProvider({provider: 'openai'});
+        assert.strictEqual(result.provider, 'openai');
+      },
+    );
   });
 
   it('throws for unknown provider', () => {
-    assert.throws(
-      () => resolveProvider({provider: 'nonexistent'}),
-      /Unknown provider/,
-    );
+    assert.throws(() => resolveProvider({provider: 'nonexistent'}), /Unknown provider/);
   });
 
   it('throws when explicit provider is given but key is missing', () => {
-    const prev = {...process.env};
-    delete process.env.OPENAI_API_KEY;
-
-    assert.throws(
-      () => resolveProvider({provider: 'openai'}),
-      /OPENAI_API_KEY is required/,
+    withEnv(
+      () => {
+        delete process.env.OPENAI_API_KEY;
+      },
+      () => {
+        assert.throws(() => resolveProvider({provider: 'openai'}), /OPENAI_API_KEY is required/);
+      },
     );
-
-    process.env = prev;
   });
 });
 
@@ -157,70 +164,178 @@ describe('resolveModel', () => {
   });
 
   it('uses env var override when set', () => {
-    const prev = {...process.env};
-    process.env.OPENAI_CHAPTER_MODEL = 'env-model';
-
-    const model = resolveModel({
-      resolved: openaiResolved,
-      envModelKey: 'OPENAI_CHAPTER_MODEL',
-    });
-    assert.strictEqual(model, 'env-model');
-
-    process.env = prev;
+    withEnv(
+      () => {
+        process.env.OPENAI_CHAPTER_MODEL = 'env-model';
+      },
+      () => {
+        const model = resolveModel({
+          resolved: openaiResolved,
+          envModelKey: 'OPENAI_CHAPTER_MODEL',
+        });
+        assert.strictEqual(model, 'env-model');
+      },
+    );
   });
 
   it('explicit model takes priority over env var', () => {
-    const prev = {...process.env};
-    process.env.OPENAI_CHAPTER_MODEL = 'env-model';
-
-    const model = resolveModel({
-      resolved: openaiResolved,
-      model: 'explicit-model',
-      envModelKey: 'OPENAI_CHAPTER_MODEL',
-    });
-    assert.strictEqual(model, 'explicit-model');
-
-    process.env = prev;
+    withEnv(
+      () => {
+        process.env.OPENAI_CHAPTER_MODEL = 'env-model';
+      },
+      () => {
+        const model = resolveModel({
+          resolved: openaiResolved,
+          model: 'explicit-model',
+          envModelKey: 'OPENAI_CHAPTER_MODEL',
+        });
+        assert.strictEqual(model, 'explicit-model');
+      },
+    );
   });
 
-  it('returns fallback when resolved config is null', () => {
+  it('returns null when no provider is configured', () => {
     const model = resolveModel({resolved: {provider: null, config: null}});
-    assert.strictEqual(model, 'gpt-4.1-mini');
+    assert.strictEqual(model, null);
   });
 });
 
-// ── Transcription provider ────────────────────────────────────────────
+// ── Client creation ───────────────────────────────────────────────────
 
-describe('resolveTranscriptionProvider', () => {
-  it('returns explicit TRANSCRIBE_PROVIDER when set', () => {
-    const prev = {...process.env};
-    process.env.TRANSCRIBE_PROVIDER = 'openai';
-
-    const result = resolveTranscriptionProvider();
-    assert.strictEqual(result, 'openai');
-
-    process.env = prev;
+describe('createClient', () => {
+  it('throws a clear error when no provider is configured', () => {
+    assert.throws(() => createClient({provider: null, config: null}), /No AI provider available/);
   });
 
-  it('returns local-whispercpp in auto mode without OpenAI key', () => {
-    const prev = {...process.env};
-    delete process.env.TRANSCRIBE_PROVIDER;
-    delete process.env.OPENAI_API_KEY;
+  it('builds a client for the resolved provider with timeout and retries', () => {
+    withEnv(
+      () => {
+        process.env.DEEPSEEK_API_KEY = 'sk-test-ds';
+      },
+      () => {
+        const resolved = resolveProvider();
+        const client = createClient(resolved);
+        assert.strictEqual(client.baseURL, 'https://api.deepseek.com');
+        assert.strictEqual(client.apiKey, 'sk-test-ds');
+        assert.strictEqual(client.timeout, 180_000);
+        assert.strictEqual(client.maxRetries, 1);
+      },
+    );
+  });
+});
 
-    const result = resolveTranscriptionProvider();
-    assert.strictEqual(result, 'local-whispercpp');
+// ── chatCompletion (request shaping) ──────────────────────────────────
 
-    process.env = prev;
+describe('chatCompletion', () => {
+  it('sends system/user messages and the resolved model', async () => {
+    let captured;
+    const client = mockClient(async (params) => {
+      captured = params;
+      return jsonResponse('hello');
+    });
+
+    const text = await chatCompletion(client, {
+      model: 'test-model',
+      systemPrompt: 'sys',
+      userPrompt: 'user',
+    });
+    assert.strictEqual(text, 'hello');
+    assert.strictEqual(captured.model, 'test-model');
+    assert.deepStrictEqual(captured.messages, [
+      {role: 'system', content: 'sys'},
+      {role: 'user', content: 'user'},
+    ]);
+    assert.strictEqual(captured.response_format, undefined);
   });
 
-  it('returns openai in auto mode with OPENAI_API_KEY', () => {
-    const prev = {...process.env};
-    delete process.env.TRANSCRIBE_PROVIDER;
-    process.env.OPENAI_API_KEY = 'sk-test';
+  it('adds response_format json_object in jsonMode', async () => {
+    let captured;
+    const client = mockClient(async (params) => {
+      captured = params;
+      return jsonResponse('{}');
+    });
 
-    const result = resolveTranscriptionProvider();
-    assert.strictEqual(result, 'openai');
+    await chatCompletion(client, {model: 'm', systemPrompt: 's', userPrompt: 'u', jsonMode: true});
+    assert.deepStrictEqual(captured.response_format, {type: 'json_object'});
+  });
 
-    process.env = prev;
+  it('strips markdown fences from the response', async () => {
+    const client = mockClient(async () => jsonResponse('```json\n{"a":1}\n```'));
+    const text = await chatCompletion(client, {model: 'm', systemPrompt: 's', userPrompt: 'u'});
+    assert.strictEqual(text, '{"a":1}');
+  });
+
+  it('returns empty string when the response has no content', async () => {
+    const client = mockClient(async () => ({choices: []}));
+    const text = await chatCompletion(client, {model: 'm', systemPrompt: 's', userPrompt: 'u'});
+    assert.strictEqual(text, '');
+  });
+});
+
+// ── structuredChatCompletion (JSON parse + retry) ─────────────────────
+
+describe('structuredChatCompletion', () => {
+  it('parses valid JSON on the first attempt', async () => {
+    let calls = 0;
+    const client = mockClient(async () => {
+      calls += 1;
+      return jsonResponse('{"clips": [{"title": "a"}]}');
+    });
+
+    const parsed = await structuredChatCompletion(client, {
+      model: 'm',
+      systemPrompt: 's',
+      userPrompt: 'u',
+    });
+    assert.deepStrictEqual(parsed, {clips: [{title: 'a'}]});
+    assert.strictEqual(calls, 1);
+  });
+
+  it('retries once with a repair prompt when JSON is invalid', async () => {
+    const prompts = [];
+    const client = mockClient(async (params) => {
+      prompts.push(params.messages[1].content);
+      return jsonResponse(prompts.length === 1 ? 'not json at all' : '{"ok": true}');
+    });
+
+    const parsed = await structuredChatCompletion(client, {
+      model: 'm',
+      systemPrompt: 's',
+      userPrompt: 'original prompt',
+    });
+    assert.deepStrictEqual(parsed, {ok: true});
+    assert.strictEqual(prompts.length, 2);
+    assert.match(prompts[1], /raw JSON only/);
+    assert.match(prompts[1], /original prompt/);
+  });
+
+  it('throws a descriptive error when JSON stays invalid after retry', async () => {
+    let calls = 0;
+    const client = mockClient(async () => {
+      calls += 1;
+      return jsonResponse('still not json');
+    });
+
+    await assert.rejects(
+      structuredChatCompletion(client, {model: 'm', systemPrompt: 's', userPrompt: 'u'}),
+      /Model returned invalid JSON after retry/,
+    );
+    assert.strictEqual(calls, 2);
+  });
+
+  it('does not retry network/API errors', async () => {
+    let calls = 0;
+    const client = mockClient(async () => {
+      calls += 1;
+      const error = new Error('connect ECONNREFUSED');
+      error.status = 500;
+      throw error;
+    });
+
+    await assert.rejects(
+      structuredChatCompletion(client, {model: 'm', systemPrompt: 's', userPrompt: 'u'}),
+      /ECONNREFUSED/,
+    );
+    assert.strictEqual(calls, 1);
   });
 });

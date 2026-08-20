@@ -12,7 +12,10 @@ import {
 } from '../scripts/clipkit-lib.mjs';
 
 test('slugify normalizes human titles into safe slugs', () => {
-  assert.equal(slugify('How I Manifested Getting Rich At 20'), 'how-i-manifested-getting-rich-at-20');
+  assert.equal(
+    slugify('How I Manifested Getting Rich At 20'),
+    'how-i-manifested-getting-rich-at-20',
+  );
   assert.equal(slugify('***', 'fallback'), 'fallback');
 });
 
@@ -47,7 +50,10 @@ test('buildBrollCaptionArgs applies workflow defaults without stomping explicit 
   assert.ok(args.includes('--sound-effects'));
   assert.ok(!args.includes('--vertical-contain'));
   assert.ok(!args.includes('--disable-sound-effects'));
-  assert.equal(args[args.indexOf('--scene-library') + 1], path.join(projectRoot, 'custom-scenes-library'));
+  assert.equal(
+    args[args.indexOf('--scene-library') + 1],
+    path.join(projectRoot, 'custom-scenes-library'),
+  );
   assert.equal(args[args.indexOf('--max-clips') + 1], '4');
   assert.equal(args[args.indexOf('--padding-seconds') + 1], '3');
 });
