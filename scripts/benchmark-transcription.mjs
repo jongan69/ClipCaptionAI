@@ -14,7 +14,7 @@ import {timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
-  npm run transcribe:benchmark -- --video /path/to/video.mp4 [options]
+  bun run transcribe:benchmark -- --video /path/to/video.mp4 [options]
 
 Options:
   --out-dir DIR           Output root. Default: ./outputs/transcription-benchmarks

@@ -22,8 +22,13 @@ interface CcaBridge {
     argValues?: Record<string, unknown>;
     extraArgs?: string;
   }): Promise<{session: string; command: string; startedAt: string} | undefined>;
-  runRawCommand(payload: {command: string}): Promise<{session: string} | undefined>;
   stopWorkflow(session?: string): Promise<{stopped: boolean; reason?: string | null}>;
+  listJobs(): Promise<Array<Record<string, unknown>>>;
+  getJob(id: string): Promise<Record<string, unknown>>;
+  getJobLogs(
+    id: string,
+    offsets?: {stdoutOffset?: number; stderrOffset?: number},
+  ): Promise<unknown>;
 
   // Preferences & secrets
   getPreferences(): Promise<Record<string, unknown> | undefined>;

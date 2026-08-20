@@ -5,7 +5,7 @@ import {ingestYouTubeScenes} from './lib-youtube-scenes.mjs';
 
 const usage = `
 Usage:
-  npm run scene:ingest:youtube -- --query "money celebration movie scene" [options]
+  bun run scene:ingest:youtube -- --query "money celebration movie scene" [options]
 
 Options:
   --query TEXT              Search query. Repeat by using --queries-file for many.

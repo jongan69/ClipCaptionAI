@@ -7,13 +7,13 @@ This file is the walkthrough home for every ClipCaptionAI workflow. The [README]
 Double-click `RUN.command`, or run:
 
 ```bash
-npm run menu
-npx clipcaptionai menu
+bun run menu
+bunx clipcaptionai menu
 ```
 
 The menu is the safest front door for everyday editing. It can download YouTube videos, download YouTube videos into a frame image, run the eBay cinematic listing ads and competitor creative blueprint lanes, slice whole videos into fixed clips, cut one local video into fixed clips, find important moments for manual editing, run YouTube clipping, auto-chapter a conversation, tighten a conversation, compress a video, caption an existing edit, enhance a video with B-roll, find standalone B-roll, rerender a generated clip, open Studio, open the latest output, and run diagnostics.
 
-`RUN.command` and `npm run menu` open the same workflow menu. The full menu-to-command mapping lives in the [README command reference](../README.md#command-reference).
+`RUN.command` and `bun run menu` open the same workflow menu. The full menu-to-command mapping lives in the [README command reference](../README.md#command-reference).
 
 For render-producing workflows, the menu can also open an optional advanced settings prompt before the run. That prompt can override the most common live decisions without making you hand-edit `caption-style.json` first:
 
@@ -39,7 +39,7 @@ clipcaptionai video qa --run outputs/video-runs/brief --json
 For a single non-interactive pass:
 
 ```bash
-npm run clipkit -- video run --brief-file brief.txt --assets-dir ./assets --dry-run --json
+bun run clipkit -- video run --brief-file brief.txt --assets-dir ./assets --dry-run --json
 ```
 
 `video run` combines planning and rendering, while `--dry-run` creates the plan and planned output without rendering. The resulting `run.json` is the durable contract: it records the brief hash, approved asset hashes, shot plan, provider intent, output metadata, and QA status. A successful render is not considered complete until `video qa` passes. The generic renderer is deterministic and local; it currently creates image/video shot cards with Remotion. Use the specialized provider commands below when the model explicitly needs narration or generated marketing assets — existing caption, B-roll, YouTube, eBay, ElevenLabs, fal, and Rotato commands remain available as specialized workflows.
@@ -51,13 +51,13 @@ Read [the agent guide](AGENT_GUIDE.md) before automating the CLI and [the produc
 Use this when you have a long conversation (podcast, interview, coaching call) and want to automatically detect topic changes, split it into chapters with titles and descriptions.
 
 ```bash
-npm run chapter:auto -- --video "/path/to/conversation.mp4"
+bun run chapter:auto -- --video "/path/to/conversation.mp4"
 ```
 
 With video splitting:
 
 ```bash
-npm run chapter:auto -- --video "/path/to/conversation.mp4" --split
+bun run chapter:auto -- --video "/path/to/conversation.mp4" --split
 ```
 
 Options:
@@ -79,13 +79,13 @@ Output: `outputs/chapters/<name>.chapters.json` with title, start/end timestamps
 Use this when you have a long conversation and want AI to find filler words, repetitive sections, and tangents that can be cut to produce a tighter edit.
 
 ```bash
-npm run tighten:auto -- --video "/path/to/conversation.mp4"
+bun run tighten:auto -- --video "/path/to/conversation.mp4"
 ```
 
 With video generation:
 
 ```bash
-npm run tighten:auto -- --video "/path/to/conversation.mp4" --tighten
+bun run tighten:auto -- --video "/path/to/conversation.mp4" --tighten
 ```
 
 Options:
@@ -108,7 +108,7 @@ Output: `outputs/tighten/<name>.cuts.json` with per-cut timestamps, reasons (fil
 Use this when the project folder is getting too heavy.
 
 ```bash
-npm run cleanup
+bun run cleanup
 ```
 
 Cleanup can remove temporary render staging from `outputs/work/` and `public/media/`, or prune old folders in `outputs/` while keeping the newest 5. It asks for confirmation before deleting.
@@ -116,9 +116,9 @@ Cleanup can remove temporary render staging from `outputs/work/` and `public/med
 Useful direct commands:
 
 ```bash
-npm run cleanup -- --temp --yes
-npm run cleanup -- --outputs --keep-latest 5 --yes
-npm run cleanup -- --outputs --keep-latest 5 --dry-run
+bun run cleanup -- --temp --yes
+bun run cleanup -- --outputs --keep-latest 5 --yes
+bun run cleanup -- --outputs --keep-latest 5 --dry-run
 ```
 
 ## Download YouTube Videos And Stop
@@ -129,7 +129,7 @@ Use this when you only want the source videos downloaded from a text file.
 2. Run:
 
 ```bash
-npm run download:youtube -- --links links.txt
+bun run download:youtube -- --links links.txt
 ```
 
 Output:
@@ -143,7 +143,7 @@ This does not transcribe, clip, caption, add B-roll, or render.
 Shortcut alias:
 
 ```bash
-npm run clipkit -- download --links links.txt
+bun run clipkit -- download --links links.txt
 ```
 
 ## Download Full Videos And Chop Them Into Fixed Clips
@@ -151,19 +151,19 @@ npm run clipkit -- download --links links.txt
 Use this when you want the original full-video chopping workflow: download every source in `links.txt`, then split each whole video into back-to-back 15-second clips.
 
 ```bash
-npm run clipkit -- fixed-clips --links links.txt --segment-seconds 15
+bun run clipkit -- fixed-clips --links links.txt --segment-seconds 15
 ```
 
 Shortcut alias:
 
 ```bash
-npm run clips:fixed -- --links links.txt --segment-seconds 15
+bun run clips:fixed -- --links links.txt --segment-seconds 15
 ```
 
 Direct low-level command:
 
 ```bash
-npm run download:split -- --links links.txt --segment-seconds 15
+bun run download:split -- --links links.txt --segment-seconds 15
 ```
 
 Output:
@@ -188,13 +188,13 @@ This does not transcribe, pick moments, caption, add B-roll, or render.
 Use this when the source file is already on your machine and you just want the whole thing chopped into back-to-back 15-second sections.
 
 ```bash
-npm run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15
+bun run clipkit -- split-video --video "/path/to/video.mp4" --segment-seconds 15
 ```
 
 Shortcut alias:
 
 ```bash
-npm run video:split -- --video "/path/to/video.mp4" --segment-seconds 15
+bun run video:split -- --video "/path/to/video.mp4" --segment-seconds 15
 ```
 
 Output:
@@ -217,13 +217,13 @@ This does not transcribe, pick moments, caption, add B-roll, or render.
 Use this when you want the system to act like an assistant editor: download the videos, find the strongest or most viral-worthy moments, and export clean source clips for your own timeline.
 
 ```bash
-npm run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2
+bun run clipkit -- moments --links links.txt --max-clips 6 --padding-seconds 2
 ```
 
 Shortcut alias:
 
 ```bash
-npm run moments:auto -- --links links.txt --max-clips 6 --padding-seconds 2
+bun run moments:auto -- --links links.txt --max-clips 6 --padding-seconds 2
 ```
 
 Output clips land inside the run folder as `*.moment.mp4`, alongside a `selection.json` file with the chosen timestamps, hooks, and reasons.
@@ -239,7 +239,7 @@ Use this when you want a clearer answer to "why did the bot pick this?" before y
 Run against the latest batch:
 
 ```bash
-npm run moments:review -- --write --format markdown
+bun run moments:review -- --write --format markdown
 ```
 
 That reads the newest `outputs/run-*` folder, scores every chosen moment, explains the strongest signals, and writes `viral-scorecards.md` into the run folder. The report includes:
@@ -256,7 +256,7 @@ That reads the newest `outputs/run-*` folder, scores every chosen moment, explai
 Run against an older batch:
 
 ```bash
-npm run clipkit -- review-moments \
+bun run clipkit -- review-moments \
   --run outputs/run-YYYY-MM-DD-HHMMSS \
   --top 10 \
   --format text
@@ -265,8 +265,8 @@ npm run clipkit -- review-moments \
 To save the scorecards back into each `selection.json` (latest run, or a specific run):
 
 ```bash
-npm run moments:review -- --persist --write --format json
-npm run moments:review -- --run outputs/run-YYYY-MM-DD-HHMMSS --persist --write --format json
+bun run moments:review -- --persist --write --format json
+bun run moments:review -- --run outputs/run-YYYY-MM-DD-HHMMSS --persist --write --format json
 ```
 
 Persisted scorecards become optional `viralScorecard` blocks inside each `selection.json`, with an overall 0-100 score and readable reasons like hook strength, emotional intensity, practical value, and thought completeness.
@@ -276,13 +276,13 @@ Persisted scorecards become optional `viralScorecard` blocks inside each `select
 Use this when you have long YouTube videos and want the system to download them, transcribe them, select the most interesting clips, add padding, mix B-roll/SFX when enabled, and render captioned shorts.
 
 ```bash
-npm run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2
+bun run clipkit -- auto-clips --links links.txt --max-clips 6 --padding-seconds 2
 ```
 
 Shortcut alias:
 
 ```bash
-npm run clip:auto -- --links links.txt --max-clips 6 --padding-seconds 2
+bun run clip:auto -- --links links.txt --max-clips 6 --padding-seconds 2
 ```
 
 ## B-Roll-Heavy Caption Generator
@@ -290,13 +290,13 @@ npm run clip:auto -- --links links.txt --max-clips 6 --padding-seconds 2
 Use this when `links.txt` is labeled by creator/profile and you want the final edits to lean heavily on your local custom scenes library instead of mostly the original talking-head footage.
 
 ```bash
-npm run clipkit -- broll-captions --links links.txt --max-clips 3
+bun run clipkit -- broll-captions --links links.txt --max-clips 3
 ```
 
 Shortcut alias:
 
 ```bash
-npm run broll:captions -- --links links.txt --max-clips 3
+bun run broll:captions -- --links links.txt --max-clips 3
 ```
 
 Defaults for this workflow:
@@ -316,13 +316,13 @@ This is the best fit for the labeled creator workflow where `# Mani Videos` and 
 Use this when the edit already exists and you only want the invert/masked caption style rendered on top.
 
 ```bash
-npm run clipkit -- caption --video "/path/to/video.mp4"
+bun run clipkit -- caption --video "/path/to/video.mp4"
 ```
 
 Shortcut alias:
 
 ```bash
-npm run caption:auto -- --video "/path/to/video.mp4"
+bun run caption:auto -- --video "/path/to/video.mp4"
 ```
 
 That transcribes the video, renders captions, and saves the result here:
@@ -334,7 +334,7 @@ outputs/caption-run-YYYY-MM-DD-HHMMSS/final/
 With manual transcript corrections:
 
 ```bash
-npm run clipkit -- caption \
+bun run clipkit -- caption \
   --video "/path/to/video.mp4" \
   --captions "/path/to/fixed.captions.json"
 ```
@@ -344,14 +344,14 @@ npm run clipkit -- caption \
 Use this when you already have a mostly edited video and want ClipCaptionAI to add timed B-roll cutaways plus captions on top. It does not select/cut a new short from a long source. It keeps the full base video timeline and audio, then adds visual inserts where the transcript context benefits from motion or movie/TV-style references.
 
 ```bash
-npm run clipkit -- enhance --video "/path/to/edit.mp4" --run-name edit-v1
+bun run clipkit -- enhance --video "/path/to/edit.mp4" --run-name edit-v1
 ```
 
 Shortcut aliases:
 
 ```bash
-npm run video:enhance -- --video "/path/to/already-edited.mp4"
-npm run broll:enhance -- --video "/path/to/already-edited.mp4"
+bun run video:enhance -- --video "/path/to/already-edited.mp4"
+bun run broll:enhance -- --video "/path/to/already-edited.mp4"
 ```
 
 The final video will be in `outputs/<run-name>/final/`. Every run creates:
@@ -397,7 +397,7 @@ Useful `broll:enhance` options:
 Example:
 
 ```bash
-npm run broll:enhance -- \
+bun run broll:enhance -- \
   --video "/path/to/already-edited.mp4" \
   --run-name my-existing-edit \
   --max-insertions 12 \
@@ -436,7 +436,7 @@ Each planned scene mix writes trace files like:
 Run the pop-culture query pass manually for an existing scene plan:
 
 ```bash
-npm run scene:research-pop-culture -- \
+bun run scene:research-pop-culture -- \
   --scene-plan "/path/to/clip.scene-mix.scene-plan.json"
 ```
 
@@ -460,13 +460,13 @@ Use this when you are editing manually and only want matching B-roll assets from
 2. Double-click `BROLL.command`, or run:
 
 ```bash
-npm run broll:find
+bun run broll:find
 ```
 
 Or through the command hub:
 
 ```bash
-npm run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8
+bun run clipkit -- broll --prompts broll-prompts.txt --max-downloads 8
 ```
 
 Every run creates a separate folder:
@@ -506,11 +506,11 @@ Useful `broll:find` options:
 Examples:
 
 ```bash
-npm run broll:find -- --prompts "/path/to/ideas.txt" --max-downloads 5
+bun run broll:find -- --prompts "/path/to/ideas.txt" --max-downloads 5
 ```
 
 ```bash
-npm run broll:find -- \
+bun run broll:find -- \
   --prompts broll-prompts.txt \
   --run-name broll-money-scenes \
   --quality high \
@@ -522,7 +522,7 @@ npm run broll:find -- \
 Movie/TV scene style:
 
 ```bash
-npm run broll:find -- \
+bun run broll:find -- \
   --prompts broll-prompts-budapest-movie-scenes.txt \
   --run-name broll-budapest-movie-scenes \
   --movie-scenes \
@@ -535,22 +535,22 @@ Movie-scene results are candidate references, not rights-cleared assets. Review 
 
 ## Process Pipeline
 
-The `npm run process` alias is the original full YouTube auto-clipping pipeline. It downloads every source in `links.txt`, transcribes each video, picks the strongest clips, and renders captioned shorts — with extra knobs for B-roll, SFX, vertical framing, and scene libraries.
+The `bun run process` alias is the original full YouTube auto-clipping pipeline. It downloads every source in `links.txt`, transcribes each video, picks the strongest clips, and renders captioned shorts — with extra knobs for B-roll, SFX, vertical framing, and scene libraries.
 
 ```bash
-npm run process
+bun run process
 ```
 
 Force AI to pick new clips instead of reusing an existing `selection.json`:
 
 ```bash
-npm run process -- --reselect
+bun run process -- --reselect
 ```
 
 Limit the number of clips per source video:
 
 ```bash
-npm run process -- --max-clips 6
+bun run process -- --max-clips 6
 ```
 
 The double-click `RUN.command` uses `MAX_CLIPS=6` by default. To temporarily change the one-click cap from Terminal:
@@ -562,19 +562,19 @@ MAX_CLIPS=10 /path/to/RUN.command
 Add more lead-in and tail padding around each AI-selected clip:
 
 ```bash
-npm run process -- --padding-seconds 3
+bun run process -- --padding-seconds 3
 ```
 
 Render all selected clips as 9:16 while keeping the full horizontal video visible with black bars:
 
 ```bash
-npm run process -- --vertical-contain
+bun run process -- --vertical-contain
 ```
 
 Use a different links file:
 
 ```bash
-npm run process -- --links "/path/to/links.txt"
+bun run process -- --links "/path/to/links.txt"
 ```
 
 Useful `process` options:
@@ -614,7 +614,7 @@ Useful `process` options:
 Local custom-scenes example:
 
 ```bash
-npm run process -- \
+bun run process -- \
   --links links.txt \
   --scene-library ./custom-scenes-library \
   --library-config ./custom-scenes-library/library.config.json \
@@ -632,7 +632,7 @@ This works with a local curated scene library, and it can also auto-build that l
 One-off mix command:
 
 ```bash
-npm run scene:mix -- \
+bun run scene:mix -- \
   --video "/path/to/raw-clip.mp4" \
   --captions "/path/to/raw-clip.captions.json" \
   --out "/path/to/raw-clip.scene-mix.mp4"
@@ -641,7 +641,7 @@ npm run scene:mix -- \
 Enable it for the full pipeline:
 
 ```bash
-npm run process -- --context-scenes
+bun run process -- --context-scenes
 ```
 
 The same mixed source is reused automatically by `rerender:clip` when a `*.scene-mix.mp4` exists next to the raw clip.
@@ -649,7 +649,7 @@ The same mixed source is reused automatically by `rerender:clip` when a `*.scene
 One-off YouTube ingest:
 
 ```bash
-npm run scene:ingest:youtube-cc -- \
+bun run scene:ingest:youtube-cc -- \
   --query "money motivation movie scene" \
   --max-downloads 2 \
   --max-duration-seconds 60
@@ -662,7 +662,7 @@ If `caption-style.json` has `contextScenes.youtubeIngest.enabled: true`, the mix
 Drop sound files into `sfx-library/`, then standardize and index them:
 
 ```bash
-npm run sfx:standardize
+bun run sfx:standardize
 ```
 
 Full pipeline runs automatically add low-volume contextual SFX when `caption-style.json` has `soundEffects.enabled: true`. The final render uses `*.sfx-mix.mp4` as its source, and each mix writes a `*.sfx-plan.json` next to it so you can inspect exactly which sounds were chosen. By default, the same SFX file is used at most once inside a generated short.
@@ -670,7 +670,7 @@ Full pipeline runs automatically add low-volume contextual SFX when `caption-sty
 One-off SFX mix:
 
 ```bash
-npm run sfx:mix -- \
+bun run sfx:mix -- \
   --video "/path/to/clip-or-scene-mix.mp4" \
   --captions "/path/to/clip.captions.json" \
   --out "/path/to/clip.sfx-mix.mp4"
@@ -689,7 +689,7 @@ Useful full-run options:
 Transcribe one video or clip:
 
 ```bash
-npm run transcribe -- \
+bun run transcribe -- \
   --video "/path/to/clip.mp4" \
   --out "outputs/clip.captions.json"
 ```
@@ -697,7 +697,7 @@ npm run transcribe -- \
 Render one clip with an existing captions file:
 
 ```bash
-npm run render:clip -- \
+bun run render:clip -- \
   --video "/path/to/clip.mp4" \
   --captions "outputs/clip.captions.json" \
   --out "outputs/clip.captioned.mp4"
@@ -706,7 +706,7 @@ npm run render:clip -- \
 Render only a small frame range for a fast proof:
 
 ```bash
-npm run render:clip -- \
+bun run render:clip -- \
   --video "/path/to/clip.mp4" \
   --captions "outputs/clip.captions.json" \
   --out "outputs/proof.mp4" \
@@ -716,7 +716,7 @@ npm run render:clip -- \
 Render one clip as 9:16 contain:
 
 ```bash
-npm run render:clip -- \
+bun run render:clip -- \
   --video "/path/to/clip.mp4" \
   --captions "outputs/clip.captions.json" \
   --out "outputs/clip.vertical-contain.mp4" \
@@ -750,7 +750,7 @@ Useful `render:clip` options:
 Run AI selection on a local video:
 
 ```bash
-npm run smart:clips -- \
+bun run smart:clips -- \
   --video "/path/to/original.mp4" \
   --out-dir "outputs/smart-clips" \
   --max-clips 6
@@ -782,7 +782,7 @@ Useful `smart:clips` options:
 
 ## Transcription Notes
 
-`npm run transcribe` extracts mono 16kHz audio, transcribes it, and writes both caption tokens and the full transcription response.
+`bun run transcribe` extracts mono 16kHz audio, transcribes it, and writes both caption tokens and the full transcription response.
 
 Provider order in `auto` mode:
 
@@ -815,16 +815,16 @@ Useful options:
 Examples:
 
 ```bash
-npm run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json
-npm run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json --provider local-whispercpp --local-model small.en
-npm run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json --provider local-whispercpp --disable-text-enhance
-npm run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json --provider openai
+bun run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json
+bun run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json --provider local-whispercpp --local-model small.en
+bun run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json --provider local-whispercpp --disable-text-enhance
+bun run transcribe -- --video "/path/to/video.mp4" --out /tmp/captions.json --provider openai
 ```
 
 Benchmark local vs reference:
 
 ```bash
-npm run transcribe:benchmark -- \
+bun run transcribe:benchmark -- \
   --video "/path/to/video.mp4" \
   --sample-start 30 \
   --sample-seconds 25 \
@@ -837,7 +837,7 @@ npm run transcribe:benchmark -- \
 The renderer supports an optional foreground/alpha video above captions:
 
 ```bash
-npm run rerender:clip -- \
+bun run rerender:clip -- \
   --clip "/path/to/clip.captions.json" \
   --foreground-video "/path/to/transparent-subject-layer.webm"
 ```
@@ -867,8 +867,8 @@ When fixing transcription manually, edit the `"text"` values. Keep `startMs`, `e
 ## Demo Capture And Reviewed AI Assets
 
 - Record the real workflow in Cursorful at 1080p, then caption/render it here. Cursorful remains an operator tool, not a project dependency.
-- Generate a local ElevenLabs narration file with `npm run voiceover:elevenlabs -- --script narration.txt --voice-id VOICE_ID`.
-- Create opt-in, human-reviewed fal assets with `npm run fal:image-edit -- ... --approved-for-generated-marketing` or `npm run fal:reference-video -- ... --approved-for-generated-marketing`.
+- Generate a local ElevenLabs narration file with `bun run voiceover:elevenlabs -- --script narration.txt --voice-id VOICE_ID`.
+- Create opt-in, human-reviewed fal assets with `bun run fal:image-edit -- ... --approved-for-generated-marketing` or `bun run fal:reference-video -- ... --approved-for-generated-marketing`.
 - Generated images/video are never eBay source-of-truth/main listing photos or evidence of condition. Full setup and QA details: [AI provider workflows](AI_PROVIDERS.md).
 
 ## Competitive eBay Creative Blueprints
@@ -884,7 +884,7 @@ Use this lane when the goal is a real product ad, not an automatic photo slidesh
 Start with a credit ROI plan before rendering. Use `--skip-item-ids` when a listing should be excluded from paid generation:
 
 ```bash
-npm run ebay:cinematic-ads -- roi-plan \
+bun run ebay:cinematic-ads -- roi-plan \
   --credit-budget 45 \
   --max-listings 1 \
   --max-higgs-shots 1 \
@@ -910,7 +910,7 @@ For higher-energy sales creatives, use `--ad-strategy high-energy` during planni
 Prepare one or more listing projects:
 
 ```bash
-npm run ebay:cinematic-ads -- prepare --item-ids 398160795273
+bun run ebay:cinematic-ads -- prepare --item-ids 398160795273
 ```
 
 That creates:
@@ -939,7 +939,7 @@ When the Higgsfield MCP tools are available in your agent environment, import th
 For the full batch pipeline, let the eBay ad planner rank live listings, prepare the real listing photos, discover competitor references, and write structure maps in one pass:
 
 ```bash
-npm run ebay:cinematic-ads -- competitive-plan \
+bun run ebay:cinematic-ads -- competitive-plan \
   --max-listings 3 \
   --credit-budget 60 \
   --max-higgs-shots 1 \
@@ -968,7 +968,7 @@ Useful options:
 If eBay/MCP traffic is rate-limited, rerun the same planner from saved truth snapshots instead of waiting on the live API:
 
 ```bash
-npm run ebay:cinematic-ads -- competitive-plan \
+bun run ebay:cinematic-ads -- competitive-plan \
   --dashboard-file exports/ebay-listing-performance-dashboard.json \
   --workbench-file exports/ebay-listing-asset-workbench.json \
   --competitors exports/automatio-kalodata.csv \
@@ -997,7 +997,7 @@ Batch outputs:
 Then run the creative intelligence pass with a Kalodata, Automatio, TikTok, or hand-curated CSV/JSON export:
 
 ```bash
-npm run ebay:creative-intel -- plan \
+bun run ebay:creative-intel -- plan \
   --project-dir "outputs/ebay-cinematic-ads/.../398160795273" \
   --competitors "/path/to/kalodata-export.csv"
 ```
@@ -1013,14 +1013,14 @@ Treat Kalodata as a structured export source rather than an internal unattended 
 If you do not have an export yet, run it without `--competitors`. It will still write a `kalodata-automatio-prompt.md` for that listing so you can paste the exact extraction request into Automatio or another scraper:
 
 ```bash
-npm run ebay:creative-intel -- plan \
+bun run ebay:creative-intel -- plan \
   --project-dir "outputs/ebay-cinematic-ads/.../398160795273"
 ```
 
 You can also seed public YouTube metadata links for manual creative review:
 
 ```bash
-npm run ebay:creative-intel -- plan \
+bun run ebay:creative-intel -- plan \
   --project-dir "outputs/ebay-cinematic-ads/.../398160795273" \
   --discover-youtube
 ```
@@ -1030,7 +1030,7 @@ npm run ebay:creative-intel -- plan \
 For a shot-for-shot structure map, add bounded reference analysis:
 
 ```bash
-npm run ebay:creative-intel -- plan \
+bun run ebay:creative-intel -- plan \
   --project-dir "outputs/ebay-cinematic-ads/.../398160795273" \
   --discover-youtube \
   --analyze-reference-video \
@@ -1044,7 +1044,7 @@ This downloads only a bounded research clip from the selected reference, detects
 To make the structure tangible before spending generation credits, render an original preview ad from the blueprint:
 
 ```bash
-npm run ebay:render-blueprint-ad -- \
+bun run ebay:render-blueprint-ad -- \
   --blueprint "outputs/competitive-plan-proof/.../competitive-creative/<item-id>/creative-blueprint.json"
 ```
 
@@ -1060,7 +1060,7 @@ The preview renderer uses actual listing images, local/cleared B-roll if present
 For batch QA across a full competitive-plan run:
 
 ```bash
-npm run ebay:render-blueprint-batch -- \
+bun run ebay:render-blueprint-batch -- \
   --blueprints-dir "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative" \
   --duration 12 \
   --limit 5
@@ -1073,7 +1073,7 @@ That finds each `creative-blueprint.json`, renders a product-safe preview for ea
 For the full post-blueprint control loop in one command:
 
 ```bash
-npm run ebay:competitive-loop -- \
+bun run ebay:competitive-loop -- \
   --blueprints-dir "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative" \
   --credit-budget 45 \
   --max-jobs-per-listing 1
@@ -1086,7 +1086,7 @@ That runs preview rendering, technical QA, premium render packet prep, a batch H
 Before spending paid-generation credits, run the quality gate:
 
 ```bash
-npm run ebay:competitive-qa -- \
+bun run ebay:competitive-qa -- \
   --preview-manifest "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-preview-render-manifest.json"
 ```
 
@@ -1097,7 +1097,7 @@ That writes `competitive-video-qa-report.json` and `competitive-video-qa-report.
 After reviewing the proof frames/previews, create the credit-aware premium render packet:
 
 ```bash
-npm run ebay:prep-premium-renders -- \
+bun run ebay:prep-premium-renders -- \
   --preview-manifest "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-preview-render-manifest.json" \
   --roi-plan "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/higgsfield-roi-plan.json" \
   --credit-budget 45 \
@@ -1122,7 +1122,7 @@ By default, premium prep holds listings whose selected structure is only a fallb
 To hand off all paid render jobs in one batch:
 
 ```bash
-npm run ebay:competitive-handoff -- \
+bun run ebay:competitive-handoff -- \
   --premium-plan "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json"
 ```
 
@@ -1131,7 +1131,7 @@ That writes `competitive-render-handoff/` with `render-queue.json`, `render-queu
 To render the handoff queue through the Higgsfield CLI instead of running shell commands manually:
 
 ```bash
-npm run ebay:competitive-higgsfield-render -- \
+bun run ebay:competitive-higgsfield-render -- \
   --premium-plan "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json" \
   --model seedance_2_0_mini \
   --credit-budget 40
@@ -1144,7 +1144,7 @@ That writes `competitive-higgsfield-render-run/competitive-higgsfield-render-man
 To package each listing into a portable creative packet for a generator/operator:
 
 ```bash
-npm run ebay:competitive-packets -- \
+bun run ebay:competitive-packets -- \
   --status "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-video-pipeline-status.json"
 ```
 
@@ -1153,7 +1153,7 @@ That writes `competitive-creative-packets/<item-id>-*/` folders containing `crea
 For a batch of held listings, export one consolidated Automatio/Kalodata research queue:
 
 ```bash
-npm run ebay:competitive-research-queue -- \
+bun run ebay:competitive-research-queue -- \
   --status "outputs/ebay-cinematic-ads/.../competitive-premium-render-plan/competitive-video-pipeline-status.json"
 ```
 
@@ -1162,7 +1162,7 @@ That writes `competitive-research-queue/automatio-search-queue.csv`, `competitiv
 If Automatio/Kalodata gives you one consolidated export for several listings, route it back into the packet templates instead of copying rows by hand. The export should include `Item ID`, `Competitor Import Template`, `Packet Dir`, or the exact queued `Search Query` plus the competitor columns:
 
 ```bash
-npm run ebay:competitive-research-import -- \
+bun run ebay:competitive-research-import -- \
   --queue "outputs/ebay-cinematic-ads/.../competitive-research-queue/competitive-research-queue.json" \
   --results "/path/to/automatio-results.csv"
 ```
@@ -1172,7 +1172,7 @@ That writes `competitive-research-import/competitive-research-import-manifest.js
 For the normal operator loop, import the consolidated export and immediately validate which listings are ready to rerun:
 
 ```bash
-npm run ebay:competitive-research-loop -- \
+bun run ebay:competitive-research-loop -- \
   --queue "outputs/ebay-cinematic-ads/.../competitive-research-queue/competitive-research-queue.json" \
   --results "/path/to/automatio-results.csv" \
   --credit-budget 45 \
@@ -1184,7 +1184,7 @@ By default this writes the matched rows into the local packet templates, then ru
 After multiple packet templates have been filled, process every ready one in a batch:
 
 ```bash
-npm run ebay:competitive-research-process -- \
+bun run ebay:competitive-research-process -- \
   --queue "outputs/ebay-cinematic-ads/.../competitive-research-queue/competitive-research-queue.json" \
   --credit-budget 45 \
   --max-jobs-per-listing 1
@@ -1197,7 +1197,7 @@ The processor skips empty templates, requires at least one row with product titl
 After filling a held packet's `research/competitor-import-template.csv` with real Automatio/Kalodata rows, rerun that listing with:
 
 ```bash
-npm run ebay:competitive-research-rerun -- \
+bun run ebay:competitive-research-rerun -- \
   --packet-dir "outputs/ebay-cinematic-ads/.../competitive-premium-render-plan/competitive-creative-packets/<item-id>-slug" \
   --competitors "outputs/ebay-cinematic-ads/.../competitive-premium-render-plan/competitive-creative-packets/<item-id>-slug/research/competitor-import-template.csv" \
   --credit-budget 45 \
@@ -1211,7 +1211,7 @@ The helper infers the original listing project from the packet/status/preview br
 After approved generated clips are saved into each listing's `higgsfield-renders/`, run the batch finalizer. If the Higgsfield output is a direct URL or a local downloaded file, import it to the exact expected path first:
 
 ```bash
-npm run ebay:collect-premium-renders -- \
+bun run ebay:collect-premium-renders -- \
   --premium-plan "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json" \
   --url-map "render-urls.json"
 ```
@@ -1219,7 +1219,7 @@ npm run ebay:collect-premium-renders -- \
 The URL map can be an object like `{ "<item-id>": { "<job-id>": "/path/or/url/to/video.mp4" } }` or an array of `{ "item_id", "job_id", "url" }` rows. The collector also scans each listing's `higgsfield/*.competitive-job.json` files for result URLs, imports clips into `higgsfield-renders/<job-id>.mp4`, and verifies a video stream with `ffprobe`.
 
 ```bash
-npm run ebay:finalize-premium-ads -- \
+bun run ebay:finalize-premium-ads -- \
   --premium-plan "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json"
 ```
 
@@ -1228,7 +1228,7 @@ That writes `competitive-premium-finalize-manifest.json`, assembles only ready l
 To see the current state of every listing in the run, audit the manifests:
 
 ```bash
-npm run ebay:competitive-status -- \
+bun run ebay:competitive-status -- \
   --premium-plan "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-premium-render-plan.json"
 ```
 
@@ -1237,7 +1237,7 @@ That writes `competitive-video-pipeline-status.json` and `competitive-video-pipe
 To review the run visually before spending credits or uploading:
 
 ```bash
-npm run ebay:competitive-review -- \
+bun run ebay:competitive-review -- \
   --status "outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/competitive-creative/competitive-premium-render-plan/competitive-video-pipeline-status.json"
 ```
 
@@ -1262,14 +1262,14 @@ For a story-building finish, use the generated `story-broll-prompts.txt`.
 Start with owned/local footage:
 
 ```bash
-npm run ebay:cinematic-ads -- seed-local-broll \
+bun run ebay:cinematic-ads -- seed-local-broll \
   --project-dir outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273
 ```
 
 Then search for extra clips only if the local footage does not carry the story:
 
 ```bash
-npm run ebay:cinematic-ads -- find-broll \
+bun run ebay:cinematic-ads -- find-broll \
   --project-dir "outputs/ebay-cinematic-ads/.../398160795273" \
   --energy max
 ```
@@ -1279,7 +1279,7 @@ This uses the existing ClipCaptionAI B-roll finder and copies selected clips int
 Assemble the finished Higgsfield clips:
 
 ```bash
-npm run ebay:cinematic-ads -- assemble \
+bun run ebay:cinematic-ads -- assemble \
   --project-dir "outputs/ebay-cinematic-ads/.../398160795273" \
   --energy max \
   --include-broll \
@@ -1291,7 +1291,7 @@ The assembler refuses to make a slideshow fallback. If there are no rendered cli
 After reviewing the final video and proof frame, upload and stage an eBay attachment:
 
 ```bash
-npm run ebay:cinematic-ads -- upload \
+bun run ebay:cinematic-ads -- upload \
   --item-id 398160795273 \
   --video outputs/ebay-cinematic-ads/run-YYYY-MM-DD-HHMMSS/398160795273/final/398160795273-cinematic-ad.mp4 \
   --attach \
@@ -1323,31 +1323,31 @@ The current `outputs` folder is kept clean by separating every run into its own 
 List generated clips:
 
 ```bash
-npm run clipkit -- rerender --list
+bun run clipkit -- rerender --list
 ```
 
 List clips in the latest run:
 
 ```bash
-npm run rerender:clip -- --list
+bun run rerender:clip -- --list
 ```
 
 List clips in an older run:
 
 ```bash
-npm run rerender:clip -- --run "/path/to/outputs/run-YYYY-MM-DD-HHMMSS" --list
+bun run rerender:clip -- --run "/path/to/outputs/run-YYYY-MM-DD-HHMMSS" --list
 ```
 
 Open the listed `.captions.json` file, edit only the `"text"` values, then rerender:
 
 ```bash
-npm run rerender:clip -- --clip 1
+bun run rerender:clip -- --clip 1
 ```
 
 Rerender a named clip from an older run:
 
 ```bash
-npm run rerender:clip -- \
+bun run rerender:clip -- \
   --run "/path/to/outputs/run-YYYY-MM-DD-HHMMSS" \
   --clip "03-your-website-is-leaking-money"
 ```
@@ -1355,7 +1355,7 @@ npm run rerender:clip -- \
 Rerender that older clip as 9:16 contain with black bars:
 
 ```bash
-npm run rerender:clip -- \
+bun run rerender:clip -- \
   --run "/path/to/outputs/run-YYYY-MM-DD-HHMMSS" \
   --clip "03-your-website-is-leaking-money" \
   --vertical-contain
@@ -1364,13 +1364,13 @@ npm run rerender:clip -- \
 Rerender a specific clip:
 
 ```bash
-npm run clipkit -- rerender --clip 03-your-website-is-leaking-money
+bun run clipkit -- rerender --clip 03-your-website-is-leaking-money
 ```
 
 Rerender a specific clip with captions disabled for that export only:
 
 ```bash
-npm run clipkit -- rerender --clip 03-your-website-is-leaking-money --no-captions
+bun run clipkit -- rerender --clip 03-your-website-is-leaking-money --no-captions
 ```
 
 The rerender option supports both cases: leave the clip blank to list editable clips, or enter a clip number, slug, title fragment, or full `.captions.json` path to rerender immediately. Optionally point it at an older run folder instead of the latest run, and add `--no-captions` if you want a B-roll-only rerender for one specific export. `--no-captions` disables both the visible text layer and the inverted/masked caption effect layer.
@@ -1378,7 +1378,7 @@ The rerender option supports both cases: leave the clip blank to list editable c
 By default, rerenders write `*.corrected.mp4` next to the original. To overwrite the original captioned clip:
 
 ```bash
-npm run rerender:clip -- --clip 1 --replace
+bun run rerender:clip -- --clip 1 --replace
 ```
 
 Useful `rerender:clip` options:
@@ -1402,7 +1402,7 @@ Useful `rerender:clip` options:
 ## Diagnostics
 
 ```bash
-npm run doctor
+bun run doctor
 ```
 
 This checks Node, npm, ffmpeg, ffprobe, yt-dlp, `.env`, and optional OpenAI key presence.
@@ -1412,27 +1412,27 @@ This checks Node, npm, ffmpeg, ffprobe, yt-dlp, `.env`, and optional OpenAI key 
 Open the newest output folder:
 
 ```bash
-npm run output:open
+bun run output:open
 ```
 
 Open Remotion Studio:
 
 ```bash
-npm run studio
+bun run studio
 ```
 
 ## Preview In Remotion Studio
 
 ```bash
-npm run sample:props
-npm run studio
+bun run sample:props
+bun run studio
 ```
 
 Then open the `CaptionedClip` composition in Remotion Studio and load `outputs/studio/sample-props/sample-props.json` as props.
 
 ## Appendix: Caption Style Configuration
 
-Edit `caption-style.json` at the project root. The one-click runner, `npm run process`, `npm run smart:clips`, `npm run render:clip`, and `npm run rerender:clip` all read this file automatically unless you pass `--style-config`.
+Edit `caption-style.json` at the project root. The one-click runner, `bun run process`, `bun run smart:clips`, `bun run render:clip`, and `bun run rerender:clip` all read this file automatically unless you pass `--style-config`.
 
 ### Layout And Export Fields
 
@@ -1592,7 +1592,7 @@ When `youtubeIngest.enabled` is on, the pipeline can add new YouTube clips into 
 If your library is a folder of raw personal clips, build metadata first:
 
 ```bash
-npm run scene:index -- \
+bun run scene:index -- \
   --scene-library ./custom-scenes-library \
   --library-config ./custom-scenes-library/library.config.json
 ```

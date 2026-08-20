@@ -11,7 +11,7 @@ const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
 const usage = `
 Usage:
-  npm run fal:image-edit -- --image approved-source.jpg --prompt "Replace only the background with a studio sweep" --approved-for-generated-marketing
+  bun run fal:image-edit -- --image approved-source.jpg --prompt "Replace only the background with a studio sweep" --approved-for-generated-marketing
 
 Options:
   --image FILE_OR_HTTPS_URL  Source image. Repeat the flag for multiple references.

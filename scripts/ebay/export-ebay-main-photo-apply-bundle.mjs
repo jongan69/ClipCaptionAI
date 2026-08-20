@@ -10,8 +10,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/export-ebay-main-photo-apply-bundle.mjs --queue outputs/.../final-main-photo-upload-queue.json
-  npm run ebay:main-photo-apply-bundle -- --queue outputs/.../final-main-photo-upload-queue.json
+  bun scripts/export-ebay-main-photo-apply-bundle.mjs --queue outputs/.../final-main-photo-upload-queue.json
+  bun run ebay:main-photo-apply-bundle -- --queue outputs/.../final-main-photo-upload-queue.json
 
 Options:
   --queue FILE       Final main-photo upload queue JSON.

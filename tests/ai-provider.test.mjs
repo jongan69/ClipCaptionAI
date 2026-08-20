@@ -3,20 +3,30 @@ import assert from 'node:assert';
 import {
   PROVIDERS,
   resolveProvider,
+  prepareProvider,
   resolveModel,
   createClient,
   chatCompletion,
   structuredChatCompletion,
 } from '../scripts/ai-provider.mjs';
 
+process.env.CCA_DISABLE_OLLAMA = '1';
+
 // Restore process.env after a mutating test, even on failure.
 const withEnv = (mutator, fn) => {
   const prev = {...process.env};
+  const restore = () => {
+    process.env = prev;
+  };
   try {
     mutator();
-    return fn();
-  } finally {
-    process.env = prev;
+    const result = fn();
+    if (result && typeof result.finally === 'function') return result.finally(restore);
+    restore();
+    return result;
+  } catch (error) {
+    restore();
+    throw error;
   }
 };
 
@@ -32,6 +42,10 @@ const jsonResponse = (content) => ({
 // ── Provider registry ─────────────────────────────────────────────────
 
 describe('PROVIDERS registry', () => {
+  it('defines Ollama with the local default model', () => {
+    assert.strictEqual(PROVIDERS.ollama.baseURL, 'http://127.0.0.1:11434/v1');
+    assert.strictEqual(PROVIDERS.ollama.defaultModel, 'qwen3:4b');
+  });
   it('defines deepseek with correct config', () => {
     const d = PROVIDERS.deepseek;
     assert.strictEqual(d.id, 'deepseek');
@@ -53,6 +67,16 @@ describe('PROVIDERS registry', () => {
 // ── Provider resolution ───────────────────────────────────────────────
 
 describe('resolveProvider', () => {
+  it('prefers an available Ollama installation in auto mode', () => {
+    withEnv(
+      () => {
+        delete process.env.CCA_DISABLE_OLLAMA;
+        process.env.CCA_OLLAMA_AVAILABLE = '1';
+        process.env.DEEPSEEK_API_KEY = 'sk-test-ds';
+      },
+      () => assert.strictEqual(resolveProvider().provider, 'ollama'),
+    );
+  });
   it('returns null when no keys are set', () => {
     withEnv(
       () => {
@@ -133,6 +157,44 @@ describe('resolveProvider', () => {
       () => {
         assert.throws(() => resolveProvider({provider: 'openai'}), /OPENAI_API_KEY is required/);
       },
+    );
+  });
+});
+
+describe('prepareProvider', () => {
+  const unavailable = {
+    fetchImpl: async () => {
+      throw new Error('offline');
+    },
+    spawnImpl: () => ({unref() {}}),
+    attempts: 1,
+    intervalMs: 0,
+  };
+
+  it('falls back to configured cloud AI when automatic Ollama setup fails', async () => {
+    await withEnv(
+      () => {
+        delete process.env.CCA_DISABLE_OLLAMA;
+        process.env.CCA_OLLAMA_AVAILABLE = '1';
+        process.env.DEEPSEEK_API_KEY = 'sk-test-ds';
+      },
+      async () => {
+        const prepared = await prepareProvider(resolveProvider(), unavailable);
+        assert.strictEqual(prepared.provider, 'deepseek');
+      },
+    );
+  });
+
+  it('fails closed when explicit Ollama setup fails', async () => {
+    await withEnv(
+      () => {
+        process.env.CCA_OLLAMA_AVAILABLE = '1';
+      },
+      () =>
+        assert.rejects(
+          prepareProvider(resolveProvider({provider: 'ollama'}), unavailable),
+          /did not become ready/,
+        ),
     );
   });
 });

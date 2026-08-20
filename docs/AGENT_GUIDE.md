@@ -7,12 +7,14 @@ ClipCaptionAI is a video-focused command-line harness. Read `CLAUDE.md` at the r
 From a cloned checkout:
 
 ```bash
-npm run clipkit -- doctor
-npm run clipkit -- video plan --brief-file brief.txt --assets-dir ./approved-assets --json
-npm run clipkit -- video inspect --run outputs/video-runs/brief --json
-npm run clipkit -- video render --run outputs/video-runs/brief --json
-npm run clipkit -- video qa --run outputs/video-runs/brief --json
+bun run clipkit -- doctor
+bun run clipkit -- video plan --brief-file brief.txt --assets-dir ./approved-assets --json
+bun run clipkit -- video inspect --run outputs/video-runs/brief --json
+bun run clipkit -- video render --run outputs/video-runs/brief --json
+bun run clipkit -- video qa --run outputs/video-runs/brief --json
 ```
+
+Long-running adapter actions detach by default. Save the returned job ID, or add `--wait`. Use `clipcaptionai jobs status|logs|wait|cancel` to coordinate work started by either an agent or the desktop app. See [Tool adapters](TOOL_ADAPTERS.md).
 
 Use `--dry-run` before any paid provider call or expensive render. Use `--run-id` for stable names. A run may be resumed by invoking `render` again; existing artifacts are reused unless `--force` is supplied.
 
@@ -22,7 +24,7 @@ Use `--dry-run` before any paid provider call or expensive render. Use `--run-id
 - Treat `qa.status=passed` as the minimum technical completion gate.
 - Do not infer provider success from configuration, a request ID, or a dry-run manifest.
 - Do not put secrets in prompts, arguments, manifests, or generated logs.
-- The AI provider (`scripts/ai-provider.mjs`) abstracts DeepSeek and OpenAI — use `--provider` to override auto-detection. Chat/analysis works with either; transcription requires OpenAI or local whisper.cpp.
+- The AI provider prefers local Ollama, then configured DeepSeek/OpenAI fallback. Use `--provider` to override. Transcription remains separate and requires OpenAI, local whisper.cpp, or YouTube subtitles.
 - Use existing specialized commands when they provide the right behavior: `caption`, `enhance`, `auto-clips`, `chapter`, `broll`, `voiceover`, `fal-image-edit`, `fal-reference-video`, and `rotato`.
 - Generated marketing/B-roll assets require human review and are not product-condition evidence.
 

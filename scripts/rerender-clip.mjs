@@ -12,8 +12,8 @@ import {
 
 const usage = `
 Usage:
-  npm run rerender:clip -- --clip 1 [options]
-  npm run rerender:clip -- --list [options]
+  bun run rerender:clip -- --clip 1 [options]
+  bun run rerender:clip -- --list [options]
 
 Options:
   --run DIR               Run folder. Default: latest outputs/run-* folder.
@@ -240,6 +240,6 @@ if (vertical && !verticalContain) {
   renderArgs.push('--vertical');
 }
 
-run('npm', renderArgs);
+run('bun', renderArgs);
 
 console.log(`Corrected render written to: ${outPath}`);

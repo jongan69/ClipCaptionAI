@@ -25,13 +25,13 @@ Do not commit:
 The public command surface is:
 
 ```bash
-npm run menu
-npm run doctor
-npm run clipkit -- auto-clips
-npm run clipkit -- caption
-npm run clipkit -- enhance
-npm run clipkit -- broll
-npm run clipkit -- rerender
+bun run menu
+bun run doctor
+bun run clipkit -- auto-clips
+bun run clipkit -- caption
+bun run clipkit -- enhance
+bun run clipkit -- broll
+bun run clipkit -- rerender
 ```
 
 Keep deeper scripts available for power use, but route everyday editing through `clipkit` so the project stays understandable.

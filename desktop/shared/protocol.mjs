@@ -12,8 +12,10 @@ export const CHANNELS = {
   LIST_WORKFLOWS: 'cca:list-workflows',
   GET_ENVIRONMENT: 'cca:get-environment',
   RUN_WORKFLOW: 'cca:run-workflow',
-  RUN_RAW_COMMAND: 'cca:run-raw-command',
   STOP_WORKFLOW: 'cca:stop-workflow',
+  LIST_JOBS: 'cca:list-jobs',
+  JOB_STATUS: 'cca:job-status',
+  JOB_LOGS: 'cca:job-logs',
 
   // Preferences & secrets
   GET_PREFERENCES: 'cca:get-preferences',
@@ -76,15 +78,7 @@ export function validateRunRequest(payload) {
  * Validate a settings preference key/value.
  */
 export function validatePreference(key) {
-  const allowedKeys = [
-    'lastWorkflowId',
-    'lastRawCommand',
-    'runnerMode',
-    'lastExtraArgs',
-    'formDrafts',
-    'windowBounds',
-    'version',
-  ];
+  const allowedKeys = ['lastWorkflowId', 'lastExtraArgs', 'formDrafts', 'windowBounds', 'version'];
   if (typeof key !== 'string' || !key.trim()) {
     throw new Error('Invalid preference key');
   }
@@ -96,17 +90,8 @@ export function validatePreference(key) {
 /**
  * Validate a secret key name.
  */
-export function validateSecretKey(key) {
-  const allowed = [
-    'OPENAI_API_KEY',
-    'DEEPSEEK_API_KEY',
-    'YOUTUBE_API_KEY',
-    'FAL_KEY',
-    'ELEVENLABS_API_KEY',
-    'ELEVENLABS_VOICE_ID',
-    'EBAY_MCP_TOKEN',
-  ];
-  if (!allowed.includes(key)) {
+export function validateSecretKey(key, allowedKeys = new Set()) {
+  if (!allowedKeys.has(key)) {
     throw new Error(`Unknown secret key: ${key}`);
   }
 }

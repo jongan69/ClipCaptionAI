@@ -10,8 +10,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/render-competitive-blueprint-batch.mjs --blueprints-dir outputs/.../competitive-creative
-  npm run ebay:render-blueprint-batch -- --blueprints-dir outputs/.../competitive-creative --limit 3
+  bun scripts/render-competitive-blueprint-batch.mjs --blueprints-dir outputs/.../competitive-creative
+  bun run ebay:render-blueprint-batch -- --blueprints-dir outputs/.../competitive-creative --limit 3
 
 Options:
   --blueprints-dir DIR     Directory to scan recursively for creative-blueprint.json files.

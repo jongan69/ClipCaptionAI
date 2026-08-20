@@ -10,7 +10,6 @@ export interface SecretState {
 
 export interface Preferences {
   lastWorkflowId?: string;
-  runnerMode?: 'form' | 'raw';
   windowBounds?: {width: number; height: number; x?: number; y?: number};
   formDrafts?: Record<string, Record<string, string>>;
 }

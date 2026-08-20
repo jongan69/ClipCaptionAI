@@ -3,7 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {z} from 'zod';
-import {resolveProvider, createClient, structuredChatCompletion} from './ai-provider.mjs';
+import {
+  resolveProvider,
+  prepareProvider,
+  createClient,
+  structuredChatCompletion,
+} from './ai-provider.mjs';
 import {
   ensureDir,
   loadEnv,
@@ -26,7 +31,7 @@ import {
 
 const usage = `
 Usage:
-  npm run smart:clips -- --video original.mp4 [options]
+  bun run smart:clips -- --video original.mp4 [options]
 
 Options:
   --out-dir DIR           Output folder. Default: outputs/smart-clips
@@ -177,7 +182,7 @@ if (
   if (args['reindex-scene-library']) {
     indexArgs.push('--reindex');
   }
-  run('npm', indexArgs);
+  run('bun', indexArgs);
 }
 
 const safeBase = path
@@ -203,7 +208,7 @@ const writeSelection = () => {
 };
 
 if (!fs.existsSync(transcriptPath)) {
-  run('npm', [
+  run('bun', [
     'run',
     'transcribe',
     '--',
@@ -410,7 +415,7 @@ ${chunks.join('\n')}`,
   },
 ];
 
-const resolved = resolveProvider();
+const resolved = await prepareProvider(resolveProvider());
 const client = resolved.config ? createClient(resolved) : null;
 const candidateModels = [
   args['selection-model'],
@@ -735,7 +740,7 @@ selection.clips.forEach((clip, index) => {
       sceneArgs.push('--disable-youtube-ingest');
     }
 
-    run('npm', sceneArgs);
+    run('bun', sceneArgs);
 
     if (fs.existsSync(sceneMixPath)) {
       videoForRender = sceneMixPath;
@@ -772,7 +777,7 @@ selection.clips.forEach((clip, index) => {
       sfxArgs.push('--sfx-library', sfxLibraryPath);
     }
 
-    run('npm', sfxArgs);
+    run('bun', sfxArgs);
 
     if (fs.existsSync(sfxMixPath)) {
       videoForRender = sfxMixPath;
@@ -807,7 +812,7 @@ selection.clips.forEach((clip, index) => {
     renderArgs.push('--vertical');
   }
 
-  run('npm', renderArgs);
+  run('bun', renderArgs);
 });
 
 selection.thoughtBoundaryConfig = {

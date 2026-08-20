@@ -18,6 +18,7 @@ import {
 } from './lib.mjs';
 import {buildBrollCaptionArgs, mergeStyleConfig, slugify, timestampSlug} from './clipkit-lib.mjs';
 import {commandExists} from './command-utils.mjs';
+import {runPlatformCli} from './platform/cli.mjs';
 const require = createRequire(import.meta.url);
 const packageJson = require('../package.json');
 const defaultFramePath =
@@ -55,7 +56,7 @@ const run = (command, args, options = {}) => {
 };
 
 const npmRun = (script, args = []) => {
-  run('npm', ['run', script, ...(args.length > 0 ? ['--', ...args] : [])]);
+  run('bun', ['run', script, ...(args.length > 0 ? ['--', ...args] : [])]);
 };
 
 const withDefaultArgs = (defaults, args = []) => [...defaults, ...args];
@@ -1432,6 +1433,10 @@ const main = async () => {
 
   if (process.argv.length <= 2) {
     await interactiveMenu();
+    return;
+  }
+
+  if (!process.env.CCA_LEGACY_CLI && (await runPlatformCli(process.argv.slice(2)))) {
     return;
   }
 

@@ -12,12 +12,12 @@ const scriptName = path.basename(fileURLToPath(import.meta.url));
 
 const usage = `
 Usage:
-  npm run ebay:cinematic-ads -- prepare --item-ids 398160795273
-  npm run ebay:cinematic-ads -- roi-plan --credit-budget 45 --prepare-selected
-  npm run ebay:cinematic-ads -- competitive-plan --max-listings 3
-  npm run ebay:cinematic-ads -- find-broll --project-dir outputs/ebay-cinematic-ads/.../398160795273
-  npm run ebay:cinematic-ads -- assemble --project-dir outputs/ebay-cinematic-ads/.../398160795273
-  npm run ebay:cinematic-ads -- upload --item-id 398160795273 --video /path/to/final.mp4 --attach --apply-immediately
+  bun run ebay:cinematic-ads -- prepare --item-ids 398160795273
+  bun run ebay:cinematic-ads -- roi-plan --credit-budget 45 --prepare-selected
+  bun run ebay:cinematic-ads -- competitive-plan --max-listings 3
+  bun run ebay:cinematic-ads -- find-broll --project-dir outputs/ebay-cinematic-ads/.../398160795273
+  bun run ebay:cinematic-ads -- assemble --project-dir outputs/ebay-cinematic-ads/.../398160795273
+  bun run ebay:cinematic-ads -- upload --item-id 398160795273 --video /path/to/final.mp4 --attach --apply-immediately
 
 Commands:
   roi-plan    Rank live listings and create a credit-spend plan before rendering.
@@ -875,15 +875,15 @@ const writeStoryBrollPlan = ({listing, listingDir}) => {
     'Find B-roll candidates:',
     '',
     '```bash',
-    `npm run ebay:cinematic-ads -- find-broll --project-dir "${listingDir}"`,
+    `bun run ebay:cinematic-ads -- find-broll --project-dir "${listingDir}"`,
     '```',
     '',
     'Assemble with B-roll finish:',
     '',
     '```bash',
     energy === 'max'
-      ? `npm run ebay:cinematic-ads -- assemble --project-dir "${listingDir}" --energy max`
-      : `npm run ebay:cinematic-ads -- assemble --project-dir "${listingDir}" --include-broll --broll-position end`,
+      ? `bun run ebay:cinematic-ads -- assemble --project-dir "${listingDir}" --energy max`
+      : `bun run ebay:cinematic-ads -- assemble --project-dir "${listingDir}" --include-broll --broll-position end`,
     '```',
     '',
   ].join('\n');
@@ -946,13 +946,13 @@ const writeBriefs = ({listing, listingDir, listingPlan = null}) => {
     'After Higgsfield renders are in `higgsfield-renders/`:',
     '',
     '```bash',
-    `npm run ebay:cinematic-ads -- assemble --project-dir "${listingDir}"`,
+    `bun run ebay:cinematic-ads -- assemble --project-dir "${listingDir}"`,
     '```',
     '',
     'Then upload/attach after review:',
     '',
     '```bash',
-    `npm run ebay:cinematic-ads -- upload --item-id ${listing.item_id} --video "${path.join(listingDir, 'final', `${listing.item_id}-cinematic-ad.mp4`)}" --attach`,
+    `bun run ebay:cinematic-ads -- upload --item-id ${listing.item_id} --video "${path.join(listingDir, 'final', `${listing.item_id}-cinematic-ad.mp4`)}" --attach`,
     '```',
     '',
   ]

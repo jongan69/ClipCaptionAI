@@ -11,10 +11,10 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/qa-competitive-videos.mjs --status outputs/.../competitive-video-pipeline-status.json
-  node scripts/qa-competitive-videos.mjs --preview-manifest outputs/.../competitive-preview-render-manifest.json
-  node scripts/qa-competitive-videos.mjs --video final-ad.mp4 --item-id 123
-  npm run ebay:competitive-qa -- --status outputs/.../competitive-video-pipeline-status.json
+  bun scripts/qa-competitive-videos.mjs --status outputs/.../competitive-video-pipeline-status.json
+  bun scripts/qa-competitive-videos.mjs --preview-manifest outputs/.../competitive-preview-render-manifest.json
+  bun scripts/qa-competitive-videos.mjs --video final-ad.mp4 --item-id 123
+  bun run ebay:competitive-qa -- --status outputs/.../competitive-video-pipeline-status.json
 
 Options:
   --status FILE             Pipeline status JSON from ebay:competitive-status.

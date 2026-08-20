@@ -16,7 +16,7 @@ import {
 
 const usage = `
 Usage:
-  npm run render:clip -- --video input.mp4 --captions captions.json --out output.mp4 [options]
+  bun run render:clip -- --video input.mp4 --captions captions.json --out output.mp4 [options]
 
 Options:
   --width N               Output width. Default: source width, or 1080 with --vertical.
@@ -119,7 +119,7 @@ if (args.frames) {
 }
 
 try {
-  run('npx', renderArgs);
+  run('bunx', renderArgs);
 } finally {
   fs.rmSync(propsPath, {force: true});
 }

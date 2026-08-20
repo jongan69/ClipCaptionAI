@@ -9,8 +9,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/export-competitive-research-queue.mjs --packets-manifest outputs/.../competitive-creative-packets-manifest.json
-  npm run ebay:competitive-research-queue -- --status outputs/.../competitive-video-pipeline-status.json
+  bun scripts/export-competitive-research-queue.mjs --packets-manifest outputs/.../competitive-creative-packets-manifest.json
+  bun run ebay:competitive-research-queue -- --status outputs/.../competitive-video-pipeline-status.json
 
 Options:
   --packets-manifest FILE  Manifest from ebay:competitive-packets.
@@ -105,7 +105,7 @@ const main = async () => {
       research.competitor_import_template ??
       path.join(packetDir, 'research', 'competitor-import-template.csv');
     const rerunCommand = [
-      'npm run ebay:competitive-research-rerun --',
+      'bun run ebay:competitive-research-rerun --',
       '--packet-dir',
       shellQuote(packetDir),
       '--competitors',

@@ -1,27 +1,25 @@
 #!/usr/bin/env node
 import {app, BrowserWindow, dialog, ipcMain, Menu, shell} from 'electron';
-import {spawn, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import crypto from 'node:crypto';
 import {commandExists} from '../scripts/command-utils.mjs';
 import {outputsRoot as DESKTOP_OUTPUTS_ROOT, probeVideo} from '../scripts/lib.mjs';
+import {serializeCatalog} from '../scripts/platform/catalog.mjs';
+import {cancelJob, listJobs, readJobLogs, submitJob} from '../scripts/platform/jobs.mjs';
 import {SecretVault} from './shared/env.mjs';
 import {resolveRuntimePaths, ensureRuntimeDirs} from './shared/paths.mjs';
 import {CHANNELS, EVENTS, validateRunRequest, validateSecretKey} from './shared/protocol.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEV_PROJECT_ROOT = path.resolve(__dirname, '..');
-const WORKFLOWS_PATH = path.join(__dirname, 'workflows.json');
 const APP_NAME = 'ClipCaptionAI Desktop';
 const DEFAULT_WINDOW_BOUNDS = {width: 1320, height: 900, x: undefined, y: undefined};
 const DEFAULT_WINDOW_SETTINGS = {width: 1320, height: 900};
 
-const BASE_WORKFLOWS = loadJsonOrThrow(WORKFLOWS_PATH, []);
-let WORKFLOWS = [...BASE_WORKFLOWS];
-const CLIPKIT_HELP_COMMAND = ['--help'];
-const JOBS = new Map();
+let WORKFLOWS = [];
+let ADAPTERS = [];
+let CATALOG_SECRET_KEYS = new Set();
 const LOG_ROTATE_BYTES = 10 * 1024 * 1024;
 const PREFS_VERSION = 2;
 const gotSingleInstance = app.requestSingleInstanceLock();
@@ -68,6 +66,7 @@ let LOG_PATH = null;
 let ipcHandlersInstalled = false;
 let secretVault = null;
 let runtimePaths = null;
+const observedJobs = new Map();
 
 /**
  * Root of the CLI tree available to spawned `node` children.
@@ -90,14 +89,6 @@ function readJson(filePath, fallback) {
   } catch {
     return fallback;
   }
-}
-
-function loadJsonOrThrow(filePath, fallback = null) {
-  const value = readJson(filePath, fallback);
-  if (!value) {
-    throw new Error(`Failed to read required JSON file: ${filePath}`);
-  }
-  return value;
 }
 
 function ensureDir(dirPath) {
@@ -128,33 +119,6 @@ function assertTrustedSender(event) {
   }
 }
 
-function getAllowedCommandNames() {
-  const allowed = new Set(['menu', 'help', 'doctor']);
-  for (const workflow of WORKFLOWS || []) {
-    if (workflow.command) {
-      allowed.add(workflow.command);
-    }
-
-    for (const alias of workflow.aliases || []) {
-      if (alias) {
-        allowed.add(alias);
-      }
-    }
-  }
-
-  for (const command of detectedCommands || []) {
-    if (command) {
-      allowed.add(command);
-    }
-  }
-
-  return allowed;
-}
-
-function normalizeLine(input = '') {
-  return String(input).trim();
-}
-
 function parseArgString(input = '') {
   const tokens = [];
   const regex = /"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|([^\s"]+)/g;
@@ -166,55 +130,6 @@ function parseArgString(input = '') {
   }
 
   return tokens;
-}
-
-function sanitizeRawTokens(input = '') {
-  const tokens = parseArgString(input).filter(Boolean);
-
-  while (tokens.length > 0) {
-    const token = tokens[0];
-    const next = tokens[1];
-    if (token === 'node' && next && /(clipkit\.mjs|clipcaptionai\.js)$/.test(next)) {
-      tokens.shift();
-      tokens.shift();
-      continue;
-    }
-
-    if (
-      ['npx', 'node', 'clipcaptionai', 'npm'].includes(token) ||
-      /(.*\/)?clipcaptionai\.js$/.test(token) ||
-      /(.*\/)?clipkit\.mjs$/.test(token)
-    ) {
-      tokens.shift();
-      continue;
-    }
-
-    if (token === 'npm' && next === 'run') {
-      tokens.shift();
-      tokens.shift();
-      if (tokens[0] === '--') {
-        tokens.shift();
-      }
-      continue;
-    }
-
-    break;
-  }
-
-  if (tokens[0] === '--') {
-    tokens.shift();
-  }
-
-  return tokens;
-}
-
-function makeTitleFromCommand(command = '') {
-  return command
-    .split('-')
-    .map((segment) => segment.trim())
-    .filter(Boolean)
-    .map((segment) => `${segment.charAt(0).toUpperCase()}${segment.slice(1)}`)
-    .join(' ');
 }
 
 function buildArgvFromInput(command, argValues = {}, extraArgs = '') {
@@ -246,7 +161,7 @@ function buildArgvFromInput(command, argValues = {}, extraArgs = '') {
 
 function gatherEnvironment() {
   const required = [
-    {name: 'node', pretty: 'Node.js'},
+    {name: 'bun', pretty: 'Bun'},
     {name: 'ffmpeg', pretty: 'ffmpeg'},
     {name: 'ffprobe', pretty: 'ffprobe'},
   ];
@@ -318,128 +233,6 @@ function rotateIfNeeded() {
   }
 }
 
-function parseAvailableCommands(helpText = '') {
-  const detected = new Map();
-  const lines = String(helpText).split('\n');
-  let inCommands = false;
-
-  for (const line of lines) {
-    if (line.startsWith('Commands:')) {
-      inCommands = true;
-      continue;
-    }
-
-    if (!inCommands) {
-      continue;
-    }
-
-    if (!/^ {2}/.test(line)) {
-      break;
-    }
-
-    const match = line.match(/^ {2}([a-zA-Z0-9-_|]+)\s{2,}(.*)$/);
-    if (!match) {
-      continue;
-    }
-
-    const entry = match[1];
-    const rawDescription = normalizeLine(match[2]);
-    const description = rawDescription.replace(/^\[[^\]]+\]\s*/, '');
-    const aliases = entry
-      .split('|')
-      .map((alias) => alias.trim())
-      .filter(Boolean);
-    const command = aliases[0];
-
-    if (!command || command === 'help') {
-      continue;
-    }
-
-    if (!detected.has(command)) {
-      detected.set(command, {
-        command,
-        aliases,
-        description,
-      });
-    }
-  }
-
-  return [...detected.values()];
-}
-
-function getAvailableCommands() {
-  const result = spawnSync('node', [getCliEntry(), ...CLIPKIT_HELP_COMMAND], {
-    cwd: getCliRoot(),
-    encoding: 'utf8',
-    timeout: 20_000,
-  });
-
-  if (result.error) {
-    throw result.error;
-  }
-
-  if (result.status !== 0) {
-    throw new Error(`clipkit --help exited with code ${result.status}`);
-  }
-
-  const output = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
-  return parseAvailableCommands(output);
-}
-
-function buildWorkflowCatalogFromCommands(manifest, detectedCommands = []) {
-  const workflows = [];
-  const commandIndex = new Set();
-  const idIndex = new Set();
-
-  for (const entry of manifest || []) {
-    const command = normalizeLine(entry?.command);
-    const id = normalizeLine(entry?.id || command);
-    if (!command || !id) {
-      continue;
-    }
-
-    const merged = {
-      ...entry,
-      id,
-      command,
-      source: entry.source || 'manifest',
-    };
-
-    workflows.push(merged);
-    commandIndex.add(command);
-    idIndex.add(id);
-  }
-
-  for (const item of detectedCommands || []) {
-    const command = normalizeLine(item?.command);
-    const description = normalizeLine(item?.description) || 'CLI-discovered command.';
-    const aliases = Array.isArray(item?.aliases) ? item.aliases : [];
-    if (!command) {
-      continue;
-    }
-
-    if (commandIndex.has(command) || idIndex.has(command)) {
-      continue;
-    }
-
-    workflows.push({
-      id: command,
-      title: makeTitleFromCommand(command),
-      command,
-      description,
-      aliases: aliases.filter((alias) => alias && alias !== command),
-      args: [],
-      source: 'cli-discovered',
-      _discoveredByCli: true,
-    });
-
-    commandIndex.add(command);
-    idIndex.add(command);
-  }
-
-  return workflows;
-}
-
 function validateWorkflows(workflows, detected = []) {
   const manifest = new Map((workflows || []).map((entry) => [entry.command, entry]));
   const detectedSet = new Set(
@@ -468,18 +261,35 @@ function validateWorkflows(workflows, detected = []) {
   };
 }
 
-function updateEnvironmentDiagnostics() {
+async function updateEnvironmentDiagnostics() {
   runtimeEnvironment = gatherEnvironment();
   try {
-    detectedCommandMetadata = getAvailableCommands();
-    detectedCommands = (detectedCommandMetadata || [])
-      .map((entry) => entry?.command)
-      .filter(Boolean);
-    WORKFLOWS = buildWorkflowCatalogFromCommands(BASE_WORKFLOWS, detectedCommandMetadata);
+    ADAPTERS = await serializeCatalog({root: getCliRoot()});
+    const workflowAdapter = ADAPTERS.find((entry) => entry.id === 'workflow');
+    const adapterActions = ADAPTERS.filter((entry) => entry.id !== 'workflow').flatMap((adapter) =>
+      adapter.actions.map((action) => ({
+        id: `${adapter.id}.${action.id}`,
+        title: `${adapter.title}: ${action.title}`,
+        command: `${adapter.id} ${action.id}`,
+        description: action.description,
+        args: action.args,
+        source: adapter.source,
+        group: adapter.title,
+        adapterId: adapter.id,
+        actionId: action.id,
+      })),
+    );
+    WORKFLOWS = [...(workflowAdapter?.workflows ?? []), ...adapterActions];
+    detectedCommands = WORKFLOWS.flatMap((entry) => [entry.command, ...(entry.aliases ?? [])]);
+    detectedCommandMetadata = ADAPTERS;
+    CATALOG_SECRET_KEYS = new Set(
+      ADAPTERS.flatMap((adapter) => adapter.actions.flatMap((action) => action.secrets)),
+    );
   } catch {
+    ADAPTERS = [];
     detectedCommandMetadata = [];
     detectedCommands = [];
-    WORKFLOWS = BASE_WORKFLOWS;
+    WORKFLOWS = [];
   }
 
   workflowValidation = validateWorkflows(WORKFLOWS, detectedCommands);
@@ -487,12 +297,56 @@ function updateEnvironmentDiagnostics() {
     environment: runtimeEnvironment,
     commands: detectedCommands,
     commandMetadata: detectedCommandMetadata,
+    adapters: ADAPTERS,
     validation: workflowValidation,
     updatedAt: new Date().toISOString(),
   };
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send(EVENTS.ENVIRONMENT, runtimeDiagnostics);
+  }
+}
+
+function pollBrokerJobs() {
+  for (const job of listJobs()) {
+    const previous = observedJobs.get(job.id) ?? {stdout: 0, stderr: 0, status: null};
+    const logs = readJobLogs(job.id, {
+      stdoutOffset: previous.stdout,
+      stderrOffset: previous.stderr,
+    });
+    if (logs.stdout.text) {
+      safeSend(EVENTS.WORKFLOW_LOG, {
+        session: job.id,
+        channel: 'stdout',
+        text: logs.stdout.text,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    if (logs.stderr.text) {
+      safeSend(EVENTS.WORKFLOW_LOG, {
+        session: job.id,
+        channel: 'stderr',
+        text: logs.stderr.text,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    if (
+      previous.status &&
+      previous.status !== job.status &&
+      ['completed', 'failed', 'cancelled', 'interrupted'].includes(job.status)
+    ) {
+      safeSend(EVENTS.WORKFLOW_COMPLETE, {
+        session: job.id,
+        code: job.exitCode,
+        signal: job.signal,
+        ...(job.status === 'completed' ? {} : {error: job.result?.error ?? job.status}),
+      });
+    }
+    observedJobs.set(job.id, {
+      stdout: logs.stdout.offset,
+      stderr: logs.stderr.offset,
+      status: job.status,
+    });
   }
 }
 
@@ -553,123 +407,6 @@ function createSessionLogPath() {
   return path.join(app.getPath('userData'), 'desktop-session.log');
 }
 
-function runCommand(commandWindow, session, argv, options = {}) {
-  const child = spawn('node', argv, {
-    cwd: getCliRoot(),
-    env: {
-      ...process.env,
-      // Secrets saved in the UI must reach CLI children without an app restart.
-      ...(secretVault ? secretVault.getAll() : {}),
-      NODE_NO_WARNINGS: '1',
-    },
-    stdio: ['ignore', 'pipe', 'pipe'],
-    windowsHide: true,
-    shell: false,
-    ...options,
-  });
-
-  const record = {
-    process: child,
-    session,
-    command: argv.join(' '),
-    startedAt: new Date().toISOString(),
-    status: 'running',
-    exitCode: null,
-    signal: null,
-    endedAt: null,
-  };
-
-  JOBS.set(session, record);
-
-  const relay = (channel, chunk) => {
-    const text = String(chunk);
-    writeRunLog(session, text, channel);
-    safeSend(EVENTS.WORKFLOW_LOG, {
-      session,
-      channel,
-      text,
-      timestamp: new Date().toISOString(),
-    });
-  };
-
-  child.stdout?.on('data', (chunk) => relay('stdout', chunk));
-  child.stderr?.on('data', (chunk) => relay('stderr', chunk));
-  child.on('error', (error) => {
-    record.status = 'error';
-    record.exitCode = 1;
-    record.endedAt = new Date().toISOString();
-    safeSend(EVENTS.WORKFLOW_COMPLETE, {
-      session,
-      code: 1,
-      signal: null,
-      error: error.message,
-    });
-    JOBS.delete(session);
-  });
-
-  child.on('close', (code, signal) => {
-    if (!record.endedAt) {
-      record.status = code === 0 ? 'completed' : 'failed';
-      record.exitCode = code;
-      record.signal = signal;
-      record.endedAt = new Date().toISOString();
-    }
-
-    safeSend(EVENTS.WORKFLOW_COMPLETE, {
-      session,
-      code,
-      signal,
-    });
-    JOBS.delete(session);
-  });
-
-  return child;
-}
-
-function killProcess(session) {
-  const record = JOBS.get(session);
-  if (!record) {
-    return {stopped: false, reason: 'session-not-found'};
-  }
-
-  const child = record.process;
-  if (child.killed) {
-    JOBS.delete(session);
-    return {stopped: true, reason: null};
-  }
-
-  try {
-    child.kill('SIGINT');
-  } catch {
-    // ignore
-  }
-
-  const hardKill = () => {
-    if (!child.killed) {
-      try {
-        child.kill('SIGTERM');
-      } catch {
-        // ignore
-      }
-    }
-  };
-
-  setTimeout(() => {
-    hardKill();
-    setTimeout(() => {
-      if (!child.killed) {
-        try {
-          child.kill('SIGKILL');
-        } catch {
-          // ignore
-        }
-      }
-    }, 800);
-  }, 900);
-
-  return {stopped: true, reason: null};
-}
-
 function createWindow() {
   const bounds =
     (preferences?.windowBounds && {
@@ -706,8 +443,7 @@ function createWindow() {
   } else if (fs.existsSync(path.join(__dirname, 'dist-renderer', 'index.html'))) {
     window.loadFile(path.join(__dirname, 'dist-renderer', 'index.html'));
   } else {
-    // Fallback: legacy renderer
-    window.loadFile(path.join(__dirname, 'index.html'));
+    throw new Error('Desktop renderer is missing. Run `bun run desktop:build`.');
   }
 
   window.once('ready-to-show', () => window.show());
@@ -766,8 +502,6 @@ function getPreferenceSchemaDefaults() {
     version: PREFS_VERSION,
     windowBounds: DEFAULT_WINDOW_BOUNDS,
     lastWorkflowId: 'moments',
-    lastRawCommand: '',
-    runnerMode: 'form',
     lastExtraArgs: '',
     formDrafts: {},
   };
@@ -853,12 +587,28 @@ function installIpcHandlers() {
     assertTrustedSender(event);
     return {
       workflows: WORKFLOWS,
+      adapters: ADAPTERS,
       environment: runtimeEnvironment,
       detectedCommands: detectedCommands,
       commandMetadata: detectedCommandMetadata,
       validation: workflowValidation,
       generatedAt: runtimeDiagnostics?.updatedAt,
     };
+  });
+
+  ipcMain.handle(CHANNELS.LIST_JOBS, (event) => {
+    assertTrustedSender(event);
+    return listJobs();
+  });
+
+  ipcMain.handle(CHANNELS.JOB_STATUS, (event, id) => {
+    assertTrustedSender(event);
+    return listJobs().find((job) => job.id === id) ?? null;
+  });
+
+  ipcMain.handle(CHANNELS.JOB_LOGS, (event, {id, offsets} = {}) => {
+    assertTrustedSender(event);
+    return readJobLogs(id, offsets);
   });
 
   ipcMain.handle(CHANNELS.GET_PREFERENCES, (event) => {
@@ -930,10 +680,6 @@ function installIpcHandlers() {
     assertTrustedSender(event);
     const payload = validateRunRequest(rawPayload);
 
-    if (JOBS.size > 0) {
-      throw new Error('A workflow is already running. Stop it before starting another.');
-    }
-
     const workflow = WORKFLOWS.find((candidate) => candidate.id === payload.workflowId);
     if (!workflow) {
       throw new Error(`Unknown workflow: ${payload.workflowId}`);
@@ -944,67 +690,34 @@ function installIpcHandlers() {
       throw new Error(`Workflow '${payload.workflowId}' is missing command metadata.`);
     }
 
-    if (runtimeDiagnostics?.environment?.passed && runtimeDiagnostics?.commands?.length) {
-      if (
-        !runtimeDiagnostics.commands.includes(normalizedCommand) &&
-        normalizedCommand !== 'menu'
-      ) {
-        throw new Error(`CLI command not available right now: ${normalizedCommand}`);
-      }
-    }
-
     const argv = buildArgvFromInput(workflow.command, payload.argValues, payload.extraArgs);
-    const session = crypto.randomUUID();
-    runCommand(mainWindow, session, argv);
+    const adapterArgs = workflow.adapterId
+      ? [...parseArgString(payload.argValues?.args ?? ''), ...parseArgString(payload.extraArgs)]
+      : argv.slice(2);
+    const selectedAdapter = ADAPTERS.find(
+      (entry) => entry.id === (workflow.adapterId ?? 'workflow'),
+    );
+    const job = submitJob({
+      adapter: workflow.adapterId ?? 'workflow',
+      action: workflow.actionId ?? 'run',
+      input: workflow.adapterId
+        ? {args: adapterArgs}
+        : {workflow: normalizedCommand, args: adapterArgs},
+      capabilityFingerprint: selectedAdapter?.capabilityFingerprint,
+    });
     writePreferences({lastWorkflowId: workflow.id});
     return {
-      session,
-      command: `node ${argv.join(' ')}`,
-      startedAt: new Date().toISOString(),
-    };
-  });
-
-  ipcMain.handle(CHANNELS.RUN_RAW_COMMAND, async (event, payload = {}) => {
-    assertTrustedSender(event);
-
-    if (JOBS.size > 0) {
-      throw new Error('A workflow is already running. Stop it before starting another.');
-    }
-
-    const command = normalizeLine(payload.command ?? '');
-    if (!command) {
-      throw new Error('No command provided.');
-    }
-
-    const argv = [getCliEntry(), ...sanitizeRawTokens(command)];
-    if (argv.length <= 1) {
-      throw new Error('No command was detected after sanitizing input.');
-    }
-    if (!argv[1] || argv[1].startsWith('-')) {
-      throw new Error('Raw command must start with a CLI command name.');
-    }
-
-    // Raw commands may only target commands that exist in the CLI catalog —
-    // anything else is rejected rather than passed to a shell.
-    const allowedCommands = getAllowedCommandNames();
-    if (!allowedCommands.has(argv[1])) {
-      throw new Error(`Command not available in the desktop app: ${argv[1]}`);
-    }
-
-    const session = crypto.randomUUID();
-    runCommand(mainWindow, session, argv);
-    writePreferences({lastRawCommand: command});
-    return {
-      session,
-      command: `node ${argv.join(' ')}`,
-      startedAt: new Date().toISOString(),
+      session: job.id,
+      command: `clipcaptionai workflow run ${normalizedCommand}`,
+      startedAt: job.createdAt,
     };
   });
 
   ipcMain.handle(CHANNELS.STOP_WORKFLOW, (event, session) => {
     assertTrustedSender(event);
-    const target = session || [...JOBS.keys()][0];
-    return killProcess(target);
+    if (!session) return {stopped: false, reason: 'session-required'};
+    cancelJob(session);
+    return {stopped: true, reason: null};
   });
 
   // ── Secrets management ──────────────────────────────────────
@@ -1017,7 +730,7 @@ function installIpcHandlers() {
     assertTrustedSender(event);
     // Only known env keys may be stored — anything else would be injected
     // into every spawned CLI process and is an arbitrary-code-execution path.
-    validateSecretKey(key);
+    validateSecretKey(key, CATALOG_SECRET_KEYS);
     if (secretVault) {
       secretVault.set(key, value);
     }
@@ -1027,7 +740,7 @@ function installIpcHandlers() {
 
   ipcMain.handle(CHANNELS.CLEAR_SECRET, (event, {key} = {}) => {
     assertTrustedSender(event);
-    validateSecretKey(key);
+    validateSecretKey(key, CATALOG_SECRET_KEYS);
     if (secretVault) {
       secretVault.clear(key);
     }
@@ -1180,7 +893,7 @@ function installIpcHandlers() {
   ipcHandlersInstalled = true;
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // A second instance lost the single-instance lock — exit before
   // creating windows or spawning anything.
   if (!gotSingleInstance) {
@@ -1211,9 +924,11 @@ app.whenReady().then(() => {
   runtimeDiagnostics = null;
 
   writeRunLog('startup', `Starting ${APP_NAME}`, 'system');
-  updateEnvironmentDiagnostics();
+  await updateEnvironmentDiagnostics();
   mainWindow = createWindow();
   installIpcHandlers();
+  pollBrokerJobs();
+  setInterval(pollBrokerJobs, 500).unref();
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -1237,11 +952,5 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     mainWindow = createWindow();
     installIpcHandlers();
-  }
-});
-
-app.on('before-quit', () => {
-  for (const session of JOBS.keys()) {
-    killProcess(session);
   }
 });

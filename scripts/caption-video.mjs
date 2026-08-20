@@ -17,7 +17,7 @@ import {timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
-  npm run caption:auto -- --video /path/to/video.mp4
+  bun run caption:auto -- --video /path/to/video.mp4
 
 Options:
   --video FILE              Video to caption.
@@ -80,7 +80,7 @@ if (args.captions) {
     transcribeArgs.push('--prompt', transcriptionPrompt);
   }
 
-  run('npm', transcribeArgs);
+  run('bun', transcribeArgs);
 }
 
 if (!args['no-render']) {
@@ -125,7 +125,7 @@ if (!args['no-render']) {
     renderArgs.push('--vertical-contain');
   }
 
-  run('npm', renderArgs);
+  run('bun', renderArgs);
 }
 
 const manifest = {

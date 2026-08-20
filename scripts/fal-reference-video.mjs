@@ -11,7 +11,7 @@ const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
 const usage = `
 Usage:
-  npm run fal:reference-video -- --image approved-product.jpg --prompt "Slow orbit around the exact supplied item; preserve labels, finish, and included accessories" --approved-for-generated-marketing
+  bun run fal:reference-video -- --image approved-product.jpg --prompt "Slow orbit around the exact supplied item; preserve labels, finish, and included accessories" --approved-for-generated-marketing
 
 Options:
   --image FILE_OR_HTTPS_URL  One to three approved reference images. Repeat for each image.

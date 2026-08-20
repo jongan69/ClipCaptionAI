@@ -77,7 +77,7 @@ jobs:
           bun pm pack --dry-run >/dev/null
           bun pm pack --destination .pack >/dev/null
           tar -tzf .pack/clipcaptionai-*.tgz > pack-report.txt
-          node - <<'EOF'
+          bun - <<'EOF'
           const files = require('node:fs').readFileSync('pack-report.txt', 'utf8').trim().split('\n');
           const required = ['scripts/ebay/', 'scripts/logo/', 'bin/clipcaptionai.js', 'docs/WORKFLOWS.md'];
           const missing = required.filter((p) => !files.some((f) => f.includes(p)));

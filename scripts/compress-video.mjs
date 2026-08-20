@@ -3,9 +3,9 @@
  * compress-video.mjs — Compress a video with minimal quality loss using CRF encoding.
  *
  * Usage:
- *   npm run compress:video -- --video "/path/to/video.mp4"
- *   npm run compress:video -- --video in.mp4 --quality high --codec h265
- *   npm run compress:video -- --video in.mp4 --quality medium --scale 1920 --audio-bitrate 128k
+ *   bun run compress:video -- --video "/path/to/video.mp4"
+ *   bun run compress:video -- --video in.mp4 --quality high --codec h265
+ *   bun run compress:video -- --video in.mp4 --quality medium --scale 1920 --audio-bitrate 128k
  */
 
 import {execFileSync} from 'node:child_process';
@@ -67,7 +67,7 @@ const COMPRESS_OUT_DIR = path.join(outputsRoot, 'compress');
 const usage = `compress:video — Compress a video with minimal quality loss.
 
 Usage:
-  npm run compress:video -- --video <path> [options]
+  bun run compress:video -- --video <path> [options]
 
 Required:
   --video <path>       Input video file to compress

@@ -10,8 +10,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/rerun-competitive-research-packet.mjs --packet-dir outputs/.../competitive-creative-packets/<item> --competitors kalodata-export.csv
-  npm run ebay:competitive-research-rerun -- --packet-dir outputs/.../<item> --competitors automatio-export.csv
+  bun scripts/rerun-competitive-research-packet.mjs --packet-dir outputs/.../competitive-creative-packets/<item> --competitors kalodata-export.csv
+  bun run ebay:competitive-research-rerun -- --packet-dir outputs/.../<item> --competitors automatio-export.csv
 
 Options:
   --packet-dir DIR          Creative packet folder from ebay:competitive-packets.

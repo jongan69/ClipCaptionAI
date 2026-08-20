@@ -6,7 +6,7 @@ import {ensureDir, parseArgs, projectRoot, slugify as canonicalSlugify} from './
 
 const usage = `
 Usage:
-  npm run sfx:standardize -- [options]
+  bun run sfx:standardize -- [options]
 
 Options:
   --dir DIR       SFX library folder. Default: ./sfx-library

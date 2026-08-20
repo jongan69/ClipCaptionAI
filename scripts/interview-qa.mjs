@@ -6,7 +6,7 @@
  * questions, and answers — slicing the interview into discrete Q&A clips.
  *
  * Usage:
- *   node scripts/interview-qa.mjs --video video.mp4 [--captions captions.json]
+ *   bun scripts/interview-qa.mjs --video video.mp4 [--captions captions.json]
  *
  * Output: Writes outputs/interview-qa/<slug>.qa-segments.json
  */
@@ -21,12 +21,18 @@ import {
   requireArg,
 } from './lib.mjs';
 import {slugify} from './clipkit-lib.mjs';
-import {resolveProvider, createClient, resolveModel, chatCompletion} from './ai-provider.mjs';
+import {
+  resolveProvider,
+  prepareProvider,
+  createClient,
+  resolveModel,
+  chatCompletion,
+} from './ai-provider.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 
 const usage = `
-Usage: node scripts/interview-qa.mjs --video <path> [options]
+Usage: bun scripts/interview-qa.mjs --video <path> [options]
 
 Options:
   --video <path>          Input video file (required)
@@ -205,7 +211,7 @@ async function runInterviewQA(options = {}, context = {}) {
   if (!transcriptSource) {
     throw new Error(
       'No captions found. Transcribe the video first:\n' +
-        `  node scripts/transcribe-openai.mjs --video "${videoPath}"`,
+        `  bun scripts/transcribe-openai.mjs --video "${videoPath}"`,
     );
   }
 
@@ -219,7 +225,7 @@ async function runInterviewQA(options = {}, context = {}) {
   }
 
   // Run AI analysis
-  const resolved = resolveProvider({provider: args.provider});
+  const resolved = await prepareProvider(resolveProvider({provider: args.provider}));
   if (!resolved.config) {
     // No AI provider available — generate time-based splits
     console.log('No AI provider available. Using time-based splits.');

@@ -9,8 +9,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/export-competitive-render-handoff.mjs --premium-plan outputs/.../competitive-premium-render-plan.json
-  npm run ebay:competitive-handoff -- --premium-plan outputs/.../competitive-premium-render-plan.json
+  bun scripts/export-competitive-render-handoff.mjs --premium-plan outputs/.../competitive-premium-render-plan.json
+  bun run ebay:competitive-handoff -- --premium-plan outputs/.../competitive-premium-render-plan.json
 
 Options:
   --premium-plan FILE   Premium render plan from ebay:prep-premium-renders.
@@ -134,8 +134,8 @@ const markdownForHandoff = ({plan, jobs, paths}) => {
     'Render each job as a product-preserving vertical MP4 and save it to its `output_hint` path. After that, run:',
     '',
     '```bash',
-    `npm run ebay:collect-premium-renders -- --premium-plan ${shellQuote(paths.premiumPlan)} --url-map ${shellQuote(paths.urlMapTemplate)}`,
-    `npm run ebay:competitive-loop -- --preview-manifest ${shellQuote(plan.preview_manifest)} --credit-budget ${plan.credit_budget ?? 45} --max-jobs-per-listing ${plan.max_jobs_per_listing ?? 1}`,
+    `bun run ebay:collect-premium-renders -- --premium-plan ${shellQuote(paths.premiumPlan)} --url-map ${shellQuote(paths.urlMapTemplate)}`,
+    `bun run ebay:competitive-loop -- --preview-manifest ${shellQuote(plan.preview_manifest)} --credit-budget ${plan.credit_budget ?? 45} --max-jobs-per-listing ${plan.max_jobs_per_listing ?? 1}`,
     '```',
     '',
     'If Higgsfield gives direct URLs instead of local files, fill `render-url-map.template.json` with those URLs and rerun the collector command.',

@@ -10,8 +10,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/optimize-ebay-traffic-report.mjs --traffic-report /path/to/eBay-ListingsTrafficReport.csv
-  npm run ebay:traffic-optimize -- --traffic-report /path/to/eBay-ListingsTrafficReport.csv --max-listings 12
+  bun scripts/optimize-ebay-traffic-report.mjs --traffic-report /path/to/eBay-ListingsTrafficReport.csv
+  bun run ebay:traffic-optimize -- --traffic-report /path/to/eBay-ListingsTrafficReport.csv --max-listings 12
 
 Options:
   --traffic-report FILE      eBay Listings Traffic Report CSV.
@@ -429,7 +429,7 @@ const main = async () => {
       '## Next Commands',
       '',
       '```bash',
-      `npm run ebay:cinematic-ads -- competitive-plan --dashboard-file "${dashboardPath}" --only-item-ids "$(cat "${itemIdsPath}")" --min-price 0 --max-listings ${Math.min(5, immediate.length)} --credit-budget 40 --credits-per-shot 10 --max-higgs-shots 4 --run-control-loop --control-loop-dry-run --run-higgsfield-renders --higgs-render-dry-run --higgs-render-skip-cost`,
+      `bun run ebay:cinematic-ads -- competitive-plan --dashboard-file "${dashboardPath}" --only-item-ids "$(cat "${itemIdsPath}")" --min-price 0 --max-listings ${Math.min(5, immediate.length)} --credit-budget 40 --credits-per-shot 10 --max-higgs-shots 4 --run-control-loop --control-loop-dry-run --run-higgsfield-renders --higgs-render-dry-run --higgs-render-skip-cost`,
       '```',
       '',
     ].join('\n')}\n`,

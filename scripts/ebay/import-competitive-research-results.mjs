@@ -9,8 +9,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/import-competitive-research-results.mjs --queue outputs/.../competitive-research-queue.json --results automatio-results.csv
-  npm run ebay:competitive-research-import -- --queue outputs/.../competitive-research-queue.json --results automatio-results.csv
+  bun scripts/import-competitive-research-results.mjs --queue outputs/.../competitive-research-queue.json --results automatio-results.csv
+  bun run ebay:competitive-research-import -- --queue outputs/.../competitive-research-queue.json --results automatio-results.csv
 
 Options:
   --queue FILE       Queue from ebay:competitive-research-queue.
@@ -389,7 +389,7 @@ const main = async () => {
     skipped_rows: skipped.length,
     writes,
     skipped,
-    next_command: `npm run ebay:competitive-research-process -- --queue "${queuePath}" --dry-run`,
+    next_command: `bun run ebay:competitive-research-process -- --queue "${queuePath}" --dry-run`,
   };
 
   const manifestPath = path.join(outDir, 'competitive-research-import-manifest.json');

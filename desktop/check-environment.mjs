@@ -14,7 +14,7 @@ const requiredFiles = [
 ];
 
 const requiredCommands = [
-  {name: 'node', label: 'Node.js'},
+  {name: 'bun', label: 'Bun'},
   {name: 'ffmpeg', label: 'ffmpeg'},
   {name: 'ffprobe', label: 'ffprobe'},
 ];
@@ -32,7 +32,7 @@ const run = () => {
     missingOptional: [],
     missingFiles: [],
     projectRoot,
-    node: process.version,
+    runtime: `Bun ${process.versions.bun ?? 'required'}`,
   };
 
   for (const item of requiredCommands) {
@@ -66,7 +66,7 @@ const run = () => {
 
   try {
     const commandCheck = spawnSync(
-      'node',
+      'bun',
       [path.join(projectRoot, 'bin', 'clipcaptionai.js'), '--help'],
       {
         cwd: projectRoot,

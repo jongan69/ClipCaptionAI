@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {resolveProvider, createClient, resolveModel} from './ai-provider.mjs';
+import {resolveProvider, prepareProvider, createClient, resolveModel} from './ai-provider.mjs';
 import {
   ensureDir,
   loadEnv,
@@ -27,7 +27,7 @@ import {
 
 const usage = `
 Usage:
-  npm run scene:mix -- --video clip.mp4 --captions clip.captions.json --out clip.scene-mix.mp4 [options]
+  bun run scene:mix -- --video clip.mp4 --captions clip.captions.json --out clip.scene-mix.mp4 [options]
 
 Options:
   --style-config FILE       Caption style JSON. Reads contextScenes from here by default.
@@ -1148,7 +1148,7 @@ const transcriptChunks =
   readEnhancedTranscriptChunks(captionsPath) ??
   buildTranscriptChunks(captions, config.transcriptChunkWords);
 
-const resolved = resolveProvider();
+const resolved = await prepareProvider(resolveProvider());
 const client = createClient(resolved);
 const planningModel = resolveModel({
   resolved,

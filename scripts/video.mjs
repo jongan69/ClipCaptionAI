@@ -186,7 +186,7 @@ const render = () => {
       `--public-dir=${path.dirname(publicMediaRoot)}`,
     ];
     if (!manifest.audio) renderArgs.push('--muted');
-    run('npx', renderArgs, {
+    run('bunx', renderArgs, {
       stdio: json ? ['ignore', 'ignore', 'inherit'] : 'inherit',
     });
   } finally {

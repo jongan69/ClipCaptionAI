@@ -10,8 +10,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/export-competitive-creative-packets.mjs --status outputs/.../competitive-video-pipeline-status.json
-  npm run ebay:competitive-packets -- --status outputs/.../competitive-video-pipeline-status.json
+  bun scripts/export-competitive-creative-packets.mjs --status outputs/.../competitive-video-pipeline-status.json
+  bun run ebay:competitive-packets -- --status outputs/.../competitive-video-pipeline-status.json
 
 Options:
   --status FILE        Pipeline status JSON from ebay:competitive-status.
@@ -137,7 +137,7 @@ const writeResearchBrief = ({item, blueprint, packetDir}) => {
     research_source_note: researchSourceNote,
     source_prompt: sourcePrompt && fs.existsSync(sourcePrompt) ? sourcePrompt : null,
     competitor_import_template: templatePath,
-    rerun_command: `npm run ebay:creative-intel -- plan --project-dir "${item.project_dir ?? '<listing project>'}" --competitors "<export.csv>"`,
+    rerun_command: `bun run ebay:creative-intel -- plan --project-dir "${item.project_dir ?? '<listing project>'}" --competitors "<export.csv>"`,
   };
   writeJson(path.join(researchDir, 'research-brief.json'), brief);
   fs.writeFileSync(
