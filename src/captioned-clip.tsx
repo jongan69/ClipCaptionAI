@@ -338,21 +338,22 @@ const captionMotionStyle = (style: CaptionStyle, progress: number) => {
   };
 };
 
-const getActivePage = (
+// Caption anti-flicker windows: pages and tokens linger past their end
+// timestamps so fast cuts don't blink. Deliberate magic numbers — if a
+// timing edit changes them, expect visual flicker at caption boundaries.
+const PAGE_OVERLAP_MS = 80;
+const TOKEN_OVERLAP_MS = 90;
+
+// Page segmentation is time-independent: build it once per captions input
+// and only pick the active page per frame.
+const buildCaptionPages = (
   captions: Caption[],
-  currentMs: number,
   combineTokensWithinMilliseconds: number,
-) => {
-  const {pages} = createTikTokStyleCaptions({
+) =>
+  createTikTokStyleCaptions({
     captions,
     combineTokensWithinMilliseconds,
-  });
-
-  return pages.find((page) => {
-    const endMs = page.startMs + page.durationMs;
-    return currentMs >= page.startMs && currentMs <= endMs + 80;
-  });
-};
+  }).pages;
 
 type HorizontalAlign = 'left' | 'center' | 'right';
 
@@ -628,15 +629,19 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
     [style.highlightedWords],
   );
 
-  const page = useMemo(
-    () =>
-      getActivePage(
-        captions,
-        currentMs,
-        style.combineTokensWithinMilliseconds,
-      ),
-    [captions, currentMs, style.combineTokensWithinMilliseconds],
+  const captionPages = useMemo(
+    () => buildCaptionPages(captions, style.combineTokensWithinMilliseconds),
+    [captions, style.combineTokensWithinMilliseconds],
   );
+
+  const page = useMemo(() => {
+    return (
+      captionPages.find((candidate) => {
+        const endMs = candidate.startMs + candidate.durationMs;
+        return currentMs >= candidate.startMs && currentMs <= endMs + PAGE_OVERLAP_MS;
+      }) ?? null
+    );
+  }, [captionPages, currentMs]);
 
   const activeTokenIndex = useMemo(() => {
     if (!page) {
@@ -644,7 +649,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
     }
 
     const current = page.tokens.findIndex(
-      (token) => currentMs >= token.fromMs && currentMs <= token.toMs + 90,
+      (token) => currentMs >= token.fromMs && currentMs <= token.toMs + TOKEN_OVERLAP_MS,
     );
 
     if (current !== -1) {
@@ -693,10 +698,15 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
     page && page.durationMs > 0
       ? clampProgress((currentMs - page.startMs) / page.durationMs)
       : 0;
-  const containerPositionStyle = {
-    ...positionStyle(style.position),
-    ...(style.customPosition ?? {}),
-  };
+  // Stable identity: this object feeds the layout memo, so it must not be
+  // recreated per frame (that would defeat memoization every frame).
+  const containerPositionStyle = useMemo(
+    () => ({
+      ...positionStyle(style.position),
+      ...(style.customPosition ?? {}),
+    }),
+    [style.position, style.customPosition],
+  );
   const motionValues = useMemo(() => {
     const keyframes = sortedMotionKeyframes(style);
     return {

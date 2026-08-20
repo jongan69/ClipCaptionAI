@@ -42,13 +42,13 @@ export const PromptVideo = ({shots, audio}: PromptVideoProps) => {
   return (
     <AbsoluteFill style={{backgroundColor: '#101114', color: '#fff', fontFamily: 'Arial, sans-serif'}}>
       {audioSource ? <Audio src={audioSource} /> : null}
-      {shots.map((shot) => {
+      {shots.map((shot, index) => {
         const from = startFrame;
         const durationInFrames = Math.max(1, Math.round(shot.durationSeconds * fps));
         startFrame += durationInFrames;
         return (
           <Sequence key={shot.id} from={from} durationInFrames={durationInFrames}>
-            <ShotFrame shot={shot} index={shots.indexOf(shot)} width={width} height={height} durationInFrames={durationInFrames} />
+            <ShotFrame shot={shot} index={index} totalShots={shots.length} width={width} height={height} durationInFrames={durationInFrames} />
           </Sequence>
         );
       })}
@@ -56,7 +56,7 @@ export const PromptVideo = ({shots, audio}: PromptVideoProps) => {
   );
 };
 
-const ShotFrame = ({shot, index, width, height, durationInFrames}: {shot: Shot; index: number; width: number; height: number; durationInFrames: number}) => {
+const ShotFrame = ({shot, index, totalShots, width, height, durationInFrames}: {shot: Shot; index: number; totalShots: number; width: number; height: number; durationInFrames: number}) => {
   const frame = useCurrentFrame();
   const scale = interpolate(frame, [0, durationInFrames], [1.04, 1], {extrapolateRight: 'clamp'});
   const assetSource = shot.asset && !/^https?:\/\//.test(shot.asset) ? staticFile(shot.asset) : shot.asset;
@@ -81,7 +81,7 @@ const ShotFrame = ({shot, index, width, height, durationInFrames}: {shot: Shot; 
       <div style={{position: 'relative', padding: Math.round(width * 0.07), maxWidth: '90%', textAlign: 'center', fontSize: Math.max(48, Math.round(width * 0.07)), fontWeight: 850, lineHeight: 1.06, color: '#fff', textShadow: '0 4px 18px rgba(0,0,0,.5)'}}>
         {shot.prompt}
       </div>
-      <div style={{position: 'absolute', bottom: Math.round(height * 0.08), left: Math.round(width * 0.07), right: Math.round(width * 0.07), height: 8, background: 'rgba(255,255,255,.32)', borderRadius: 8}}><div style={{height: '100%', width: `${Math.max(12, ((index + 1) / 6) * 100)}%`, background: '#fff', borderRadius: 8}} /></div>
+      <div style={{position: 'absolute', bottom: Math.round(height * 0.08), left: Math.round(width * 0.07), right: Math.round(width * 0.07), height: 8, background: 'rgba(255,255,255,.32)', borderRadius: 8}}><div style={{height: '100%', width: `${Math.max(12, ((index + 1) / totalShots) * 100)}%`, background: '#fff', borderRadius: 8}} /></div>
     </AbsoluteFill>
   );
 };
