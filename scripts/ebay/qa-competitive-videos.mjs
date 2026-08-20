@@ -103,7 +103,9 @@ const probeVideo = (file) => {
 };
 
 const fpsFromRate = (rate) => {
-  const [num, den] = String(rate ?? '').split('/').map(Number);
+  const [num, den] = String(rate ?? '')
+    .split('/')
+    .map(Number);
   if (!num || !den) return 0;
   return Number((num / den).toFixed(3));
 };
@@ -122,12 +124,15 @@ const measureBlack = (file) => {
   ]);
   return {
     black_seconds: secondsSumFromMatches(log, /black_duration:(?<duration>[0-9.]+)/g),
-    events: [...log.matchAll(/black_start:(?<start>[0-9.]+)\s+black_end:(?<end>[0-9.]+)\s+black_duration:(?<duration>[0-9.]+)/g)]
-      .map((match) => ({
-        start_seconds: numberValue(match.groups?.start, 0),
-        end_seconds: numberValue(match.groups?.end, 0),
-        duration_seconds: numberValue(match.groups?.duration, 0),
-      })),
+    events: [
+      ...log.matchAll(
+        /black_start:(?<start>[0-9.]+)\s+black_end:(?<end>[0-9.]+)\s+black_duration:(?<duration>[0-9.]+)/g,
+      ),
+    ].map((match) => ({
+      start_seconds: numberValue(match.groups?.start, 0),
+      end_seconds: numberValue(match.groups?.end, 0),
+      duration_seconds: numberValue(match.groups?.duration, 0),
+    })),
   };
 };
 
@@ -252,10 +257,16 @@ const qaVideo = ({file, itemId, title}) => {
 
   if (!probe.has_video) issues.push('Missing video stream.');
   if (!probe.has_audio) issues.push('Missing audio stream.');
-  if (probe.width < 720 || probe.height < 1280) issues.push(`Resolution too low for premium vertical listing video: ${probe.width}x${probe.height}.`);
-  if (probe.height <= probe.width) issues.push(`Video is not vertical: ${probe.width}x${probe.height}.`);
-  if (probe.duration_seconds < 6) issues.push(`Video is too short: ${probe.duration_seconds.toFixed(2)}s.`);
-  if (probe.duration_seconds > 60) warnings.push(`Video is long for a fast listing ad: ${probe.duration_seconds.toFixed(2)}s.`);
+  if (probe.width < 720 || probe.height < 1280)
+    issues.push(
+      `Resolution too low for premium vertical listing video: ${probe.width}x${probe.height}.`,
+    );
+  if (probe.height <= probe.width)
+    issues.push(`Video is not vertical: ${probe.width}x${probe.height}.`);
+  if (probe.duration_seconds < 6)
+    issues.push(`Video is too short: ${probe.duration_seconds.toFixed(2)}s.`);
+  if (probe.duration_seconds > 60)
+    warnings.push(`Video is long for a fast listing ad: ${probe.duration_seconds.toFixed(2)}s.`);
   if (probe.fps > 0 && probe.fps < 24) warnings.push(`Frame rate is low: ${probe.fps}fps.`);
 
   if (black.black_seconds > Math.max(0.75, probe.duration_seconds * 0.12)) {
@@ -328,15 +339,18 @@ const entriesFromStatus = (file) => {
 
 const inputEntries = () => {
   if (args.video) {
-    return [{
-      itemId: args['item-id'] ? String(args['item-id']) : basenameNoExt(String(args.video)),
-      title: args.title ? String(args.title) : null,
-      file: path.resolve(String(args.video)),
-      source: null,
-    }];
+    return [
+      {
+        itemId: args['item-id'] ? String(args['item-id']) : basenameNoExt(String(args.video)),
+        title: args.title ? String(args.title) : null,
+        file: path.resolve(String(args.video)),
+        source: null,
+      },
+    ];
   }
   if (args.status) return entriesFromStatus(path.resolve(String(args.status)));
-  if (args['preview-manifest']) return entriesFromPreviewManifest(path.resolve(String(args['preview-manifest'])));
+  if (args['preview-manifest'])
+    return entriesFromPreviewManifest(path.resolve(String(args['preview-manifest'])));
   throw new Error(`Missing --status, --preview-manifest, or --video.\n${usage}`);
 };
 
@@ -346,80 +360,94 @@ const defaultOutBase = () => {
   return path.join(path.dirname(path.resolve(String(source))), 'competitive-video-qa-report.json');
 };
 
-const markdownForReport = (report) => [
-  '# Competitive Video QA Report',
-  '',
-  `Items: ${report.summary.items}`,
-  `Passed: ${report.summary.pass}`,
-  `Warn: ${report.summary.warn}`,
-  `Failed: ${report.summary.fail}`,
-  `Average score: ${report.summary.average_score}`,
-  '',
-  '| Item | Status | Score | Duration | Resolution | Audio | Scene Changes | Issues / Warnings |',
-  '| --- | --- | ---: | ---: | --- | --- | ---: | --- |',
-  ...report.items.map((item) => [
-    item.item_id,
-    item.status,
-    item.score,
-    item.probe?.duration_seconds ? `${item.probe.duration_seconds.toFixed(2)}s` : '',
-    item.probe ? `${item.probe.width}x${item.probe.height}` : '',
-    item.probe?.has_audio ? `${item.audio?.mean_volume_db ?? 'n/a'} dB mean` : 'missing',
-    item.scenes?.scene_change_count ?? '',
-    [...(item.issues ?? []), ...(item.warnings ?? [])].join('; ') || 'OK',
-  ].map((cell) => String(cell).replace(/\|/g, '/')).join(' | ')).map((row) => `| ${row} |`),
-  '',
-  '## Gate Meaning',
-  '',
-  '- `pass`: meets the baseline for a listing-safe vertical video.',
-  '- `warn`: usable for review, but fix before uploading if the warning affects buyer trust or energy.',
-  '- `fail`: do not upload; regenerate or repair first.',
-  '',
-].join('\n');
+const markdownForReport = (report) =>
+  [
+    '# Competitive Video QA Report',
+    '',
+    `Items: ${report.summary.items}`,
+    `Passed: ${report.summary.pass}`,
+    `Warn: ${report.summary.warn}`,
+    `Failed: ${report.summary.fail}`,
+    `Average score: ${report.summary.average_score}`,
+    '',
+    '| Item | Status | Score | Duration | Resolution | Audio | Scene Changes | Issues / Warnings |',
+    '| --- | --- | ---: | ---: | --- | --- | ---: | --- |',
+    ...report.items
+      .map((item) =>
+        [
+          item.item_id,
+          item.status,
+          item.score,
+          item.probe?.duration_seconds ? `${item.probe.duration_seconds.toFixed(2)}s` : '',
+          item.probe ? `${item.probe.width}x${item.probe.height}` : '',
+          item.probe?.has_audio ? `${item.audio?.mean_volume_db ?? 'n/a'} dB mean` : 'missing',
+          item.scenes?.scene_change_count ?? '',
+          [...(item.issues ?? []), ...(item.warnings ?? [])].join('; ') || 'OK',
+        ]
+          .map((cell) => String(cell).replace(/\|/g, '/'))
+          .join(' | '),
+      )
+      .map((row) => `| ${row} |`),
+    '',
+    '## Gate Meaning',
+    '',
+    '- `pass`: meets the baseline for a listing-safe vertical video.',
+    '- `warn`: usable for review, but fix before uploading if the warning affects buyer trust or energy.',
+    '- `fail`: do not upload; regenerate or repair first.',
+    '',
+  ].join('\n');
 
-const entries = inputEntries();
-const items = entries.map((entry) => qaVideo(entry));
-const summary = {
-  items: items.length,
-  pass: items.filter((item) => item.status === 'pass').length,
-  warn: items.filter((item) => item.status === 'warn').length,
-  fail: items.filter((item) => item.status === 'fail').length,
-  average_score: items.length
-    ? Number((items.reduce((sum, item) => sum + item.score, 0) / items.length).toFixed(1))
-    : 0,
+const main = async () => {
+  const entries = inputEntries();
+  const items = entries.map((entry) => qaVideo(entry));
+  const summary = {
+    items: items.length,
+    pass: items.filter((item) => item.status === 'pass').length,
+    warn: items.filter((item) => item.status === 'warn').length,
+    fail: items.filter((item) => item.status === 'fail').length,
+    average_score: items.length
+      ? Number((items.reduce((sum, item) => sum + item.score, 0) / items.length).toFixed(1))
+      : 0,
+  };
+
+  const outFile = defaultOutBase();
+  const markdownFile = path.resolve(
+    String(args.markdown ?? path.join(path.dirname(outFile), 'competitive-video-qa-report.md')),
+  );
+  ensureDir(path.dirname(outFile));
+  ensureDir(path.dirname(markdownFile));
+
+  const report = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
+    source: args.status
+      ? path.resolve(String(args.status))
+      : args['preview-manifest']
+        ? path.resolve(String(args['preview-manifest']))
+        : args.video
+          ? path.resolve(String(args.video))
+          : null,
+    summary,
+    items,
+  };
+
+  fs.writeFileSync(outFile, `${JSON.stringify(report, null, 2)}\n`);
+  fs.writeFileSync(markdownFile, `${markdownForReport(report)}\n`);
+
+  console.log(`Competitive video QA report: ${outFile}`);
+  console.log(`Markdown report: ${markdownFile}`);
+  console.log(`Items: ${summary.items}`);
+  console.log(`Passed: ${summary.pass}`);
+  console.log(`Warn: ${summary.warn}`);
+  console.log(`Failed: ${summary.fail}`);
+  console.log(`Average score: ${summary.average_score}`);
+
+  if (args.strict && summary.fail > 0) {
+    process.exit(1);
+  }
 };
 
-const outFile = defaultOutBase();
-const markdownFile = path.resolve(String(
-  args.markdown ?? path.join(path.dirname(outFile), 'competitive-video-qa-report.md'),
-));
-ensureDir(path.dirname(outFile));
-ensureDir(path.dirname(markdownFile));
-
-const report = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  source: args.status
-    ? path.resolve(String(args.status))
-    : args['preview-manifest']
-      ? path.resolve(String(args['preview-manifest']))
-      : args.video
-        ? path.resolve(String(args.video))
-        : null,
-  summary,
-  items,
-};
-
-fs.writeFileSync(outFile, `${JSON.stringify(report, null, 2)}\n`);
-fs.writeFileSync(markdownFile, `${markdownForReport(report)}\n`);
-
-console.log(`Competitive video QA report: ${outFile}`);
-console.log(`Markdown report: ${markdownFile}`);
-console.log(`Items: ${summary.items}`);
-console.log(`Passed: ${summary.pass}`);
-console.log(`Warn: ${summary.warn}`);
-console.log(`Failed: ${summary.fail}`);
-console.log(`Average score: ${summary.average_score}`);
-
-if (args.strict && summary.fail > 0) {
+main().catch((err) => {
+  console.error(err?.message || err);
   process.exit(1);
-}
+});

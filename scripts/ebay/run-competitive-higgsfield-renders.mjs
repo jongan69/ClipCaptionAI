@@ -55,7 +55,12 @@ const writeJson = (file, value) => {
 };
 
 const idSet = (value) =>
-  new Set(String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean));
+  new Set(
+    String(value ?? '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
 
 const numberValue = (value, fallback = 0) => {
   const number = Number(value);
@@ -89,11 +94,15 @@ const completedJobFromFile = (file) => {
 };
 
 const runHiggs = (commandArgs) => {
-  const result = spawnSync('npm', ['exec', '--yes', '--package=@higgsfield/cli', '--', 'higgs', ...commandArgs], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-    maxBuffer: 1024 * 1024 * 20,
-  });
+  const result = spawnSync(
+    'npm',
+    ['exec', '--yes', '--package=@higgsfield/cli', '--', 'higgs', ...commandArgs],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+      maxBuffer: 1024 * 1024 * 20,
+    },
+  );
   return {
     ok: result.status === 0,
     status: result.status,
@@ -128,9 +137,9 @@ const flattenJobs = (plan) => {
 const effectiveModelForJob = ({job, account}) => {
   if (args.model) return String(args.model);
   if (
-    args['no-starter-fallback'] !== true
-    && String(account?.subscription_plan_type ?? '').toLowerCase() === 'starter'
-    && job.model === 'seedance_2_0'
+    args['no-starter-fallback'] !== true &&
+    String(account?.subscription_plan_type ?? '').toLowerCase() === 'starter' &&
+    job.model === 'seedance_2_0'
   ) {
     return String(args['starter-fallback-model'] ?? 'seedance_2_0_mini');
   }
@@ -153,7 +162,13 @@ const higgsArgsForJob = ({job, model, command}) => {
   commandArgs.push('--generate_audio', 'false');
   for (const image of job.reference_images ?? []) commandArgs.push('--image-references', image);
   if (command === 'create') {
-    commandArgs.push('--wait', '--wait-timeout', String(args['wait-timeout'] ?? '20m'), '--wait-interval', String(args['wait-interval'] ?? '5s'));
+    commandArgs.push(
+      '--wait',
+      '--wait-timeout',
+      String(args['wait-timeout'] ?? '20m'),
+      '--wait-interval',
+      String(args['wait-interval'] ?? '5s'),
+    );
   }
   commandArgs.push('--json');
   return commandArgs;
@@ -164,155 +179,185 @@ const resultUrlFromParsed = (parsed) => {
   return job?.result_url ?? null;
 };
 
-const premiumPlanPath = path.resolve(requireArg('premium-plan'));
-if (!fs.existsSync(premiumPlanPath)) throw new Error(`Premium plan not found: ${premiumPlanPath}`);
-const plan = readJson(premiumPlanPath);
-const outDir = path.resolve(String(args['out-dir'] ?? path.join(path.dirname(premiumPlanPath), 'competitive-higgsfield-render-run')));
-const outManifest = path.resolve(String(args['out-manifest'] ?? path.join(outDir, 'competitive-higgsfield-render-manifest.json')));
-const urlMapPath = path.resolve(String(args['url-map'] ?? path.join(outDir, 'higgsfield-render-url-map.json')));
-const creditBudget = numberValue(args['credit-budget'], 45);
-const maxJobs = args['max-jobs'] !== undefined ? Math.max(0, Math.floor(numberValue(args['max-jobs'], 0))) : null;
-const approvedJobIds = idSet(args['job-ids']);
-const skipJobIds = idSet(args['skip-job-ids']);
-const dryRun = args['dry-run'] === true;
-const skipCost = args['skip-cost'] === true;
-const overwrite = args.overwrite === true;
-ensureDir(outDir);
+const main = async () => {
+  const premiumPlanPath = path.resolve(requireArg('premium-plan'));
+  if (!fs.existsSync(premiumPlanPath))
+    throw new Error(`Premium plan not found: ${premiumPlanPath}`);
+  const plan = readJson(premiumPlanPath);
+  const outDir = path.resolve(
+    String(
+      args['out-dir'] ??
+        path.join(path.dirname(premiumPlanPath), 'competitive-higgsfield-render-run'),
+    ),
+  );
+  const outManifest = path.resolve(
+    String(
+      args['out-manifest'] ?? path.join(outDir, 'competitive-higgsfield-render-manifest.json'),
+    ),
+  );
+  const urlMapPath = path.resolve(
+    String(args['url-map'] ?? path.join(outDir, 'higgsfield-render-url-map.json')),
+  );
+  const creditBudget = numberValue(args['credit-budget'], 45);
+  const maxJobs =
+    args['max-jobs'] !== undefined
+      ? Math.max(0, Math.floor(numberValue(args['max-jobs'], 0)))
+      : null;
+  const approvedJobIds = idSet(args['job-ids']);
+  const skipJobIds = idSet(args['skip-job-ids']);
+  const dryRun = args['dry-run'] === true;
+  const skipCost = args['skip-cost'] === true;
+  const overwrite = args.overwrite === true;
+  ensureDir(outDir);
 
-const account = accountStatus();
-const candidates = flattenJobs(plan)
-  .filter((job) => (approvedJobIds.size ? approvedJobIds.has(job.id) : true))
-  .filter((job) => !skipJobIds.has(job.id));
+  const account = accountStatus();
+  const candidates = flattenJobs(plan)
+    .filter((job) => (approvedJobIds.size ? approvedJobIds.has(job.id) : true))
+    .filter((job) => !skipJobIds.has(job.id));
 
-const results = [];
-const urlMap = {};
-let plannedCredits = 0;
-let createdCredits = 0;
-let createdCount = 0;
+  const results = [];
+  const urlMap = {};
+  let plannedCredits = 0;
+  let createdCredits = 0;
+  let createdCount = 0;
 
-for (const job of candidates) {
-  const completed = completedJobFromFile(job.job_json);
-  const model = effectiveModelForJob({job, account});
-  const entry = {
-    item_id: job.item_id,
-    title: job.title,
-    job_id: job.id,
-    model,
-    original_model: job.model ?? null,
-    job_json: job.job_json,
-    output_hint: job.output_hint,
-    status: 'planned',
-    estimated_credits: 0,
-    result_url: null,
-    command_args: higgsArgsForJob({job, model, command: 'create'}),
-    cost_stdout_tail: '',
-    cost_stderr_tail: '',
-    create_stdout_tail: '',
-    create_stderr_tail: '',
-    error: null,
-  };
+  for (const job of candidates) {
+    const completed = completedJobFromFile(job.job_json);
+    const model = effectiveModelForJob({job, account});
+    const entry = {
+      item_id: job.item_id,
+      title: job.title,
+      job_id: job.id,
+      model,
+      original_model: job.model ?? null,
+      job_json: job.job_json,
+      output_hint: job.output_hint,
+      status: 'planned',
+      estimated_credits: 0,
+      result_url: null,
+      command_args: higgsArgsForJob({job, model, command: 'create'}),
+      cost_stdout_tail: '',
+      cost_stderr_tail: '',
+      create_stdout_tail: '',
+      create_stderr_tail: '',
+      error: null,
+    };
 
-  if (completed && !overwrite) {
-    entry.status = 'existing_completed';
-    entry.result_url = completed.result_url;
-    urlMap[job.item_id] ??= {};
-    urlMap[job.item_id][job.id] = completed.result_url;
-    results.push(entry);
-    continue;
-  }
-
-  if (maxJobs !== null && createdCount >= maxJobs) {
-    entry.status = 'held_max_jobs';
-    results.push(entry);
-    continue;
-  }
-
-  if (skipCost) {
-    entry.estimated_credits = numberValue(job.estimated_credits, 0);
-  } else {
-    const cost = runHiggs(higgsArgsForJob({job, model, command: 'cost'}));
-    entry.cost_stdout_tail = tail(cost.stdout);
-    entry.cost_stderr_tail = tail(cost.stderr);
-    if (!cost.ok) {
-      entry.status = 'cost_failed';
-      entry.error = entry.cost_stderr_tail || entry.cost_stdout_tail || `cost exited ${cost.status}`;
+    if (completed && !overwrite) {
+      entry.status = 'existing_completed';
+      entry.result_url = completed.result_url;
+      urlMap[job.item_id] ??= {};
+      urlMap[job.item_id][job.id] = completed.result_url;
       results.push(entry);
       continue;
     }
-    entry.estimated_credits = numberValue(cost.parsed?.credits, numberValue(job.estimated_credits, 0));
-  }
 
-  if (plannedCredits + entry.estimated_credits > creditBudget) {
-    entry.status = 'held_credit_budget';
+    if (maxJobs !== null && createdCount >= maxJobs) {
+      entry.status = 'held_max_jobs';
+      results.push(entry);
+      continue;
+    }
+
+    if (skipCost) {
+      entry.estimated_credits = numberValue(job.estimated_credits, 0);
+    } else {
+      const cost = runHiggs(higgsArgsForJob({job, model, command: 'cost'}));
+      entry.cost_stdout_tail = tail(cost.stdout);
+      entry.cost_stderr_tail = tail(cost.stderr);
+      if (!cost.ok) {
+        entry.status = 'cost_failed';
+        entry.error =
+          entry.cost_stderr_tail || entry.cost_stdout_tail || `cost exited ${cost.status}`;
+        results.push(entry);
+        continue;
+      }
+      entry.estimated_credits = numberValue(
+        cost.parsed?.credits,
+        numberValue(job.estimated_credits, 0),
+      );
+    }
+
+    if (plannedCredits + entry.estimated_credits > creditBudget) {
+      entry.status = 'held_credit_budget';
+      results.push(entry);
+      continue;
+    }
+    plannedCredits += entry.estimated_credits;
+
+    if (dryRun) {
+      entry.status = 'dry_run';
+      results.push(entry);
+      continue;
+    }
+
+    const created = runHiggs(entry.command_args);
+    entry.create_stdout_tail = tail(created.stdout);
+    entry.create_stderr_tail = tail(created.stderr);
+    if (!created.ok) {
+      entry.status = 'create_failed';
+      entry.error =
+        entry.create_stderr_tail || entry.create_stdout_tail || `create exited ${created.status}`;
+      results.push(entry);
+      continue;
+    }
+
+    ensureDir(path.dirname(job.job_json));
+    fs.writeFileSync(job.job_json, `${JSON.stringify(created.parsed, null, 2)}\n`);
+    entry.result_url = resultUrlFromParsed(created.parsed);
+    if (!entry.result_url) {
+      entry.status = 'missing_result_url';
+      entry.error = 'Higgsfield job completed without result_url.';
+      results.push(entry);
+      continue;
+    }
+    urlMap[job.item_id] ??= {};
+    urlMap[job.item_id][job.id] = entry.result_url;
+    entry.status = 'created';
+    createdCredits += entry.estimated_credits;
+    createdCount += 1;
     results.push(entry);
-    continue;
-  }
-  plannedCredits += entry.estimated_credits;
-
-  if (dryRun) {
-    entry.status = 'dry_run';
-    results.push(entry);
-    continue;
   }
 
-  const created = runHiggs(entry.command_args);
-  entry.create_stdout_tail = tail(created.stdout);
-  entry.create_stderr_tail = tail(created.stderr);
-  if (!created.ok) {
-    entry.status = 'create_failed';
-    entry.error = entry.create_stderr_tail || entry.create_stdout_tail || `create exited ${created.status}`;
-    results.push(entry);
-    continue;
-  }
+  writeJson(urlMapPath, urlMap);
 
-  ensureDir(path.dirname(job.job_json));
-  fs.writeFileSync(job.job_json, `${JSON.stringify(created.parsed, null, 2)}\n`);
-  entry.result_url = resultUrlFromParsed(created.parsed);
-  if (!entry.result_url) {
-    entry.status = 'missing_result_url';
-    entry.error = 'Higgsfield job completed without result_url.';
-    results.push(entry);
-    continue;
-  }
-  urlMap[job.item_id] ??= {};
-  urlMap[job.item_id][job.id] = entry.result_url;
-  entry.status = 'created';
-  createdCredits += entry.estimated_credits;
-  createdCount += 1;
-  results.push(entry);
-}
+  const manifest = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
+    premium_plan: premiumPlanPath,
+    dry_run: dryRun,
+    skip_cost: skipCost,
+    overwrite,
+    account: account
+      ? {
+          subscription_plan_type: account.subscription_plan_type ?? null,
+          credits: account.credits ?? null,
+        }
+      : null,
+    credit_budget: creditBudget,
+    planned_credits: plannedCredits,
+    created_credits: createdCredits,
+    candidate_count: candidates.length,
+    created_count: results.filter((entry) => entry.status === 'created').length,
+    existing_completed_count: results.filter((entry) => entry.status === 'existing_completed')
+      .length,
+    held_count: results.filter((entry) => entry.status.startsWith('held_')).length,
+    failed_count: results.filter((entry) => /failed|missing_result_url/.test(entry.status)).length,
+    url_map: urlMapPath,
+    results,
+  };
+  writeJson(outManifest, manifest);
 
-writeJson(urlMapPath, urlMap);
-
-const manifest = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  premium_plan: premiumPlanPath,
-  dry_run: dryRun,
-  skip_cost: skipCost,
-  overwrite,
-  account: account ? {
-    subscription_plan_type: account.subscription_plan_type ?? null,
-    credits: account.credits ?? null,
-  } : null,
-  credit_budget: creditBudget,
-  planned_credits: plannedCredits,
-  created_credits: createdCredits,
-  candidate_count: candidates.length,
-  created_count: results.filter((entry) => entry.status === 'created').length,
-  existing_completed_count: results.filter((entry) => entry.status === 'existing_completed').length,
-  held_count: results.filter((entry) => entry.status.startsWith('held_')).length,
-  failed_count: results.filter((entry) => /failed|missing_result_url/.test(entry.status)).length,
-  url_map: urlMapPath,
-  results,
+  console.log(`Competitive Higgsfield render manifest: ${outManifest}`);
+  console.log(`URL map: ${urlMapPath}`);
+  console.log(`Candidates: ${manifest.candidate_count}`);
+  console.log(`Created: ${manifest.created_count}`);
+  console.log(`Existing completed: ${manifest.existing_completed_count}`);
+  console.log(`Held: ${manifest.held_count}`);
+  console.log(`Failed: ${manifest.failed_count}`);
+  console.log(`Planned credits: ${manifest.planned_credits}`);
 };
-writeJson(outManifest, manifest);
 
-console.log(`Competitive Higgsfield render manifest: ${outManifest}`);
-console.log(`URL map: ${urlMapPath}`);
-console.log(`Candidates: ${manifest.candidate_count}`);
-console.log(`Created: ${manifest.created_count}`);
-console.log(`Existing completed: ${manifest.existing_completed_count}`);
-console.log(`Held: ${manifest.held_count}`);
-console.log(`Failed: ${manifest.failed_count}`);
-console.log(`Planned credits: ${manifest.planned_credits}`);
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

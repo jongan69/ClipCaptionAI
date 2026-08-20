@@ -48,9 +48,7 @@ const parseLinkLine = (line, currentSourceProfile) => {
     };
   }
 
-  const inlineMatch = trimmed.match(
-    /^(?<label>[^#|:]+?)\s*(?:\||:)\s*(?<url>https?:\/\/\S+)$/i,
-  );
+  const inlineMatch = trimmed.match(/^(?<label>[^#|:]+?)\s*(?:\||:)\s*(?<url>https?:\/\/\S+)$/i);
   if (inlineMatch?.groups?.url) {
     return {
       entry: {
@@ -116,7 +114,7 @@ export const downloadYoutubeVideo = (url, downloadRoot) => {
     url,
   ];
 
-  let stdout = '';
+  let stdout;
   try {
     stdout = execFileSync('yt-dlp', baseArgs, {
       encoding: 'utf8',

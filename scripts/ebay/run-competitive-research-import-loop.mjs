@@ -52,7 +52,8 @@ const requireArg = (key) => {
   return path.resolve(String(args[key]));
 };
 
-const readJsonIfExists = (file) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
+const readJsonIfExists = (file) =>
+  fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null;
 const writeJson = (file, value) => {
   ensureDir(path.dirname(file));
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
@@ -106,99 +107,129 @@ const pushFlag = (cmdArgs, key) => {
   if (args[key] === true) cmdArgs.push(`--${key}`);
 };
 
-const queuePath = requireArg('queue');
-const resultsPath = requireArg('results');
-if (!fs.existsSync(queuePath)) throw new Error(`Competitive research queue not found: ${queuePath}`);
-if (!fs.existsSync(resultsPath)) throw new Error(`Results export not found: ${resultsPath}`);
+const main = async () => {
+  const queuePath = requireArg('queue');
+  const resultsPath = requireArg('results');
+  if (!fs.existsSync(queuePath))
+    throw new Error(`Competitive research queue not found: ${queuePath}`);
+  if (!fs.existsSync(resultsPath)) throw new Error(`Results export not found: ${resultsPath}`);
 
-const defaultOutDir = path.basename(path.dirname(queuePath)) === 'competitive-research-queue'
-  ? path.join(path.dirname(queuePath), '..', 'competitive-research-import-loop')
-  : path.join(path.dirname(queuePath), 'competitive-research-import-loop');
-const outDir = path.resolve(String(args['out-dir'] ?? defaultOutDir));
-const importOutDir = path.join(outDir, 'import');
-const processOutDir = path.join(outDir, 'process');
-ensureDir(outDir);
+  const defaultOutDir =
+    path.basename(path.dirname(queuePath)) === 'competitive-research-queue'
+      ? path.join(path.dirname(queuePath), '..', 'competitive-research-import-loop')
+      : path.join(path.dirname(queuePath), 'competitive-research-import-loop');
+  const outDir = path.resolve(String(args['out-dir'] ?? defaultOutDir));
+  const importOutDir = path.join(outDir, 'import');
+  const processOutDir = path.join(outDir, 'process');
+  ensureDir(outDir);
 
-const importArgs = [
-  'scripts/ebay/import-competitive-research-results.mjs',
-  '--queue',
-  queuePath,
-  '--results',
-  resultsPath,
-  '--out-dir',
-  importOutDir,
-];
-pushFlag(importArgs, 'replace');
-if (args['dry-run'] === true) importArgs.push('--dry-run');
+  const importArgs = [
+    'scripts/ebay/import-competitive-research-results.mjs',
+    '--queue',
+    queuePath,
+    '--results',
+    resultsPath,
+    '--out-dir',
+    importOutDir,
+  ];
+  pushFlag(importArgs, 'replace');
+  if (args['dry-run'] === true) importArgs.push('--dry-run');
 
-const processArgs = [
-  'scripts/ebay/process-competitive-research-queue.mjs',
-  '--queue',
-  queuePath,
-  '--out-dir',
-  processOutDir,
-  '--credit-budget',
-  String(args['credit-budget'] ?? 45),
-  '--credits-per-shot',
-  String(args['credits-per-shot'] ?? 22.5),
-  '--max-jobs-per-listing',
-  String(args['max-jobs-per-listing'] ?? 1),
-  '--min-fit-score',
-  String(args['min-fit-score'] ?? 1),
-  '--min-trend-score',
-  String(args['min-trend-score'] ?? 0),
-];
-for (const key of ['item-ids', 'skip-item-ids', 'limit', 'analysis-max-seconds', 'min-product-match-score']) {
-  pushOption(processArgs, key);
-}
-for (const key of ['analyze-reference-video', 'allow-weak-research', 'allow-incomplete', 'allow-no-trend-metrics', 'allow-low-product-match', 'allow-weak-structure']) {
-  pushFlag(processArgs, key);
-}
-if (args['run-reruns'] !== true) processArgs.push('--dry-run');
+  const processArgs = [
+    'scripts/ebay/process-competitive-research-queue.mjs',
+    '--queue',
+    queuePath,
+    '--out-dir',
+    processOutDir,
+    '--credit-budget',
+    String(args['credit-budget'] ?? 45),
+    '--credits-per-shot',
+    String(args['credits-per-shot'] ?? 22.5),
+    '--max-jobs-per-listing',
+    String(args['max-jobs-per-listing'] ?? 1),
+    '--min-fit-score',
+    String(args['min-fit-score'] ?? 1),
+    '--min-trend-score',
+    String(args['min-trend-score'] ?? 0),
+  ];
+  for (const key of [
+    'item-ids',
+    'skip-item-ids',
+    'limit',
+    'analysis-max-seconds',
+    'min-product-match-score',
+  ]) {
+    pushOption(processArgs, key);
+  }
+  for (const key of [
+    'analyze-reference-video',
+    'allow-weak-research',
+    'allow-incomplete',
+    'allow-no-trend-metrics',
+    'allow-low-product-match',
+    'allow-weak-structure',
+  ]) {
+    pushFlag(processArgs, key);
+  }
+  if (args['run-reruns'] !== true) processArgs.push('--dry-run');
 
-const steps = [];
-steps.push(runStep({name: 'import', commandArgs: importArgs}));
-if (steps[0].status === 'ok') {
-  steps.push(runStep({name: args['run-reruns'] === true ? 'process-and-rerun' : 'process-dry-run', commandArgs: processArgs}));
-}
+  const steps = [];
+  steps.push(runStep({name: 'import', commandArgs: importArgs}));
+  if (steps[0].status === 'ok') {
+    steps.push(
+      runStep({
+        name: args['run-reruns'] === true ? 'process-and-rerun' : 'process-dry-run',
+        commandArgs: processArgs,
+      }),
+    );
+  }
 
-const importManifestPath = path.join(importOutDir, 'competitive-research-import-manifest.json');
-const processManifestPath = path.join(processOutDir, 'competitive-research-batch-rerun-manifest.json');
-const importManifest = readJsonIfExists(importManifestPath);
-const processManifest = readJsonIfExists(processManifestPath);
-const reviewBoardPath = path.join(outDir, 'competitive-research-import-review.html');
-const manifest = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  ok: steps.every((step) => step.status === 'ok') && (processManifest?.ok ?? true),
-  source_queue: queuePath,
-  source_results: resultsPath,
-  out_dir: outDir,
-  dry_run: args['dry-run'] === true,
-  process_dry_run: args['run-reruns'] !== true,
-  import_manifest: importManifestPath,
-  process_manifest: processManifestPath,
-  review_board: reviewBoardPath,
-  import_summary: importManifest ? {
-    imported_rows: importManifest.imported_rows,
-    duplicate_rows: importManifest.duplicate_rows,
-    low_match_rows: importManifest.low_match_rows,
-    skipped_rows: importManifest.skipped_rows,
-    matched_listing_count: importManifest.matched_listing_count,
-  } : null,
-  process_summary: processManifest ? {
-    selected_count: processManifest.selected_count,
-    skipped_count: processManifest.skipped_count,
-    result_count: processManifest.result_count,
-    dry_run: processManifest.dry_run,
-  } : null,
-  steps,
-};
+  const importManifestPath = path.join(importOutDir, 'competitive-research-import-manifest.json');
+  const processManifestPath = path.join(
+    processOutDir,
+    'competitive-research-batch-rerun-manifest.json',
+  );
+  const importManifest = readJsonIfExists(importManifestPath);
+  const processManifest = readJsonIfExists(processManifestPath);
+  const reviewBoardPath = path.join(outDir, 'competitive-research-import-review.html');
+  const manifest = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
+    ok: steps.every((step) => step.status === 'ok') && (processManifest?.ok ?? true),
+    source_queue: queuePath,
+    source_results: resultsPath,
+    out_dir: outDir,
+    dry_run: args['dry-run'] === true,
+    process_dry_run: args['run-reruns'] !== true,
+    import_manifest: importManifestPath,
+    process_manifest: processManifestPath,
+    review_board: reviewBoardPath,
+    import_summary: importManifest
+      ? {
+          imported_rows: importManifest.imported_rows,
+          duplicate_rows: importManifest.duplicate_rows,
+          low_match_rows: importManifest.low_match_rows,
+          skipped_rows: importManifest.skipped_rows,
+          matched_listing_count: importManifest.matched_listing_count,
+        }
+      : null,
+    process_summary: processManifest
+      ? {
+          selected_count: processManifest.selected_count,
+          skipped_count: processManifest.skipped_count,
+          result_count: processManifest.result_count,
+          dry_run: processManifest.dry_run,
+        }
+      : null,
+    steps,
+  };
 
-const manifestPath = path.join(outDir, 'competitive-research-import-loop-manifest.json');
-const markdownPath = path.join(outDir, 'competitive-research-import-loop-manifest.md');
-writeJson(manifestPath, manifest);
-fs.writeFileSync(reviewBoardPath, `<!doctype html>
+  const manifestPath = path.join(outDir, 'competitive-research-import-loop-manifest.json');
+  const markdownPath = path.join(outDir, 'competitive-research-import-loop-manifest.md');
+  writeJson(manifestPath, manifest);
+  fs.writeFileSync(
+    reviewBoardPath,
+    `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -289,33 +320,46 @@ fs.writeFileSync(reviewBoardPath, `<!doctype html>
 
     <section class="card ${manifest.process_summary?.selected_count ? 'ready' : 'held'}">
       <h2>Processor Readiness</h2>
-      <p>${manifest.process_summary?.selected_count
-        ? `<span class="good-text">${escapeHtml(manifest.process_summary.selected_count)} listing(s) ready for planned rerun.</span>`
-        : '<span class="warn-text">No listings selected yet.</span>'}</p>
+      <p>${
+        manifest.process_summary?.selected_count
+          ? `<span class="good-text">${escapeHtml(manifest.process_summary.selected_count)} listing(s) ready for planned rerun.</span>`
+          : '<span class="warn-text">No listings selected yet.</span>'
+      }</p>
       <table>
         <thead><tr><th>Item</th><th>Status</th><th>Command / Reason</th></tr></thead>
         <tbody>
-          ${(processManifest?.results ?? []).map((result) => `
+          ${(processManifest?.results ?? [])
+            .map(
+              (result) => `
             <tr>
               <td><code>${escapeHtml(result.item_id)}</code><br>${escapeHtml(result.title)}</td>
               <td>${escapeHtml(result.status)}</td>
               <td><code>${escapeHtml(result.command)}</code></td>
             </tr>
-          `).join('')}
-          ${(processManifest?.skipped ?? []).map((item) => `
+          `,
+            )
+            .join('')}
+          ${(processManifest?.skipped ?? [])
+            .map(
+              (item) => `
             <tr>
               <td><code>${escapeHtml(item.item_id)}</code><br>${escapeHtml(item.title)}</td>
               <td>skipped</td>
               <td>${escapeHtml(item.skip_reason)}</td>
             </tr>
-          `).join('')}
+          `,
+            )
+            .join('')}
         </tbody>
       </table>
     </section>
 
     <section class="card">
       <h2>Imported Competitor Rows</h2>
-      ${(importManifest?.writes ?? []).map((write) => `
+      ${
+        (importManifest?.writes ?? [])
+          .map(
+            (write) => `
         <article>
           <h3>${escapeHtml(write.item_id)} · ${escapeHtml(write.title)}</h3>
           <p class="small">Template: <code>${escapeHtml(write.competitor_import_template)}</code></p>
@@ -323,82 +367,111 @@ fs.writeFileSync(reviewBoardPath, `<!doctype html>
           <table>
             <thead><tr><th>Product Title</th><th>Video URL</th><th>Hook</th><th>Trend Evidence</th><th>Product Match</th></tr></thead>
             <tbody>
-              ${(write.imported_preview_rows ?? []).map((row) => `
+              ${(write.imported_preview_rows ?? [])
+                .map(
+                  (row) => `
                 <tr>
                   <td>${escapeHtml(row['Product Title'] ?? row['Video Title'] ?? '')}</td>
                   <td>${row['Video URL'] ? `<a href="${escapeHtml(row['Video URL'])}">${escapeHtml(row['Video URL'])}</a>` : ''}</td>
                   <td>${escapeHtml(row.Hook ?? '')}</td>
-                  <td>${escapeHtml([
-                    row['Video Views'] ? `${row['Video Views']} views` : '',
-                    row['Items Sold'] ? `${row['Items Sold']} sold` : '',
-                    row['Total Revenue'] ? `${row['Total Revenue']} revenue` : '',
-                    row['Product GMV'] ? `${row['Product GMV']} GMV` : '',
-                    row['Engagement Rate'] ? `${row['Engagement Rate']} engagement` : '',
-                  ].filter(Boolean).join(' | '))}</td>
+                  <td>${escapeHtml(
+                    [
+                      row['Video Views'] ? `${row['Video Views']} views` : '',
+                      row['Items Sold'] ? `${row['Items Sold']} sold` : '',
+                      row['Total Revenue'] ? `${row['Total Revenue']} revenue` : '',
+                      row['Product GMV'] ? `${row['Product GMV']} GMV` : '',
+                      row['Engagement Rate'] ? `${row['Engagement Rate']} engagement` : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' | '),
+                  )}</td>
                   <td>
                     <span class="${row._review?.product_match?.score >= 0.2 ? 'good-text' : 'warn-text'}">${escapeHtml(row._review?.product_match?.score ?? 0)}</span>
                     <div class="small">${escapeHtml((row._review?.product_match?.shared_terms ?? []).join(', ') || 'No shared product terms')}</div>
                     ${(row._review?.product_match?.warnings ?? []).map((warning) => `<div class="warn-text">${escapeHtml(warning)}</div>`).join('')}
                   </td>
                 </tr>
-              `).join('')}
+              `,
+                )
+                .join('')}
             </tbody>
           </table>
         </article>
-      `).join('') || '<p class="small">No imported rows.</p>'}
+      `,
+          )
+          .join('') || '<p class="small">No imported rows.</p>'
+      }
     </section>
 
-    ${(importManifest?.skipped ?? []).length ? `
+    ${
+      (importManifest?.skipped ?? []).length
+        ? `
       <section class="card failed">
         <h2>Unmatched Rows</h2>
         <table>
           <thead><tr><th>Row</th><th>Route</th><th>Reason</th></tr></thead>
           <tbody>
-            ${importManifest.skipped.map((row) => `
+            ${importManifest.skipped
+              .map(
+                (row) => `
               <tr>
                 <td>${escapeHtml(row.row_index)}</td>
                 <td>${escapeHtml(`${row.route?.type ?? ''}: ${row.route?.value ?? ''}`)}</td>
                 <td>${escapeHtml(row.reason)}</td>
               </tr>
-            `).join('')}
+            `,
+              )
+              .join('')}
           </tbody>
         </table>
       </section>
-    ` : ''}
+    `
+        : ''
+    }
   </main>
 </body>
 </html>
-`);
-fs.writeFileSync(markdownPath, `${[
-  '# Competitive Research Import Loop',
-  '',
-  `OK: ${manifest.ok}`,
-  `Import dry run: ${manifest.dry_run}`,
-  `Processor dry run: ${manifest.process_dry_run}`,
-  `Source queue: ${queuePath}`,
-  `Source results: ${resultsPath}`,
-  `Review board: ${reviewBoardPath}`,
-  '',
-  '## Import Summary',
-  '',
-  manifest.import_summary
-    ? `Imported rows: ${manifest.import_summary.imported_rows}\nDuplicate rows: ${manifest.import_summary.duplicate_rows}\nLow product-match rows: ${manifest.import_summary.low_match_rows}\nSkipped rows: ${manifest.import_summary.skipped_rows}\nMatched listings: ${manifest.import_summary.matched_listing_count}`
-    : 'No import manifest found.',
-  '',
-  '## Process Summary',
-  '',
-  manifest.process_summary
-    ? `Selected listings: ${manifest.process_summary.selected_count}\nSkipped listings: ${manifest.process_summary.skipped_count}\nResults: ${manifest.process_summary.result_count}`
-    : 'No process manifest found.',
-  '',
-  '## Steps',
-  '',
-  ...steps.map((step) => `- ${step.name}: ${step.status} (${step.exit_code})`),
-  '',
-].join('\n')}\n`);
+`,
+  );
+  fs.writeFileSync(
+    markdownPath,
+    `${[
+      '# Competitive Research Import Loop',
+      '',
+      `OK: ${manifest.ok}`,
+      `Import dry run: ${manifest.dry_run}`,
+      `Processor dry run: ${manifest.process_dry_run}`,
+      `Source queue: ${queuePath}`,
+      `Source results: ${resultsPath}`,
+      `Review board: ${reviewBoardPath}`,
+      '',
+      '## Import Summary',
+      '',
+      manifest.import_summary
+        ? `Imported rows: ${manifest.import_summary.imported_rows}\nDuplicate rows: ${manifest.import_summary.duplicate_rows}\nLow product-match rows: ${manifest.import_summary.low_match_rows}\nSkipped rows: ${manifest.import_summary.skipped_rows}\nMatched listings: ${manifest.import_summary.matched_listing_count}`
+        : 'No import manifest found.',
+      '',
+      '## Process Summary',
+      '',
+      manifest.process_summary
+        ? `Selected listings: ${manifest.process_summary.selected_count}\nSkipped listings: ${manifest.process_summary.skipped_count}\nResults: ${manifest.process_summary.result_count}`
+        : 'No process manifest found.',
+      '',
+      '## Steps',
+      '',
+      ...steps.map((step) => `- ${step.name}: ${step.status} (${step.exit_code})`),
+      '',
+    ].join('\n')}\n`,
+  );
 
-console.log(`Competitive research import loop: ${manifestPath}`);
-console.log(`Imported rows: ${manifest.import_summary?.imported_rows ?? 0}`);
-console.log(`Selected listings: ${manifest.process_summary?.selected_count ?? 0}`);
-console.log(`Processor dry run: ${manifest.process_dry_run}`);
-if (!manifest.ok) process.exitCode = 1;
+  console.log(`Competitive research import loop: ${manifestPath}`);
+  console.log(`Imported rows: ${manifest.import_summary?.imported_rows ?? 0}`);
+  console.log(`Selected listings: ${manifest.process_summary?.selected_count ?? 0}`);
+  console.log(`Processor dry run: ${manifest.process_dry_run}`);
+  if (!manifest.ok) process.exitCode = 1;
+};
+
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

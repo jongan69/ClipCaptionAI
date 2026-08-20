@@ -97,122 +97,148 @@ const parseRenderPaths = (stdout) => {
   return {finalVideo, proofFrame, manifest};
 };
 
-const blueprintsDir = path.resolve(requireArg('blueprints-dir'));
-if (!fs.existsSync(blueprintsDir) || !fs.statSync(blueprintsDir).isDirectory()) {
-  throw new Error(`Blueprints directory not found: ${blueprintsDir}`);
-}
-
-const allBlueprints = findBlueprints(blueprintsDir);
-const limit = args.limit === undefined ? allBlueprints.length : Number(args.limit);
-if (!Number.isFinite(limit) || limit < 1) throw new Error(`Invalid --limit: ${args.limit}`);
-const blueprints = allBlueprints.slice(0, limit);
-if (blueprints.length === 0) throw new Error(`No creative-blueprint.json files found under ${blueprintsDir}`);
-
-const outManifest = path.resolve(String(
-  args['out-manifest'] ?? path.join(blueprintsDir, 'competitive-preview-render-manifest.json'),
-));
-ensureDir(path.dirname(outManifest));
-
-const renderOptions = ['duration', 'width', 'height', 'fps', 'music-track', 'music-volume', 'voiceover', 'voiceover-volume', 'sfx-library', 'sfx-volume'];
-const renders = [];
-const startedAt = new Date().toISOString();
-
-for (const blueprint of blueprints) {
-  const entry = {
-    blueprint,
-    item_id: null,
-    title: null,
-    ok: false,
-    skipped: args['dry-run'] === true,
-    final_video: null,
-    proof_frame: null,
-    manifest: null,
-    duration_seconds: null,
-    selected_reference: null,
-    error: null,
-    stdout_tail: '',
-    stderr_tail: '',
-  };
-
-  try {
-    const parsed = readJson(blueprint);
-    entry.item_id = parsed.listing?.item_id ?? null;
-    entry.title = parsed.listing?.title ?? null;
-    entry.selected_reference = parsed.selected_reference ?? null;
-
-    if (args['dry-run'] === true) {
-      entry.ok = true;
-      renders.push(entry);
-      continue;
-    }
-
-    const renderArgs = ['scripts/ebay/render-competitive-blueprint-ad.mjs', '--blueprint', blueprint];
-    for (const key of renderOptions) pushOption(renderArgs, key);
-    pushFlag(renderArgs, 'no-music');
-    pushFlag(renderArgs, 'no-sfx');
-
-    const result = spawnSync('node', renderArgs, {
-      cwd: projectRoot,
-      encoding: 'utf8',
-      maxBuffer: 1024 * 1024 * 20,
-    });
-    entry.stdout_tail = tail(result.stdout);
-    entry.stderr_tail = tail(result.stderr);
-
-    if (result.status !== 0) {
-      entry.error = `Renderer exited with status ${result.status}`;
-      renders.push(entry);
-      if (args['fail-fast'] === true) break;
-      continue;
-    }
-
-    const paths = parseRenderPaths(result.stdout);
-    entry.final_video = paths.finalVideo;
-    entry.proof_frame = paths.proofFrame;
-    entry.manifest = paths.manifest;
-
-    if (entry.manifest && fs.existsSync(entry.manifest)) {
-      const renderManifest = readJson(entry.manifest);
-      entry.duration_seconds = renderManifest.duration_seconds ?? null;
-      entry.final_video = renderManifest.final_video ?? entry.final_video;
-      entry.proof_frame = renderManifest.proof_frame ?? entry.proof_frame;
-      entry.selected_reference = renderManifest.selected_reference ?? entry.selected_reference;
-    }
-
-    entry.ok = Boolean(entry.final_video && fs.existsSync(entry.final_video));
-  } catch (error) {
-    entry.error = error instanceof Error ? error.message : String(error);
-    if (args['fail-fast'] === true) {
-      renders.push(entry);
-      break;
-    }
+const main = async () => {
+  const blueprintsDir = path.resolve(requireArg('blueprints-dir'));
+  if (!fs.existsSync(blueprintsDir) || !fs.statSync(blueprintsDir).isDirectory()) {
+    throw new Error(`Blueprints directory not found: ${blueprintsDir}`);
   }
 
-  renders.push(entry);
-}
+  const allBlueprints = findBlueprints(blueprintsDir);
+  const limit = args.limit === undefined ? allBlueprints.length : Number(args.limit);
+  if (!Number.isFinite(limit) || limit < 1) throw new Error(`Invalid --limit: ${args.limit}`);
+  const blueprints = allBlueprints.slice(0, limit);
+  if (blueprints.length === 0)
+    throw new Error(`No creative-blueprint.json files found under ${blueprintsDir}`);
 
-const manifest = {
-  created_at: new Date().toISOString(),
-  started_at: startedAt,
-  script: scriptName,
-  blueprints_dir: blueprintsDir,
-  dry_run: args['dry-run'] === true,
-  requested_count: blueprints.length,
-  discovered_count: allBlueprints.length,
-  rendered_count: renders.filter((entry) => entry.ok && !entry.skipped).length,
-  skipped_count: renders.filter((entry) => entry.skipped).length,
-  failed_count: renders.filter((entry) => !entry.ok).length,
-  source_policy: 'structure-only competitor analysis; final previews use listing images, local/cleared B-roll if present, local music, and local SFX',
-  renders,
+  const outManifest = path.resolve(
+    String(
+      args['out-manifest'] ?? path.join(blueprintsDir, 'competitive-preview-render-manifest.json'),
+    ),
+  );
+  ensureDir(path.dirname(outManifest));
+
+  const renderOptions = [
+    'duration',
+    'width',
+    'height',
+    'fps',
+    'music-track',
+    'music-volume',
+    'voiceover',
+    'voiceover-volume',
+    'sfx-library',
+    'sfx-volume',
+  ];
+  const renders = [];
+  const startedAt = new Date().toISOString();
+
+  for (const blueprint of blueprints) {
+    const entry = {
+      blueprint,
+      item_id: null,
+      title: null,
+      ok: false,
+      skipped: args['dry-run'] === true,
+      final_video: null,
+      proof_frame: null,
+      manifest: null,
+      duration_seconds: null,
+      selected_reference: null,
+      error: null,
+      stdout_tail: '',
+      stderr_tail: '',
+    };
+
+    try {
+      const parsed = readJson(blueprint);
+      entry.item_id = parsed.listing?.item_id ?? null;
+      entry.title = parsed.listing?.title ?? null;
+      entry.selected_reference = parsed.selected_reference ?? null;
+
+      if (args['dry-run'] === true) {
+        entry.ok = true;
+        renders.push(entry);
+        continue;
+      }
+
+      const renderArgs = [
+        'scripts/ebay/render-competitive-blueprint-ad.mjs',
+        '--blueprint',
+        blueprint,
+      ];
+      for (const key of renderOptions) pushOption(renderArgs, key);
+      pushFlag(renderArgs, 'no-music');
+      pushFlag(renderArgs, 'no-sfx');
+
+      const result = spawnSync('node', renderArgs, {
+        cwd: projectRoot,
+        encoding: 'utf8',
+        maxBuffer: 1024 * 1024 * 20,
+      });
+      entry.stdout_tail = tail(result.stdout);
+      entry.stderr_tail = tail(result.stderr);
+
+      if (result.status !== 0) {
+        entry.error = `Renderer exited with status ${result.status}`;
+        renders.push(entry);
+        if (args['fail-fast'] === true) break;
+        continue;
+      }
+
+      const paths = parseRenderPaths(result.stdout);
+      entry.final_video = paths.finalVideo;
+      entry.proof_frame = paths.proofFrame;
+      entry.manifest = paths.manifest;
+
+      if (entry.manifest && fs.existsSync(entry.manifest)) {
+        const renderManifest = readJson(entry.manifest);
+        entry.duration_seconds = renderManifest.duration_seconds ?? null;
+        entry.final_video = renderManifest.final_video ?? entry.final_video;
+        entry.proof_frame = renderManifest.proof_frame ?? entry.proof_frame;
+        entry.selected_reference = renderManifest.selected_reference ?? entry.selected_reference;
+      }
+
+      entry.ok = Boolean(entry.final_video && fs.existsSync(entry.final_video));
+    } catch (error) {
+      entry.error = error instanceof Error ? error.message : String(error);
+      if (args['fail-fast'] === true) {
+        renders.push(entry);
+        break;
+      }
+    }
+
+    renders.push(entry);
+  }
+
+  const manifest = {
+    created_at: new Date().toISOString(),
+    started_at: startedAt,
+    script: scriptName,
+    blueprints_dir: blueprintsDir,
+    dry_run: args['dry-run'] === true,
+    requested_count: blueprints.length,
+    discovered_count: allBlueprints.length,
+    rendered_count: renders.filter((entry) => entry.ok && !entry.skipped).length,
+    skipped_count: renders.filter((entry) => entry.skipped).length,
+    failed_count: renders.filter((entry) => !entry.ok).length,
+    source_policy:
+      'structure-only competitor analysis; final previews use listing images, local/cleared B-roll if present, local music, and local SFX',
+    renders,
+  };
+
+  fs.writeFileSync(outManifest, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  const failed = manifest.failed_count;
+  console.log(`Competitive preview batch manifest: ${outManifest}`);
+  console.log(`Blueprints discovered: ${manifest.discovered_count}`);
+  console.log(`Rendered: ${manifest.rendered_count}`);
+  console.log(`Skipped: ${manifest.skipped_count}`);
+  console.log(`Failed: ${failed}`);
+
+  if (failed > 0) process.exitCode = 1;
 };
 
-fs.writeFileSync(outManifest, `${JSON.stringify(manifest, null, 2)}\n`);
-
-const failed = manifest.failed_count;
-console.log(`Competitive preview batch manifest: ${outManifest}`);
-console.log(`Blueprints discovered: ${manifest.discovered_count}`);
-console.log(`Rendered: ${manifest.rendered_count}`);
-console.log(`Skipped: ${manifest.skipped_count}`);
-console.log(`Failed: ${failed}`);
-
-if (failed > 0) process.exitCode = 1;
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

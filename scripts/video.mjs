@@ -2,10 +2,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import {parseArgs, ensureDir, projectRoot, publicMediaRoot, run, videoToSrc, workspaceRoot} from './lib.mjs';
 import {
-  VIDEO_RUN_SCHEMA_VERSION, collectMedia, createRunDir, describeAsset, emitResult,
-  hashText, manifestPathFor, probeArtifact, requireManifest,
+  parseArgs,
+  ensureDir,
+  projectRoot,
+  publicMediaRoot,
+  run,
+  videoToSrc,
+  workspaceRoot,
+} from './lib.mjs';
+import {
+  VIDEO_RUN_SCHEMA_VERSION,
+  collectMedia,
+  createRunDir,
+  describeAsset,
+  emitResult,
+  hashText,
+  manifestPathFor,
+  probeArtifact,
+  requireManifest,
   writeJson,
 } from './video-run-lib.mjs';
 
@@ -46,7 +61,10 @@ const readBrief = () => {
 };
 
 const makeShots = (brief) => {
-  const lines = brief.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const lines = brief
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
   const shotLines = lines.filter((line) => !/^#/.test(line));
   const source = shotLines.length ? shotLines : [brief];
   return source.slice(0, 24).map((text, index) => ({
@@ -59,8 +77,13 @@ const makeShots = (brief) => {
 
 const plan = () => {
   const brief = readBrief();
-  const assetsDir = path.resolve(workspaceRoot, String(args['assets-dir'] || path.dirname(brief.path)));
-  const runDir = createRunDir(args['run-id'] || path.basename(brief.path, path.extname(brief.path)));
+  const assetsDir = path.resolve(
+    workspaceRoot,
+    String(args['assets-dir'] || path.dirname(brief.path)),
+  );
+  const runDir = createRunDir(
+    args['run-id'] || path.basename(brief.path, path.extname(brief.path)),
+  );
   const assets = collectMedia(assetsDir).map((file) => describeAsset(file, projectRoot));
   const audioPath = args.audio ? path.resolve(workspaceRoot, String(args.audio)) : null;
   if (audioPath && !fs.existsSync(audioPath)) throw new Error(`Audio file not found: ${audioPath}`);
@@ -87,26 +110,56 @@ const plan = () => {
       preset: String(args.preset || (args.vertical ? 'vertical-social' : 'landscape-master')),
     },
     providers: {
-      transcription: {provider: String(args['transcription-provider'] || 'local-whispercpp'), status: 'not_requested'},
+      transcription: {
+        provider: String(args['transcription-provider'] || 'local-whispercpp'),
+        status: 'not_requested',
+      },
       narration: {provider: String(args['narration-provider'] || 'none'), status: 'not_requested'},
-      generation: {provider: String(args['generation-provider'] || 'local-remotion'), status: 'planned'},
+      generation: {
+        provider: String(args['generation-provider'] || 'local-remotion'),
+        status: 'planned',
+      },
     },
     artifact: null,
     qa: {status: 'not_run', checks: []},
   };
   writeJson(manifestPathFor(runDir), manifest);
-  return {ok: true, runDir, manifestPath: manifestPathFor(runDir), runId: manifest.runId, status: manifest.status, message: `Planned video run ${manifest.runId}`};
+  return {
+    ok: true,
+    runDir,
+    manifestPath: manifestPathFor(runDir),
+    runId: manifest.runId,
+    status: manifest.status,
+    message: `Planned video run ${manifest.runId}`,
+  };
 };
 
 const render = () => {
   const {runDir, manifestPath, manifest} = requireManifest(args.run);
   if (manifest.artifact?.path && fs.existsSync(manifest.artifact.path) && !args.force) {
-    return {ok: true, resumed: true, runDir, manifestPath, artifact: manifest.artifact, message: `Reusing existing artifact ${manifest.artifact.path}`};
+    return {
+      ok: true,
+      resumed: true,
+      runDir,
+      manifestPath,
+      artifact: manifest.artifact,
+      message: `Reusing existing artifact ${manifest.artifact.path}`,
+    };
   }
-  const output = path.resolve(workspaceRoot, String(args.output || path.join(runDir, 'final', `${manifest.runId}.mp4`)));
+  const output = path.resolve(
+    workspaceRoot,
+    String(args.output || path.join(runDir, 'final', `${manifest.runId}.mp4`)),
+  );
   ensureDir(path.dirname(output));
   if (args['dry-run']) {
-    return {ok: true, dryRun: true, runDir, manifestPath, plannedOutput: output, message: `Dry run: would render ${output}`};
+    return {
+      ok: true,
+      dryRun: true,
+      runDir,
+      manifestPath,
+      plannedOutput: output,
+      message: `Dry run: would render ${output}`,
+    };
   }
   const propsPath = path.join(os.tmpdir(), `clipcaptionai-video-${Date.now()}.json`);
   const props = {
@@ -122,7 +175,11 @@ const render = () => {
   fs.writeFileSync(propsPath, JSON.stringify(props));
   try {
     const renderArgs = [
-      'remotion', 'render', 'src/index.tsx', 'PromptVideo', output,
+      'remotion',
+      'render',
+      'src/index.tsx',
+      'PromptVideo',
+      output,
       `--props=${propsPath}`,
       '--codec=h264',
       '--concurrency=1',
@@ -136,38 +193,81 @@ const render = () => {
     fs.rmSync(propsPath, {force: true});
   }
   const artifact = probeArtifact(output);
-  const updated = {...manifest, status: 'rendered', renderedAt: new Date().toISOString(), artifact, qa: {status: 'not_run', checks: []}};
+  const updated = {
+    ...manifest,
+    status: 'rendered',
+    renderedAt: new Date().toISOString(),
+    artifact,
+    qa: {status: 'not_run', checks: []},
+  };
   writeJson(manifestPath, updated);
-  return {ok: true, runDir, manifestPath, artifact, status: updated.status, message: `Rendered ${output}`};
+  return {
+    ok: true,
+    runDir,
+    manifestPath,
+    artifact,
+    status: updated.status,
+    message: `Rendered ${output}`,
+  };
 };
 
 const qa = () => {
   const {runDir, manifestPath, manifest} = requireManifest(args.run);
-  if (!manifest.artifact?.path || !fs.existsSync(manifest.artifact.path)) throw new Error('No rendered artifact found. Run video render first.');
+  if (!manifest.artifact?.path || !fs.existsSync(manifest.artifact.path))
+    throw new Error('No rendered artifact found. Run video render first.');
   const artifact = probeArtifact(manifest.artifact.path);
   const checks = [
     {name: 'file-exists', ok: fs.existsSync(artifact.path)},
     {name: 'video-stream', ok: artifact.width > 0 && artifact.height > 0},
     {name: 'duration', ok: artifact.durationSeconds > 0},
     {name: 'h264-video', ok: artifact.videoCodec === 'h264'},
-    {name: 'audio-not-silent', ok: !artifact.hasAudio || artifact.meanVolumeDb === null || artifact.meanVolumeDb > -60},
+    {
+      name: 'audio-not-silent',
+      ok: !artifact.hasAudio || artifact.meanVolumeDb === null || artifact.meanVolumeDb > -60,
+    },
   ];
   const status = checks.every((check) => check.ok) ? 'passed' : 'failed';
-  const updated = {...manifest, artifact, qa: {status, checkedAt: new Date().toISOString(), checks}};
+  const updated = {
+    ...manifest,
+    artifact,
+    qa: {status, checkedAt: new Date().toISOString(), checks},
+  };
   writeJson(manifestPath, updated);
-  return {ok: status === 'passed', runDir, manifestPath, artifact, qa: updated.qa, status, message: `QA ${status}: ${artifact.path}`};
+  return {
+    ok: status === 'passed',
+    runDir,
+    manifestPath,
+    artifact,
+    qa: updated.qa,
+    status,
+    message: `QA ${status}: ${artifact.path}`,
+  };
 };
 
 const inspect = () => {
   const {runDir, manifestPath, manifest} = requireManifest(args.run);
-  return {ok: true, runDir, manifestPath, manifest, message: `Run ${manifest.runId}: ${manifest.status}`};
+  return {
+    ok: true,
+    runDir,
+    manifestPath,
+    manifest,
+    message: `Run ${manifest.runId}: ${manifest.status}`,
+  };
 };
 
 const main = () => {
-  if (!command || args.help || args.h) { process.stdout.write(usage); return; }
+  if (!command || args.help || args.h) {
+    process.stdout.write(usage);
+    return;
+  }
   if (command === 'plan') return plan();
   if (command === 'render') return render();
-  if (command === 'run') { const planned = plan(); if (!planned.ok) return planned; args.run = planned.runDir; return render(); }
+  if (command === 'run') {
+    const planned = plan();
+    if (!planned.ok) return planned;
+    args.run = planned.runDir;
+    return render();
+  }
   if (command === 'inspect') return inspect();
   if (command === 'qa') return qa();
   throw new Error(`Unknown video command: ${command}\n${usage}`);

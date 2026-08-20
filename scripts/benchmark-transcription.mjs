@@ -8,7 +8,9 @@ import {
   outputsRoot,
   projectRoot,
   requireArg,
+  slugify as canonicalSlugify,
 } from './lib.mjs';
+import {timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
@@ -41,23 +43,7 @@ const candidateProvider = String(args['candidate-provider'] ?? 'local-whispercpp
 const localModel = args['local-model'] ? String(args['local-model']) : null;
 const prompt = args.prompt ? String(args.prompt) : null;
 
-const slugify = (value) =>
-  String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 80) || 'video';
-
-const timestampSlug = () => {
-  const now = new Date();
-  const pad = (value) => String(value).padStart(2, '0');
-  return [
-    now.getFullYear(),
-    pad(now.getMonth() + 1),
-    pad(now.getDate()),
-    `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`,
-  ].join('-');
-};
+const slugify = (value) => canonicalSlugify(value, 'video');
 
 const normalizeText = (value) =>
   String(value ?? '')

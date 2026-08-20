@@ -64,7 +64,9 @@ export const PROVIDERS = {
  * @returns {{ provider: string, config: object } | { provider: null, config: null }}
  */
 export const resolveProvider = (opts = {}) => {
-  const requested = String(opts.provider ?? '').toLowerCase().trim();
+  const requested = String(opts.provider ?? '')
+    .toLowerCase()
+    .trim();
 
   // Explicit CLI flag
   if (requested === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
@@ -74,14 +76,10 @@ export const resolveProvider = (opts = {}) => {
     return {provider: 'openai', config: PROVIDERS.openai};
   }
   if (requested && !PROVIDERS[requested]) {
-    throw new Error(
-      `Unknown provider "${requested}". Valid options: deepseek, openai`,
-    );
+    throw new Error(`Unknown provider "${requested}". Valid options: deepseek, openai`);
   }
   if (requested && !process.env[PROVIDERS[requested].apiKeyEnv]) {
-    throw new Error(
-      `${PROVIDERS[requested].apiKeyEnv} is required for provider "${requested}"`,
-    );
+    throw new Error(`${PROVIDERS[requested].apiKeyEnv} is required for provider "${requested}"`);
   }
 
   // Auto-detect: prefer DeepSeek
@@ -113,6 +111,8 @@ export const createClient = (resolved, opts = {}) => {
     baseURL: resolved.config.baseURL,
     apiKey: process.env[resolved.config.apiKeyEnv],
     maxRetries: opts.maxRetries ?? 1,
+    // Bound any single model call so a hung provider can't hang a pipeline.
+    timeout: opts.timeout ?? 180_000,
   });
 };
 
@@ -136,7 +136,10 @@ export const resolveModel = (opts = {}) => {
   if (envModelKey && process.env[envModelKey]) return process.env[envModelKey];
 
   const config = resolved.config;
-  if (!config) return 'gpt-4.1-mini'; // fallback
+  // No provider configured → no model. Callers that can operate without AI
+  // (heuristic fallback paths) rely on this null; callers that require AI
+  // fail later at createClient() with a clear error.
+  if (!config) return null;
 
   return preferFast ? config.fastModel : config.defaultModel;
 };
@@ -179,87 +182,46 @@ export const chatCompletion = async (client, opts) => {
 /**
  * Run a chat completion and parse the result as JSON.
  *
+ * On a JSON parse failure the request is retried once with an explicit
+ * "raw JSON only" instruction; if the retry also fails, a descriptive
+ * error is thrown instead of a bare SyntaxError.
+ *
  * @param {OpenAI} client
  * @param {{ model: string, systemPrompt: string, userPrompt: string, temperature?: number }} opts
  * @returns {Promise<object>}
  */
 export const structuredChatCompletion = async (client, opts) => {
-  const text = await chatCompletion(client, {
-    ...opts,
-    jsonMode: true,
-    temperature: opts.temperature ?? 0.3,
-  });
+  const attempt = (repair = false) =>
+    chatCompletion(client, {
+      ...opts,
+      jsonMode: true,
+      temperature: opts.temperature ?? 0.3,
+      ...(repair
+        ? {
+            userPrompt: `${opts.userPrompt}\n\nRespond with raw JSON only — no markdown fences, no commentary.`,
+          }
+        : {}),
+    });
 
-  return JSON.parse(text);
-};
+  try {
+    const text = await attempt(false);
+    return JSON.parse(text);
+  } catch (error) {
+    // Only repair genuine parse failures; network/API errors pass through.
+    if (!(error instanceof SyntaxError)) {
+      throw error;
+    }
 
-// ── Convenience: one-shot structured completion ────────────────────────
-
-/**
- * Resolve provider, create client, run structured completion, return parsed JSON.
- * The most common pattern in the codebase condensed into one call.
- *
- * @param {{ provider?: string, model?: string, envModelKey?: string, systemPrompt: string, userPrompt: string, temperature?: number }} opts
- * @returns {Promise<{ result: object, meta: { provider: string, model: string } }>}
- */
-export const runStructuredCompletion = async (opts) => {
-  const resolved = resolveProvider({provider: opts.provider});
-  if (!resolved.config) {
-    throw new Error('No AI provider available. Set DEEPSEEK_API_KEY or OPENAI_API_KEY.');
+    try {
+      const retryText = await attempt(true);
+      return JSON.parse(retryText);
+    } catch (retryError) {
+      throw new Error(
+        `Model returned invalid JSON${retryError instanceof SyntaxError ? ' after retry' : ''}: ${
+          retryError?.message ?? retryError
+        }`,
+        {cause: retryError},
+      );
+    }
   }
-
-  const model = resolveModel({
-    resolved,
-    model: opts.model,
-    envModelKey: opts.envModelKey,
-  });
-
-  const client = createClient(resolved);
-  const parsed = await structuredChatCompletion(client, {
-    model,
-    systemPrompt: opts.systemPrompt,
-    userPrompt: opts.userPrompt,
-    temperature: opts.temperature,
-  });
-
-  return {
-    result: parsed,
-    meta: {provider: resolved.provider, model},
-  };
-};
-
-// ── Capability checks ──────────────────────────────────────────────────
-
-/**
- * Check if the current provider supports a specific feature.
- * @param {string} provider
- * @param {string} feature - e.g. 'transcription', 'responsesApi', 'strictJsonSchema'
- * @returns {boolean}
- */
-export const providerSupports = (provider, feature) => {
-  const config = PROVIDERS[provider];
-  if (!config) return false;
-  return Boolean(config.supports[feature]);
-};
-
-/**
- * Returns the best available transcription provider.
- * DeepSeek doesn't do transcription, so this always falls back to
- * the existing transcription logic (whisper.cpp → OpenAI → YouTube).
- *
- * @returns {'local-whispercpp' | 'openai' | 'youtube' | null}
- */
-export const resolveTranscriptionProvider = () => {
-  // Transcription is independent of the chat provider.
-  // Use the existing TRANSCRIBE_PROVIDER env var or auto-detect.
-  const requested = String(
-    process.env.TRANSCRIBE_PROVIDER ?? 'auto',
-  ).toLowerCase();
-
-  if (requested !== 'auto') return requested;
-
-  // Auto-detect: whisper.cpp → OpenAI Whisper → YouTube
-  // (commandExists check is done at call time in transcribe-openai.mjs)
-  if (process.env.OPENAI_API_KEY) return 'openai';
-  return 'local-whispercpp'; // fallback — caller will check if whisper-cli is installed
 };

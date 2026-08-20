@@ -50,13 +50,23 @@ const writeJson = (file, value) => {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
 };
 
-const idSet = (value) => new Set(String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean));
+const idSet = (value) =>
+  new Set(
+    String(value ?? '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
 
 const queuePath = (() => {
   if (args.queue) return path.resolve(String(args.queue));
   if (args.status) {
     const statusPath = path.resolve(String(args.status));
-    return path.join(path.dirname(statusPath), 'competitive-research-queue', 'competitive-research-queue.json');
+    return path.join(
+      path.dirname(statusPath),
+      'competitive-research-queue',
+      'competitive-research-queue.json',
+    );
   }
   throw new Error(`Missing --queue or --status.\n${usage}`);
 })();
@@ -112,8 +122,17 @@ const readRows = (file) => {
   if (!text) return {rows: [], error: 'file empty'};
   try {
     if (/\.csv$/i.test(file)) return {rows: parseCsv(text), error: null};
-    if (/\.ndjson$/i.test(file) || text.split(/\r?\n/).every((line) => line.trim().startsWith('{'))) {
-      return {rows: text.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line)), error: null};
+    if (
+      /\.ndjson$/i.test(file) ||
+      text.split(/\r?\n/).every((line) => line.trim().startsWith('{'))
+    ) {
+      return {
+        rows: text
+          .split(/\r?\n/)
+          .filter(Boolean)
+          .map((line) => JSON.parse(line)),
+        error: null,
+      };
     }
     return {rows: extractRowsFromJson(JSON.parse(text)), error: null};
   } catch (error) {
@@ -122,7 +141,8 @@ const readRows = (file) => {
 };
 
 const keyMatches = (candidate, wanted) =>
-  candidate.toLowerCase().replace(/[^a-z0-9]/g, '') === wanted.toLowerCase().replace(/[^a-z0-9]/g, '');
+  candidate.toLowerCase().replace(/[^a-z0-9]/g, '') ===
+  wanted.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 const firstValue = (row, keys) => {
   for (const key of keys) {
@@ -166,7 +186,9 @@ const productMatchScore = ({listing, row}) => {
     firstValue(row, ['Caption']),
     firstValue(row, ['Hook']),
     firstValue(row, ['Product Category']),
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
   const competitorTerms = Array.from(new Set(titleTokens(competitorText)));
   const shared = listingTerms.filter((term) => competitorTerms.includes(term));
   const denominator = Math.max(1, Math.min(listingTerms.length, competitorTerms.length));
@@ -218,7 +240,9 @@ const validateRows = ({rows, listing, minProductMatchScore}) => {
   });
   const metricRows = rows.filter((row) => firstValue(row, trendMetricKeys));
   const structureRows = usable.filter((row) => firstValue(row, structureEvidenceKeys));
-  const productMatchRows = usable.filter((row) => productMatchScore({listing, row}) >= minProductMatchScore);
+  const productMatchRows = usable.filter(
+    (row) => productMatchScore({listing, row}) >= minProductMatchScore,
+  );
   const maxProductMatchScore = usable.reduce(
     (max, row) => Math.max(max, productMatchScore({listing, row})),
     0,
@@ -227,8 +251,10 @@ const validateRows = ({rows, listing, minProductMatchScore}) => {
   if (rows.length === 0) issues.push('no data rows');
   if (usable.length === 0) issues.push('no row has both product title and video URL');
   if (metricRows.length === 0) issues.push('no rows include trend metrics');
-  if (usable.length > 0 && structureRows.length === 0) issues.push('no rows include structure evidence');
-  if (usable.length > 0 && productMatchRows.length === 0) issues.push('no rows meet product-match threshold');
+  if (usable.length > 0 && structureRows.length === 0)
+    issues.push('no rows include structure evidence');
+  if (usable.length > 0 && productMatchRows.length === 0)
+    issues.push('no rows meet product-match threshold');
   return {
     row_count: rows.length,
     usable_row_count: usable.length,
@@ -281,151 +307,171 @@ const runRerun = ({listing, commandArgs}) => {
   return entry;
 };
 
-if (!fs.existsSync(queuePath)) {
-  throw new Error(`Competitive research queue not found: ${queuePath}. Run ebay:competitive-research-queue first.`);
-}
+const main = async () => {
+  if (!fs.existsSync(queuePath)) {
+    throw new Error(
+      `Competitive research queue not found: ${queuePath}. Run ebay:competitive-research-queue first.`,
+    );
+  }
 
-const queue = readJson(queuePath);
-const defaultOutDir = path.basename(path.dirname(queuePath)) === 'competitive-research-queue'
-  ? path.join(path.dirname(queuePath), '..', 'competitive-research-batch-rerun')
-  : path.join(path.dirname(queuePath), 'competitive-research-batch-rerun');
-const outDir = path.resolve(String(args['out-dir'] ?? defaultOutDir));
-ensureDir(outDir);
-const onlyIds = idSet(args['item-ids']);
-const skipIds = idSet(args['skip-item-ids']);
-const limit = args.limit === undefined ? Infinity : Math.max(0, Math.floor(Number(args.limit)));
-const allowIncomplete = args['allow-incomplete'] === true;
-const allowNoTrendMetrics = args['allow-no-trend-metrics'] === true;
-const allowLowProductMatch = args['allow-low-product-match'] === true;
-const allowWeakStructure = args['allow-weak-structure'] === true;
-const minProductMatchScore = args['min-product-match-score'] === undefined ? 0.2 : Number(args['min-product-match-score']);
+  const queue = readJson(queuePath);
+  const defaultOutDir =
+    path.basename(path.dirname(queuePath)) === 'competitive-research-queue'
+      ? path.join(path.dirname(queuePath), '..', 'competitive-research-batch-rerun')
+      : path.join(path.dirname(queuePath), 'competitive-research-batch-rerun');
+  const outDir = path.resolve(String(args['out-dir'] ?? defaultOutDir));
+  ensureDir(outDir);
+  const onlyIds = idSet(args['item-ids']);
+  const skipIds = idSet(args['skip-item-ids']);
+  const limit = args.limit === undefined ? Infinity : Math.max(0, Math.floor(Number(args.limit)));
+  const allowIncomplete = args['allow-incomplete'] === true;
+  const allowNoTrendMetrics = args['allow-no-trend-metrics'] === true;
+  const allowLowProductMatch = args['allow-low-product-match'] === true;
+  const allowWeakStructure = args['allow-weak-structure'] === true;
+  const minProductMatchScore =
+    args['min-product-match-score'] === undefined ? 0.2 : Number(args['min-product-match-score']);
 
-const evaluated = [];
-const selected = [];
-const skipped = [];
+  const evaluated = [];
+  const selected = [];
+  const skipped = [];
 
-for (const listing of queue.listings ?? []) {
-  const itemId = String(listing.item_id);
-  if (onlyIds.size > 0 && !onlyIds.has(itemId)) {
-    skipped.push({...listing, skip_reason: 'not in item-ids'});
-    continue;
+  for (const listing of queue.listings ?? []) {
+    const itemId = String(listing.item_id);
+    if (onlyIds.size > 0 && !onlyIds.has(itemId)) {
+      skipped.push({...listing, skip_reason: 'not in item-ids'});
+      continue;
+    }
+    if (skipIds.has(itemId)) {
+      skipped.push({...listing, skip_reason: 'skip item list'});
+      continue;
+    }
+    const importPath = listing.competitor_import_template;
+    const {rows, error} = readRows(importPath);
+    const validation = validateRows({rows, listing, minProductMatchScore});
+    const evaluation = {...listing, import_error: error, validation};
+    evaluated.push(evaluation);
+    if (error) {
+      skipped.push({...evaluation, skip_reason: `import error: ${error}`});
+      continue;
+    }
+    if (
+      !allowIncomplete &&
+      validation.issues.includes('no row has both product title and video URL')
+    ) {
+      skipped.push({...evaluation, skip_reason: validation.issues.join('; ')});
+      continue;
+    }
+    if (!allowNoTrendMetrics && validation.issues.includes('no rows include trend metrics')) {
+      skipped.push({...evaluation, skip_reason: validation.issues.join('; ')});
+      continue;
+    }
+    if (!allowWeakStructure && validation.issues.includes('no rows include structure evidence')) {
+      skipped.push({...evaluation, skip_reason: validation.issues.join('; ')});
+      continue;
+    }
+    if (
+      !allowLowProductMatch &&
+      validation.issues.includes('no rows meet product-match threshold')
+    ) {
+      skipped.push({...evaluation, skip_reason: validation.issues.join('; ')});
+      continue;
+    }
+    if (selected.length >= limit) {
+      skipped.push({...evaluation, skip_reason: 'limit reached'});
+      continue;
+    }
+    selected.push(evaluation);
   }
-  if (skipIds.has(itemId)) {
-    skipped.push({...listing, skip_reason: 'skip item list'});
-    continue;
-  }
-  const importPath = listing.competitor_import_template;
-  const {rows, error} = readRows(importPath);
-  const validation = validateRows({rows, listing, minProductMatchScore});
-  const evaluation = {...listing, import_error: error, validation};
-  evaluated.push(evaluation);
-  if (error) {
-    skipped.push({...evaluation, skip_reason: `import error: ${error}`});
-    continue;
-  }
-  if (!allowIncomplete && validation.issues.includes('no row has both product title and video URL')) {
-    skipped.push({...evaluation, skip_reason: validation.issues.join('; ')});
-    continue;
-  }
-  if (!allowNoTrendMetrics && validation.issues.includes('no rows include trend metrics')) {
-    skipped.push({...evaluation, skip_reason: validation.issues.join('; ')});
-    continue;
-  }
-  if (!allowWeakStructure && validation.issues.includes('no rows include structure evidence')) {
-    skipped.push({...evaluation, skip_reason: validation.issues.join('; ')});
-    continue;
-  }
-  if (!allowLowProductMatch && validation.issues.includes('no rows meet product-match threshold')) {
-    skipped.push({...evaluation, skip_reason: validation.issues.join('; ')});
-    continue;
-  }
-  if (selected.length >= limit) {
-    skipped.push({...evaluation, skip_reason: 'limit reached'});
-    continue;
-  }
-  selected.push(evaluation);
-}
 
-const results = [];
-for (const listing of selected) {
-  const commandArgs = [
-    'scripts/ebay/rerun-competitive-research-packet.mjs',
-    '--packet-dir',
-    listing.packet_dir,
-    '--competitors',
-    listing.competitor_import_template,
-    '--credit-budget',
-    String(args['credit-budget'] ?? 45),
-    '--credits-per-shot',
-    String(args['credits-per-shot'] ?? 22.5),
-    '--max-jobs-per-listing',
-    String(args['max-jobs-per-listing'] ?? 1),
-    '--min-fit-score',
-    String(args['min-fit-score'] ?? 1),
-    '--min-trend-score',
-    String(args['min-trend-score'] ?? 0),
-  ];
-  if (args['analyze-reference-video'] === true) commandArgs.push('--analyze-reference-video');
-  if (args['allow-weak-research'] === true) commandArgs.push('--allow-weak-research');
-  pushOption(commandArgs, 'analysis-max-seconds');
-  if (args['dry-run'] === true) commandArgs.push('--dry-run');
-  results.push(runRerun({listing, commandArgs}));
-}
+  const results = [];
+  for (const listing of selected) {
+    const commandArgs = [
+      'scripts/ebay/rerun-competitive-research-packet.mjs',
+      '--packet-dir',
+      listing.packet_dir,
+      '--competitors',
+      listing.competitor_import_template,
+      '--credit-budget',
+      String(args['credit-budget'] ?? 45),
+      '--credits-per-shot',
+      String(args['credits-per-shot'] ?? 22.5),
+      '--max-jobs-per-listing',
+      String(args['max-jobs-per-listing'] ?? 1),
+      '--min-fit-score',
+      String(args['min-fit-score'] ?? 1),
+      '--min-trend-score',
+      String(args['min-trend-score'] ?? 0),
+    ];
+    if (args['analyze-reference-video'] === true) commandArgs.push('--analyze-reference-video');
+    if (args['allow-weak-research'] === true) commandArgs.push('--allow-weak-research');
+    pushOption(commandArgs, 'analysis-max-seconds');
+    if (args['dry-run'] === true) commandArgs.push('--dry-run');
+    results.push(runRerun({listing, commandArgs}));
+  }
 
-const manifest = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  ok: results.every((result) => result.status === 'ok' || result.status === 'planned'),
-  dry_run: args['dry-run'] === true,
-  source_queue: queuePath,
-  out_dir: outDir,
-  quality_gate: {
-    require_product_title_and_video_url: !allowIncomplete,
-    require_trend_metrics: !allowNoTrendMetrics,
-    require_structure_evidence: !allowWeakStructure,
-    require_product_match: !allowLowProductMatch,
-    min_product_match_score: minProductMatchScore,
-    trend_metric_keys: trendMetricKeys,
-    structure_evidence_keys: structureEvidenceKeys,
-  },
-  evaluated_count: evaluated.length,
-  selected_count: selected.length,
-  skipped_count: skipped.length,
-  result_count: results.length,
-  evaluated,
-  skipped,
-  results,
+  const manifest = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
+    ok: results.every((result) => result.status === 'ok' || result.status === 'planned'),
+    dry_run: args['dry-run'] === true,
+    source_queue: queuePath,
+    out_dir: outDir,
+    quality_gate: {
+      require_product_title_and_video_url: !allowIncomplete,
+      require_trend_metrics: !allowNoTrendMetrics,
+      require_structure_evidence: !allowWeakStructure,
+      require_product_match: !allowLowProductMatch,
+      min_product_match_score: minProductMatchScore,
+      trend_metric_keys: trendMetricKeys,
+      structure_evidence_keys: structureEvidenceKeys,
+    },
+    evaluated_count: evaluated.length,
+    selected_count: selected.length,
+    skipped_count: skipped.length,
+    result_count: results.length,
+    evaluated,
+    skipped,
+    results,
+  };
+
+  const manifestPath = path.join(outDir, 'competitive-research-batch-rerun-manifest.json');
+  const markdownPath = path.join(outDir, 'competitive-research-batch-rerun-manifest.md');
+  writeJson(manifestPath, manifest);
+  fs.writeFileSync(
+    markdownPath,
+    `${[
+      '# Competitive Research Batch Rerun',
+      '',
+      `OK: ${manifest.ok}`,
+      `Dry run: ${manifest.dry_run}`,
+      `Source queue: ${queuePath}`,
+      `Requires product title and video URL: ${!allowIncomplete}`,
+      `Requires trend metrics: ${!allowNoTrendMetrics}`,
+      `Requires structure evidence: ${!allowWeakStructure}`,
+      `Requires product match: ${!allowLowProductMatch}`,
+      `Minimum product match score: ${minProductMatchScore}`,
+      `Selected: ${selected.length}`,
+      `Skipped: ${skipped.length}`,
+      '',
+      '## Results',
+      '',
+      ...results.map((result) => `- ${result.item_id} ${result.title}: ${result.status}`),
+      '',
+      '## Skipped',
+      '',
+      ...skipped.map((item) => `- ${item.item_id} ${item.title}: ${item.skip_reason}`),
+      '',
+    ].join('\n')}\n`,
+  );
+
+  console.log(`Competitive research batch rerun: ${manifestPath}`);
+  console.log(`Selected listings: ${selected.length}`);
+  console.log(`Skipped listings: ${skipped.length}`);
+  console.log(`Results: ${results.length}`);
+  if (!manifest.ok) process.exitCode = 1;
 };
 
-const manifestPath = path.join(outDir, 'competitive-research-batch-rerun-manifest.json');
-const markdownPath = path.join(outDir, 'competitive-research-batch-rerun-manifest.md');
-writeJson(manifestPath, manifest);
-fs.writeFileSync(markdownPath, `${[
-  '# Competitive Research Batch Rerun',
-  '',
-  `OK: ${manifest.ok}`,
-  `Dry run: ${manifest.dry_run}`,
-  `Source queue: ${queuePath}`,
-  `Requires product title and video URL: ${!allowIncomplete}`,
-  `Requires trend metrics: ${!allowNoTrendMetrics}`,
-  `Requires structure evidence: ${!allowWeakStructure}`,
-  `Requires product match: ${!allowLowProductMatch}`,
-  `Minimum product match score: ${minProductMatchScore}`,
-  `Selected: ${selected.length}`,
-  `Skipped: ${skipped.length}`,
-  '',
-  '## Results',
-  '',
-  ...results.map((result) => `- ${result.item_id} ${result.title}: ${result.status}`),
-  '',
-  '## Skipped',
-  '',
-  ...skipped.map((item) => `- ${item.item_id} ${item.title}: ${item.skip_reason}`),
-  '',
-].join('\n')}\n`);
-
-console.log(`Competitive research batch rerun: ${manifestPath}`);
-console.log(`Selected listings: ${selected.length}`);
-console.log(`Skipped listings: ${skipped.length}`);
-console.log(`Results: ${results.length}`);
-if (!manifest.ok) process.exitCode = 1;
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

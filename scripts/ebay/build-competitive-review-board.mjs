@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
 import {ensureDir, parseArgs} from '../lib.mjs';
 
-const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
 
 const usage = `
@@ -71,9 +69,12 @@ const trendReason = (reference) => {
   if (metrics.sold) parts.push(`${formatNumber(metrics.sold)} sold`);
   if (metrics.revenue) parts.push(`${formatMoney(metrics.revenue)} revenue`);
   if (metrics.growth_rate) parts.push(`${formatNumber(metrics.growth_rate)}% growth`);
-  if (metrics.views_per_day) parts.push(`${formatNumber(metrics.views_per_day, {maximumFractionDigits: 0})} views/day`);
-  if (metrics.sold_per_day) parts.push(`${formatNumber(metrics.sold_per_day, {maximumFractionDigits: 2})} sold/day`);
-  if (metrics.engagement_rate) parts.push(`${(Number(metrics.engagement_rate) * 100).toFixed(1)}% engagement`);
+  if (metrics.views_per_day)
+    parts.push(`${formatNumber(metrics.views_per_day, {maximumFractionDigits: 0})} views/day`);
+  if (metrics.sold_per_day)
+    parts.push(`${formatNumber(metrics.sold_per_day, {maximumFractionDigits: 2})} sold/day`);
+  if (metrics.engagement_rate)
+    parts.push(`${(Number(metrics.engagement_rate) * 100).toFixed(1)}% engagement`);
   return parts.join(' | ') || 'No trend metrics';
 };
 
@@ -90,8 +91,12 @@ const trendReportForBlueprint = (blueprintPath) => {
 const qaReportForStatus = (statusReport) => {
   const previewManifest = statusReport?.manifests?.preview;
   return firstExisting(
-    previewManifest ? path.join(path.dirname(previewManifest), 'competitive-video-qa-report.json') : null,
-    previewManifest ? path.join(path.dirname(previewManifest), 'competitive-video-qa-report.md') : null,
+    previewManifest
+      ? path.join(path.dirname(previewManifest), 'competitive-video-qa-report.json')
+      : null,
+    previewManifest
+      ? path.join(path.dirname(previewManifest), 'competitive-video-qa-report.md')
+      : null,
   );
 };
 
@@ -113,26 +118,33 @@ const renderMedia = ({item, outDir}) => {
   return '<div class="empty-media">No preview media yet</div>';
 };
 
-const statusTone = (status) => ({
-  final_ready: 'good',
-  ready_to_finalize: 'good',
-  collected_waiting_finalize: 'warn',
-  waiting_for_generated_clips: 'warn',
-  research_review_required: 'warn',
-  premium_packet_ready: 'warn',
-  preview_ready: 'neutral',
-  blueprint_only: 'neutral',
-  failed: 'bad',
-}[status] ?? 'neutral');
+const statusTone = (status) =>
+  ({
+    final_ready: 'good',
+    ready_to_finalize: 'good',
+    collected_waiting_finalize: 'warn',
+    waiting_for_generated_clips: 'warn',
+    research_review_required: 'warn',
+    premium_packet_ready: 'warn',
+    preview_ready: 'neutral',
+    blueprint_only: 'neutral',
+    failed: 'bad',
+  })[status] ?? 'neutral';
 
 const renderQa = (qa) => {
   if (!qa) return '';
   const details = [
     qa.probe ? `${qa.probe.width}x${qa.probe.height}` : null,
     qa.probe?.duration_seconds ? `${Number(qa.probe.duration_seconds).toFixed(2)}s` : null,
-    qa.audio?.mean_volume_db !== null && qa.audio?.mean_volume_db !== undefined ? `${Number(qa.audio.mean_volume_db).toFixed(1)} dB audio` : null,
-    qa.scenes?.scene_change_count !== undefined ? `${qa.scenes.scene_change_count} scene changes` : null,
-  ].filter(Boolean).join(' | ');
+    qa.audio?.mean_volume_db !== null && qa.audio?.mean_volume_db !== undefined
+      ? `${Number(qa.audio.mean_volume_db).toFixed(1)} dB audio`
+      : null,
+    qa.scenes?.scene_change_count !== undefined
+      ? `${qa.scenes.scene_change_count} scene changes`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' | ');
   const messages = [...(qa.issues ?? []), ...(qa.warnings ?? [])];
   return `
     <section>
@@ -144,7 +156,15 @@ const renderQa = (qa) => {
   `;
 };
 
-const renderItemCard = ({item, blueprint, trendReport, qa, qaReportPath, creativePacket, outDir}) => {
+const renderItemCard = ({
+  item,
+  blueprint,
+  trendReport,
+  qa,
+  qaReportPath,
+  creativePacket,
+  outDir,
+}) => {
   const selected = blueprint?.selected_reference ?? item.preview?.selected_reference ?? {};
   const ranked = trendReport?.ranked_references ?? blueprint?.ranked_references ?? [];
   const topTrend = ranked[0] ?? selected;
@@ -185,9 +205,13 @@ const renderItemCard = ({item, blueprint, trendReport, qa, qaReportPath, creativ
 
         <section>
           <h3>Premium Render Jobs</h3>
-          ${premiumJobs.length ? `
+          ${
+            premiumJobs.length
+              ? `
             <ul>
-              ${premiumJobs.map((job) => `
+              ${premiumJobs
+                .map(
+                  (job) => `
                 <li>
                   <code>${escapeHtml(job.id)}</code>
                   <span class="${job.exists ? 'ready' : 'missing'}">${job.exists ? 'clip exists' : 'missing clip'}</span>
@@ -195,17 +219,25 @@ const renderItemCard = ({item, blueprint, trendReport, qa, qaReportPath, creativ
                   ${job.caption_intent ? `<div class="small">Caption intent: ${escapeHtml(job.caption_intent)}</div>` : ''}
                   <div class="small">${escapeHtml(job.output_hint ?? '')}</div>
                 </li>
-              `).join('')}
+              `,
+                )
+                .join('')}
             </ul>
-          ` : '<p class="small">No premium render jobs prepared.</p>'}
+          `
+              : '<p class="small">No premium render jobs prepared.</p>'
+          }
         </section>
 
-        ${item.handoff?.jobs?.length ? `
+        ${
+          item.handoff?.jobs?.length
+            ? `
           <section>
             <h3>Render Handoff</h3>
             <p class="small">Batch queue ready: ${escapeHtml(item.handoff.jobs.length)} job${item.handoff.jobs.length === 1 ? '' : 's'}. Use the runbook or URL map template to produce/import the missing product-preserving MP4s.</p>
             <ul>
-              ${item.handoff.jobs.map((job) => `
+              ${item.handoff.jobs
+                .map(
+                  (job) => `
                 <li>
                   <code>${escapeHtml(job.queue_id ?? job.job_id)}</code>
                   <span class="${job.output_exists ? 'ready' : 'missing'}">${job.output_exists ? 'clip exists' : 'awaiting render'}</span>
@@ -215,25 +247,37 @@ const renderItemCard = ({item, blueprint, trendReport, qa, qaReportPath, creativ
                   <div class="small">${escapeHtml(job.output_hint ?? '')}</div>
                   ${job.missing_reference_images?.length ? `<div class="bad-text">Missing references: ${escapeHtml(job.missing_reference_images.join(', '))}</div>` : ''}
                 </li>
-              `).join('')}
+              `,
+                )
+                .join('')}
             </ul>
           </section>
-        ` : ''}
+        `
+            : ''
+        }
 
-        ${item.premium_hold ? `
+        ${
+          item.premium_hold
+            ? `
           <section>
             <h3>Research Quality Review</h3>
             <p class="missing">${escapeHtml(item.premium_hold.reason ?? 'held')}</p>
             ${item.premium_hold.reference_quality?.issues?.length ? `<ul>${item.premium_hold.reference_quality.issues.map((issue) => `<li>${escapeHtml(issue)}</li>`).join('')}</ul>` : ''}
           </section>
-        ` : ''}
+        `
+            : ''
+        }
 
-        ${item.blockers?.length ? `
+        ${
+          item.blockers?.length
+            ? `
           <section>
             <h3>Blockers</h3>
             <ul>${item.blockers.map((blocker) => `<li>${escapeHtml(blocker)}</li>`).join('')}</ul>
           </section>
-        ` : ''}
+        `
+            : ''
+        }
 
         ${sourceLinks.length ? `<p class="links">${sourceLinks.join(' · ')}</p>` : ''}
       </div>
@@ -241,7 +285,7 @@ const renderItemCard = ({item, blueprint, trendReport, qa, qaReportPath, creativ
   `;
 };
 
-const renderBoard = ({report, cards, outDir}) => `<!doctype html>
+const renderBoard = ({report, cards}) => `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -332,7 +376,11 @@ const renderBoard = ({report, cards, outDir}) => `<!doctype html>
     <h1>Competitive Listing Video Review Board</h1>
     <div class="summary">
       <span class="pill">Items: ${escapeHtml(report.summary?.items ?? cards.length)}</span>
-      <span class="pill">Statuses: ${escapeHtml(Object.entries(report.summary?.by_status ?? {}).map(([key, value]) => `${key}=${value}`).join(', ') || 'none')}</span>
+      <span class="pill">Statuses: ${escapeHtml(
+        Object.entries(report.summary?.by_status ?? {})
+          .map(([key, value]) => `${key}=${value}`)
+          .join(', ') || 'none',
+      )}</span>
       <span class="pill">Blockers: ${escapeHtml(report.summary?.blockers ?? 0)}</span>
       <span class="pill">Generated: ${escapeHtml(new Date().toISOString())}</span>
     </div>
@@ -344,28 +392,45 @@ const renderBoard = ({report, cards, outDir}) => `<!doctype html>
 </html>
 `;
 
-const statusPath = requireArg('status');
-const outFile = path.resolve(String(args.out ?? path.join(path.dirname(statusPath), 'competitive-review-board.html')));
-const outDir = path.dirname(outFile);
-ensureDir(outDir);
+const main = async () => {
+  const statusPath = requireArg('status');
+  const outFile = path.resolve(
+    String(args.out ?? path.join(path.dirname(statusPath), 'competitive-review-board.html')),
+  );
+  const outDir = path.dirname(outFile);
+  ensureDir(outDir);
 
-const report = readJson(statusPath);
-const qaReportPath = qaReportForStatus(report);
-const qaReport = qaReportPath?.endsWith('.json') ? readJsonIfExists(qaReportPath) : null;
-const qaByItem = new Map((qaReport?.items ?? []).map((item) => [String(item.item_id), item]));
-const packetManifestPath = path.join(path.dirname(statusPath), 'competitive-creative-packets', 'competitive-creative-packets-manifest.json');
-const packetManifest = readJsonIfExists(packetManifestPath);
-const packetByItem = new Map((packetManifest?.packets ?? []).map((packet) => [String(packet.item_id), packet]));
-const cards = (report.items ?? []).map((item) => {
-  const blueprint = readJsonIfExists(item.blueprint);
-  const trendReportPath = item.blueprint ? path.join(path.dirname(item.blueprint), 'competitor-trend-report.json') : null;
-  const trendReport = readJsonIfExists(trendReportPath);
-  const qa = qaByItem.get(String(item.item_id));
-  const creativePacket = packetByItem.get(String(item.item_id));
-  return renderItemCard({item, blueprint, trendReport, qa, qaReportPath, creativePacket, outDir});
+  const report = readJson(statusPath);
+  const qaReportPath = qaReportForStatus(report);
+  const qaReport = qaReportPath?.endsWith('.json') ? readJsonIfExists(qaReportPath) : null;
+  const qaByItem = new Map((qaReport?.items ?? []).map((item) => [String(item.item_id), item]));
+  const packetManifestPath = path.join(
+    path.dirname(statusPath),
+    'competitive-creative-packets',
+    'competitive-creative-packets-manifest.json',
+  );
+  const packetManifest = readJsonIfExists(packetManifestPath);
+  const packetByItem = new Map(
+    (packetManifest?.packets ?? []).map((packet) => [String(packet.item_id), packet]),
+  );
+  const cards = (report.items ?? []).map((item) => {
+    const blueprint = readJsonIfExists(item.blueprint);
+    const trendReportPath = item.blueprint
+      ? path.join(path.dirname(item.blueprint), 'competitor-trend-report.json')
+      : null;
+    const trendReport = readJsonIfExists(trendReportPath);
+    const qa = qaByItem.get(String(item.item_id));
+    const creativePacket = packetByItem.get(String(item.item_id));
+    return renderItemCard({item, blueprint, trendReport, qa, qaReportPath, creativePacket, outDir});
+  });
+
+  fs.writeFileSync(outFile, renderBoard({report, cards, outDir}));
+
+  console.log(`Competitive review board: ${outFile}`);
+  console.log(`Items: ${report.items?.length ?? 0}`);
+};
+
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
 });
-
-fs.writeFileSync(outFile, renderBoard({report, cards, outDir}));
-
-console.log(`Competitive review board: ${outFile}`);
-console.log(`Items: ${report.items?.length ?? 0}`);

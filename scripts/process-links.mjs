@@ -8,13 +8,10 @@ import {
   parseArgs,
   projectRoot,
   run,
+  slugify as canonicalSlugify,
 } from './lib.mjs';
-import {
-  downloadYoutubeVideo,
-  readLinkEntriesFromLinksFile,
-} from './lib-youtube-download.mjs';
+import {downloadYoutubeVideo, readLinkEntriesFromLinksFile} from './lib-youtube-download.mjs';
 
-const desktopLinks = '/Users/jonathangan/Desktop/Full-Vids/links.txt';
 const localLinks = path.join(projectRoot, 'links.txt');
 
 const usage = `
@@ -22,7 +19,7 @@ Usage:
   npm run process -- [options]
 
 Options:
-  --links FILE            Links file. Default: ./links.txt, then ${desktopLinks}
+  --links FILE            Links file. Default: ./links.txt, then $CCA_LINKS_PATH
   --out-dir DIR           Output root. Default: outputs
   --run-name NAME         Run folder name. Default: run-YYYY-MM-DD-HHMMSS
   --download-dir DIR      Download folder. Default: current run folder/downloads
@@ -87,7 +84,11 @@ const uniqueDir = (parent, preferredName) => {
 
 const linksPath = path.resolve(
   args.links ??
-    (fs.existsSync(localLinks) ? localLinks : desktopLinks),
+    (fs.existsSync(localLinks)
+      ? localLinks
+      : process.env.CCA_LINKS_PATH && fs.existsSync(process.env.CCA_LINKS_PATH)
+        ? process.env.CCA_LINKS_PATH
+        : localLinks),
 );
 const outRoot = path.resolve(args['out-dir'] ?? outputsRoot);
 const runName = String(args['run-name'] ?? makeRunName());
@@ -112,12 +113,7 @@ if (fs.existsSync(styleConfigPath)) {
   fs.copyFileSync(styleConfigPath, path.join(runDir, 'caption-style.json'));
 }
 
-const slugify = (value) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 72) || 'video';
+const slugify = (value) => canonicalSlugify(value, 'video');
 
 const passThroughOptions = [
   'max-clips',

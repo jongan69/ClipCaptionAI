@@ -1,11 +1,6 @@
 #!/usr/bin/env node
 import path from 'node:path';
-import {
-  ensureDir,
-  loadEnv,
-  parseArgs,
-  projectRoot,
-} from './lib.mjs';
+import {ensureDir, loadEnv, parseArgs, projectRoot} from './lib.mjs';
 import {ingestYouTubeScenes} from './lib-youtube-scenes.mjs';
 
 const usage = `
@@ -43,7 +38,8 @@ if (args['queries-file']) {
   const filePath = path.resolve(String(args['queries-file']));
   const fs = await import('node:fs');
   queries.push(
-    ...fs.readFileSync(filePath, 'utf8')
+    ...fs
+      .readFileSync(filePath, 'utf8')
       .split(/\r?\n/)
       .map((line) => line.trim())
       .filter(Boolean),
@@ -63,4 +59,6 @@ const result = await ingestYouTubeScenes({
   channelId: args['channel-id'] ? String(args['channel-id']) : null,
 });
 
-console.log(`Downloaded ${result.downloaded.length} new YouTube scene clips into ${sceneLibraryDir}`);
+console.log(
+  `Downloaded ${result.downloaded.length} new YouTube scene clips into ${sceneLibraryDir}`,
+);

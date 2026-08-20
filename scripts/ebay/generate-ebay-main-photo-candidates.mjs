@@ -39,7 +39,10 @@ const requireArg = (key) => {
 };
 
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
-const clean = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+const clean = (value) =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
 const isImage = (name) => /\.(jpe?g|png|webp)$/i.test(name);
 
 const magick = (() => {
@@ -110,7 +113,12 @@ const selectedRows = (worklist, {top, minImpressions, includeMonitor}) => {
     .filter((row) => Number(row.sold ?? 0) === 0)
     .filter((row) => Number(row.impressions ?? 0) >= minImpressions)
     .filter((row) => includeMonitor || row.primary_action !== 'monitor')
-    .filter((row) => row.primary_action === 'main_image_title' || row.issue_tags?.includes('weak_ctr') || row.issue_tags?.includes('zero_clicks'))
+    .filter(
+      (row) =>
+        row.primary_action === 'main_image_title' ||
+        row.issue_tags?.includes('weak_ctr') ||
+        row.issue_tags?.includes('zero_clicks'),
+    )
     .sort((a, b) => {
       const priorityDelta = Number(b.priority_score ?? 0) - Number(a.priority_score ?? 0);
       if (priorityDelta !== 0) return priorityDelta;
@@ -193,103 +201,117 @@ const writeMainCandidate = ({source, itemDir, itemId}) => {
   return {raw, main, focus, contact};
 };
 
-const worklistPath = path.resolve(requireArg('worklist'));
-const sourceRoots = requireArg('source-root').split(path.delimiter).filter(Boolean).map((root) => path.resolve(root));
-const worklist = readJson(worklistPath);
-const outDir = path.resolve(String(args['out-dir'] ?? path.join(path.dirname(worklistPath), 'top-main-photo-candidates')));
-const top = Math.max(1, Math.floor(Number(args.top ?? 20)));
-const minImpressions = Math.max(0, Math.floor(Number(args['min-impressions'] ?? 0)));
-const includeMonitor = Boolean(args['include-monitor']);
+const main = async () => {
+  const worklistPath = path.resolve(requireArg('worklist'));
+  const sourceRoots = requireArg('source-root')
+    .split(path.delimiter)
+    .filter(Boolean)
+    .map((root) => path.resolve(root));
+  const worklist = readJson(worklistPath);
+  const outDir = path.resolve(
+    String(args['out-dir'] ?? path.join(path.dirname(worklistPath), 'top-main-photo-candidates')),
+  );
+  const top = Math.max(1, Math.floor(Number(args.top ?? 20)));
+  const minImpressions = Math.max(0, Math.floor(Number(args['min-impressions'] ?? 0)));
+  const includeMonitor = Boolean(args['include-monitor']);
 
-for (const sourceRoot of sourceRoots) {
-  if (!fs.existsSync(sourceRoot) || !fs.statSync(sourceRoot).isDirectory()) {
-    throw new Error(`Source root not found: ${sourceRoot}`);
+  for (const sourceRoot of sourceRoots) {
+    if (!fs.existsSync(sourceRoot) || !fs.statSync(sourceRoot).isDirectory()) {
+      throw new Error(`Source root not found: ${sourceRoot}`);
+    }
   }
-}
 
-ensureDir(outDir);
-const rows = selectedRows(worklist, {top, minImpressions, includeMonitor});
-const ids = rows.map((row) => String(row.item_id));
-const sources = sourceMapForIds(sourceRoots, ids);
-const entries = [];
-const skipped = [];
+  ensureDir(outDir);
+  const rows = selectedRows(worklist, {top, minImpressions, includeMonitor});
+  const ids = rows.map((row) => String(row.item_id));
+  const sources = sourceMapForIds(sourceRoots, ids);
+  const entries = [];
+  const skipped = [];
 
-for (const row of rows) {
-  const itemId = String(row.item_id);
-  const source = sources.get(itemId);
-  if (!source) {
-    skipped.push({item_id: itemId, title: row.title, reason: 'source_image_not_found'});
-    continue;
+  for (const row of rows) {
+    const itemId = String(row.item_id);
+    const source = sources.get(itemId);
+    if (!source) {
+      skipped.push({item_id: itemId, title: row.title, reason: 'source_image_not_found'});
+      continue;
+    }
+    const itemDir = path.join(outDir, itemId);
+    ensureDir(itemDir);
+    const images = writeMainCandidate({source, itemDir, itemId});
+    entries.push({
+      item_id: itemId,
+      title: clean(row.title),
+      url: row.url ?? `https://www.ebay.com/itm/${itemId}`,
+      priority_score: Number(row.priority_score ?? 0),
+      impressions: Number(row.impressions ?? 0),
+      views: Number(row.views ?? 0),
+      ctr: Number(row.ctr ?? 0),
+      sold: Number(row.sold ?? 0),
+      primary_action: row.primary_action ?? null,
+      issue_tags: row.issue_tags ?? [],
+      source_image: source,
+      source_lead_copy: images.raw,
+      main_photo_candidate: images.main,
+      thumbnail_focus_candidate: images.focus,
+      before_after_contact: images.contact,
+      recommendation:
+        'Review candidate visually, then use as first photo only after live seller auth is restored. Keep existing gallery detail photos behind it.',
+    });
   }
-  const itemDir = path.join(outDir, itemId);
-  ensureDir(itemDir);
-  const images = writeMainCandidate({source, itemDir, itemId});
-  entries.push({
-    item_id: itemId,
-    title: clean(row.title),
-    url: row.url ?? `https://www.ebay.com/itm/${itemId}`,
-    priority_score: Number(row.priority_score ?? 0),
-    impressions: Number(row.impressions ?? 0),
-    views: Number(row.views ?? 0),
-    ctr: Number(row.ctr ?? 0),
-    sold: Number(row.sold ?? 0),
-    primary_action: row.primary_action ?? null,
-    issue_tags: row.issue_tags ?? [],
-    source_image: source,
-    source_lead_copy: images.raw,
-    main_photo_candidate: images.main,
-    thumbnail_focus_candidate: images.focus,
-    before_after_contact: images.contact,
-    recommendation: 'Review candidate visually, then use as first photo only after live seller auth is restored. Keep existing gallery detail photos behind it.',
-  });
-}
 
-const allContact = path.join(outDir, 'all-main-photo-candidates-contact.jpg');
-if (entries.length > 0) {
-  const contactArgs = [
-    ...entries.map((entry) => entry.main_photo_candidate),
-    '-resize',
-    '300x300',
-    '-background',
-    'white',
-    '-bordercolor',
-    'white',
-    '-border',
-    '10',
-    '-append',
-    allContact,
-  ];
-  runMagick(contactArgs);
-}
+  const allContact = path.join(outDir, 'all-main-photo-candidates-contact.jpg');
+  if (entries.length > 0) {
+    const contactArgs = [
+      ...entries.map((entry) => entry.main_photo_candidate),
+      '-resize',
+      '300x300',
+      '-background',
+      'white',
+      '-bordercolor',
+      'white',
+      '-border',
+      '10',
+      '-append',
+      allContact,
+    ];
+    runMagick(contactArgs);
+  }
 
-const manifest = {
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  worklist: worklistPath,
-  source_roots: sourceRoots,
-  out_dir: outDir,
-  purpose: 'Buyer-safe main image candidates generated from real supplier/listing lead photos. No text overlays, no synthetic staging, no price changes.',
-  selected_count: rows.length,
-  generated_count: entries.length,
-  skipped_count: skipped.length,
-  top,
-  min_impressions: minImpressions,
-  include_monitor: includeMonitor,
-  all_contact_sheet: entries.length > 0 ? allContact : null,
-  entries,
-  skipped,
-  next_steps: [
-    'Visually review all-main-photo-candidates-contact.jpg for cropped or misleading candidates.',
-    'When eBay auth works, preview media revisions before applying to live listings.',
-    'After upload, snapshot traffic daily and compare CTR, views, watchers, bids, and sales by item_id.',
-  ],
+  const manifest = {
+    created_at: new Date().toISOString(),
+    script: scriptName,
+    worklist: worklistPath,
+    source_roots: sourceRoots,
+    out_dir: outDir,
+    purpose:
+      'Buyer-safe main image candidates generated from real supplier/listing lead photos. No text overlays, no synthetic staging, no price changes.',
+    selected_count: rows.length,
+    generated_count: entries.length,
+    skipped_count: skipped.length,
+    top,
+    min_impressions: minImpressions,
+    include_monitor: includeMonitor,
+    all_contact_sheet: entries.length > 0 ? allContact : null,
+    entries,
+    skipped,
+    next_steps: [
+      'Visually review all-main-photo-candidates-contact.jpg for cropped or misleading candidates.',
+      'When eBay auth works, preview media revisions before applying to live listings.',
+      'After upload, snapshot traffic daily and compare CTR, views, watchers, bids, and sales by item_id.',
+    ],
+  };
+
+  const manifestPath = path.join(outDir, `main-photo-candidates-${timestampSlug()}.json`);
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  fs.writeFileSync(path.join(outDir, 'latest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+
+  console.log(`Main-photo candidates: ${manifestPath}`);
+  console.log(`Generated: ${entries.length}`);
+  console.log(`Skipped: ${skipped.length}`);
+  if (entries.length > 0) console.log(`Contact sheet: ${allContact}`);
 };
 
-const manifestPath = path.join(outDir, `main-photo-candidates-${timestampSlug()}.json`);
-fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-fs.writeFileSync(path.join(outDir, 'latest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
-
-console.log(`Main-photo candidates: ${manifestPath}`);
-console.log(`Generated: ${entries.length}`);
-console.log(`Skipped: ${skipped.length}`);
-if (entries.length > 0) console.log(`Contact sheet: ${allContact}`);
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

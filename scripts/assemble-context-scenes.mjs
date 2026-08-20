@@ -3,11 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {
-  resolveProvider,
-  createClient,
-  resolveModel,
-} from './ai-provider.mjs';
+import {resolveProvider, createClient, resolveModel} from './ai-provider.mjs';
 import {
   ensureDir,
   loadEnv,
@@ -17,6 +13,7 @@ import {
   readCaptionStyleConfig,
   readCaptions,
   requireArg,
+  slugify as canonicalSlugify,
 } from './lib.mjs';
 import {
   ingestYouTubeScenes,
@@ -118,23 +115,18 @@ const tokenize = (value) =>
     .map(normalizeToken)
     .filter((token) => token && !stopWords.has(token));
 
-const slugify = (value) =>
-  String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+const slugify = (value) => canonicalSlugify(value, '');
 
 const isVideoFile = (file) => /\.(mp4|mov|m4v|webm)$/i.test(file);
 
 const normalizeStringList = (value, fallback = []) => {
   const raw = Array.isArray(value) ? value : fallback;
-  return raw
-    .map((item) => String(item ?? '').trim())
-    .filter(Boolean);
+  return raw.map((item) => String(item ?? '').trim()).filter(Boolean);
 };
 
-const uniqueList = (items) =>
-  [...new Set(items.map((item) => String(item ?? '').trim()).filter(Boolean))];
+const uniqueList = (items) => [
+  ...new Set(items.map((item) => String(item ?? '').trim()).filter(Boolean)),
+];
 
 const copyVideo = (input, output) => {
   ensureDir(path.dirname(output));
@@ -213,9 +205,7 @@ const readEnhancedTranscriptChunks = (captionJsonPath) => {
       }))
       .filter(
         (chunk) =>
-          Number.isFinite(chunk.startSeconds) &&
-          Number.isFinite(chunk.endSeconds) &&
-          chunk.text,
+          Number.isFinite(chunk.startSeconds) && Number.isFinite(chunk.endSeconds) && chunk.text,
       );
 
     return normalized.length > 0 ? normalized : null;
@@ -287,18 +277,10 @@ const writeIdsToSelection = (selectionPath, usageKey, clipNumber, ids) => {
   fs.writeFileSync(selectionPath, `${JSON.stringify(selection, null, 2)}\n`);
 };
 
-const popCultureAllowedAvoidTerms = new Set([
-  'anime',
-  'cartoon',
-  'compilation',
-  'funny',
-  'meme',
-]);
+const popCultureAllowedAvoidTerms = new Set(['anime', 'cartoon', 'compilation', 'funny', 'meme']);
 
 const removePopCultureAllowedAvoidTerms = (terms) =>
-  normalizeStringList(terms).filter(
-    (term) => !popCultureAllowedAvoidTerms.has(term.toLowerCase()),
-  );
+  normalizeStringList(terms).filter((term) => !popCultureAllowedAvoidTerms.has(term.toLowerCase()));
 
 const scanSceneDir = (dir) => {
   const files = [];
@@ -378,9 +360,7 @@ const loadSceneLibrary = (libraryDir) => {
 
       const meta = probeVideo(filePath);
       const sceneStart = Math.max(0, Number(scene.startSeconds ?? scene.clipStartSeconds ?? 0));
-      const declaredEnd = Number(
-        scene.endSeconds ?? scene.clipEndSeconds ?? meta.durationSeconds,
-      );
+      const declaredEnd = Number(scene.endSeconds ?? scene.clipEndSeconds ?? meta.durationSeconds);
       const sceneEnd = Math.min(
         meta.durationSeconds,
         Number.isFinite(declaredEnd) ? declaredEnd : meta.durationSeconds,
@@ -393,16 +373,20 @@ const loadSceneLibrary = (libraryDir) => {
 
       return {
         id:
-          String(scene.id ?? slugify(scene.title ?? path.basename(filePath, path.extname(filePath)))) ||
-          `scene-${index + 1}`,
+          String(
+            scene.id ?? slugify(scene.title ?? path.basename(filePath, path.extname(filePath))),
+          ) || `scene-${index + 1}`,
         filePath,
-        title:
-          String(scene.title ?? path.basename(filePath, path.extname(filePath)).replace(/[_-]+/g, ' ')),
+        title: String(
+          scene.title ?? path.basename(filePath, path.extname(filePath)).replace(/[_-]+/g, ' '),
+        ),
         source: String(scene.source ?? ''),
         description: String(scene.description ?? ''),
         tags: Array.isArray(scene.tags) ? scene.tags.map(String) : [],
         attribution:
-          scene.attribution && typeof scene.attribution === 'object' && !Array.isArray(scene.attribution)
+          scene.attribution &&
+          typeof scene.attribution === 'object' &&
+          !Array.isArray(scene.attribution)
             ? scene.attribution
             : {},
         startSeconds: sceneStart,
@@ -436,15 +420,19 @@ const normalizeProfileRule = (key, value) => {
 
   return {
     key: normalizeToken(key),
-    kind: String(raw.kind ?? '').trim().toLowerCase() || null,
+    kind:
+      String(raw.kind ?? '')
+        .trim()
+        .toLowerCase() || null,
     match,
   };
 };
 
 const loadProfileRules = (libraryConfigPath) => {
-  const config = libraryConfigPath && fs.existsSync(libraryConfigPath)
-    ? JSON.parse(fs.readFileSync(libraryConfigPath, 'utf8'))
-    : {};
+  const config =
+    libraryConfigPath && fs.existsSync(libraryConfigPath)
+      ? JSON.parse(fs.readFileSync(libraryConfigPath, 'utf8'))
+      : {};
   const merged = {...builtinProfileRules, ...(config.profiles ?? {})};
 
   return Object.fromEntries(
@@ -490,20 +478,18 @@ const isStockLikeScene = (scene) => {
     .join(' ')
     .toLowerCase();
 
-  return /\b(stock|b-?roll|footage|commercial|advertisement|ad\b|product demo|no copy ?right|royalty free|slow motion|4k clip)\b/i.test(
-    text,
-  ) || /\b(stockify|storyblocks?|shutterstock|alamy|pond5|envato|videohive|depositphotos|cliplab|media whale stock|stock depot|ai cinematic|ai generated|free to use|free download|copyright free)\b/i.test(
-    text,
+  return (
+    /\b(stock|b-?roll|footage|commercial|advertisement|ad\b|product demo|no copy ?right|royalty free|slow motion|4k clip)\b/i.test(
+      text,
+    ) ||
+    /\b(stockify|storyblocks?|shutterstock|alamy|pond5|envato|videohive|depositphotos|cliplab|media whale stock|stock depot|ai cinematic|ai generated|free to use|free download|copyright free)\b/i.test(
+      text,
+    )
   );
 };
 
 const isMovieOrTvLikeScene = (scene) => {
-  const text = [
-    scene.title,
-    scene.source,
-  ]
-    .join(' ')
-    .toLowerCase();
+  const text = [scene.title, scene.source].join(' ').toLowerCase();
 
   return /\b(movieclips?|filmclips?|movie clip|film clip|official clip|clip from|scene from|movie scene|film scene|tv scene|show scene|season \d|s\d+e\d+|netflix|hbo|tbs|bbc|warner bros|paramount|universal|sony pictures|20th century|rotton tomatoes|rotten tomatoes|binge society|scene city)\b/i.test(
     text,
@@ -600,9 +586,7 @@ const scoreScene = (
   const wantsMovieScene = preferMovieScenes || hasPopCultureQueries;
   const sceneProfileKeys = matchedSceneProfileKeys(scene, profileRules);
   const activeProfileKey = normalizeToken(sourceProfile);
-  const activeProfileMatched = activeProfileKey
-    ? sceneProfileKeys.has(activeProfileKey)
-    : false;
+  const activeProfileMatched = activeProfileKey ? sceneProfileKeys.has(activeProfileKey) : false;
   const otherMatchedPersonProfiles = [...sceneProfileKeys].filter((key) => {
     if (key === activeProfileKey) {
       return false;
@@ -702,8 +686,7 @@ const normalizeInsertions = (insertions, durationSeconds, config) => {
       };
     })
     .filter(
-      (insertion) =>
-        insertion.endSeconds - insertion.startSeconds >= config.minInsertionSeconds,
+      (insertion) => insertion.endSeconds - insertion.startSeconds >= config.minInsertionSeconds,
     )
     .sort((a, b) => a.startSeconds - b.startSeconds);
 
@@ -831,142 +814,8 @@ const insertionCoverageStats = (insertions, durationSeconds) => {
   return {
     insertionCount: insertions.length,
     coverageSeconds: Number(coverageSeconds.toFixed(2)),
-    coverageRatio: durationSeconds > 0
-      ? Number((coverageSeconds / durationSeconds).toFixed(3))
-      : 0,
+    coverageRatio: durationSeconds > 0 ? Number((coverageSeconds / durationSeconds).toFixed(3)) : 0,
   };
-};
-
-const fallbackInsertionKeywordWeights = {
-  money: 4,
-  rich: 4,
-  broke: 4,
-  identity: 3.6,
-  discipline: 3.2,
-  abroad: 3.2,
-  europe: 3,
-  budapest: 3,
-  hungary: 3,
-  language: 3,
-  friend: 2.8,
-  friends: 2.8,
-  live: 2.4,
-  place: 2.4,
-  move: 2.4,
-  moved: 2.4,
-  online: 2.8,
-  business: 2.8,
-  watch: 2.4,
-  luxury: 2.4,
-  status: 2.4,
-  city: 2,
-  travel: 2,
-};
-
-const topFallbackKeywords = (text, maxItems = 6) => {
-  const counts = new Map();
-  for (const token of tokenize(text)) {
-    counts.set(token, (counts.get(token) ?? 0) + 1);
-  }
-
-  return [...counts.entries()]
-    .sort(
-      (a, b) =>
-        (fallbackInsertionKeywordWeights[b[0]] ?? 0) + b[1] -
-        ((fallbackInsertionKeywordWeights[a[0]] ?? 0) + a[1]),
-    )
-    .map(([token]) => token)
-    .filter((token) => token.length >= 4)
-    .slice(0, maxItems);
-};
-
-const buildHeuristicInsertions = ({
-  transcriptChunks,
-  durationSeconds,
-  config,
-  targetInsertionCount,
-}) => {
-  const candidates = transcriptChunks
-    .map((chunk) => {
-      const keywords = topFallbackKeywords(chunk.text, 6);
-      const textTokens = tokenize(chunk.text);
-      if (textTokens.length < 3) {
-        return null;
-      }
-
-      let score = keywords.reduce(
-        (sum, token) => sum + (fallbackInsertionKeywordWeights[token] ?? 0.4),
-        0,
-      );
-      score += Math.min(3, textTokens.length * 0.05);
-      if (/[?!]/.test(chunk.text)) {
-        score += 1.4;
-      }
-      if (/\$\d|\d{2,}/.test(chunk.text)) {
-        score += 0.9;
-      }
-
-      const rawDuration = Math.max(
-        config.minInsertionSeconds,
-        Math.min(config.maxInsertionSeconds, chunk.endSeconds - chunk.startSeconds),
-      );
-      const midpoint = (chunk.startSeconds + chunk.endSeconds) / 2;
-      const startSeconds = clamp(
-        midpoint - rawDuration / 2,
-        config.edgeBufferSeconds,
-        Math.max(
-          config.edgeBufferSeconds,
-          durationSeconds - config.edgeBufferSeconds - rawDuration,
-        ),
-      );
-      const endSeconds = Math.min(
-        durationSeconds - config.edgeBufferSeconds,
-        startSeconds + rawDuration,
-      );
-      const query = keywords.join(' ') || chunk.text.split(/\s+/).slice(0, 6).join(' ');
-
-      return {
-        startSeconds,
-        endSeconds,
-        query,
-        reason: `Heuristic transcript match around ${query || 'strong line'}.`,
-        visualBrief: {
-          emotion: 'motivational',
-          visualMetaphor: query || 'lifestyle movement',
-          energy: 'high',
-          idealShot: 'short cinematic cutaway',
-          motion: 'movement and quick visual change',
-        },
-        searchQueries: [query, ...keywords.slice(0, 2)].filter(Boolean).slice(0, 3),
-        keywords: keywords.length > 0 ? keywords : textTokens.slice(0, 4),
-        avoidTerms: [],
-        heuristicScore: score,
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.heuristicScore - a.heuristicScore);
-
-  if (candidates.length === 0) {
-    return [];
-  }
-
-  const selected = [];
-  for (const candidate of candidates) {
-    const overlaps = selected.some(
-      (entry) =>
-        candidate.startSeconds < entry.endSeconds + config.minGapSeconds &&
-        candidate.endSeconds > entry.startSeconds - config.minGapSeconds,
-    );
-    if (overlaps) {
-      continue;
-    }
-    selected.push(candidate);
-    if (selected.length >= targetInsertionCount) {
-      break;
-    }
-  }
-
-  return normalizeInsertions(selected, durationSeconds, config);
 };
 
 const buildVideoFilter = (width, height, fps) =>
@@ -1011,12 +860,7 @@ const renderSegment = ({
   );
 };
 
-const buildSceneMix = ({
-  sourceVideo,
-  outputPath,
-  insertions,
-  metadata,
-}) => {
+const buildSceneMix = ({sourceVideo, outputPath, insertions, metadata}) => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaption-scene-mix-'));
   const durationSeconds = metadata.durationSeconds;
   let segmentIndex = 0;
@@ -1029,10 +873,7 @@ const buildSceneMix = ({
       return;
     }
 
-    const segmentPath = path.join(
-      tempDir,
-      `${String(segmentIndex).padStart(3, '0')}-source.mp4`,
-    );
+    const segmentPath = path.join(tempDir, `${String(segmentIndex).padStart(3, '0')}-source.mp4`);
     renderSegment({
       inputPath: sourceVideo,
       startSeconds,
@@ -1052,10 +893,7 @@ const buildSceneMix = ({
       return;
     }
 
-    const segmentPath = path.join(
-      tempDir,
-      `${String(segmentIndex).padStart(3, '0')}-scene.mp4`,
-    );
+    const segmentPath = path.join(tempDir, `${String(segmentIndex).padStart(3, '0')}-scene.mp4`);
     renderSegment({
       inputPath: insertion.sceneFilePath,
       startSeconds: insertion.sceneClipStartSeconds,
@@ -1179,7 +1017,9 @@ if (!sceneLibraryDir) {
 ensureDir(sceneLibraryDir);
 
 if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
-  console.warn('No AI provider API key found (DEEPSEEK_API_KEY or OPENAI_API_KEY), so context scene planning is disabled for this render.');
+  console.warn(
+    'No AI provider API key found (DEEPSEEK_API_KEY or OPENAI_API_KEY), so context scene planning is disabled for this render.',
+  );
   copyVideo(video, outPath);
   process.exit(0);
 }
@@ -1189,14 +1029,8 @@ const config = {
     1,
     Number(args['max-insertions'] ?? contextScenes.maxInsertionsPerClip ?? 3),
   ),
-  minInsertionSeconds: Math.max(
-    0.6,
-    Number(contextScenes.minInsertionSeconds ?? 1.1),
-  ),
-  maxInsertionSeconds: Math.max(
-    1.2,
-    Number(contextScenes.maxInsertionSeconds ?? 3.2),
-  ),
+  minInsertionSeconds: Math.max(0.6, Number(contextScenes.minInsertionSeconds ?? 1.1)),
+  maxInsertionSeconds: Math.max(1.2, Number(contextScenes.maxInsertionSeconds ?? 3.2)),
   minGapSeconds: Math.max(0, Number(contextScenes.minGapSeconds ?? 1.2)),
   edgeBufferSeconds: Math.max(0, Number(contextScenes.edgeBufferSeconds ?? 1.0)),
   targetCoverageRatio: clamp(Number(contextScenes.targetCoverageRatio ?? 0.5), 0.05, 0.85),
@@ -1205,10 +1039,7 @@ const config = {
     0.6,
     Number(contextScenes.targetInsertionLengthSeconds ?? contextScenes.maxInsertionSeconds ?? 3.2),
   ),
-  transcriptChunkWords: Math.max(
-    5,
-    Number(contextScenes.transcriptChunkWords ?? 10),
-  ),
+  transcriptChunkWords: Math.max(5, Number(contextScenes.transcriptChunkWords ?? 10)),
   allowSceneReuseWithinClip: Boolean(contextScenes.allowSceneReuseWithinClip),
   popCultureResearch: {
     enabled: popCultureResearchEnabled,
@@ -1230,18 +1061,9 @@ const config = {
   },
   youtubeIngest: {
     enabled: youtubeIngestEnabled,
-    maxResultsPerQuery: Math.max(
-      1,
-      Number(youtubeIngestConfig.maxResultsPerQuery ?? 6),
-    ),
-    maxDownloadsPerQuery: Math.max(
-      1,
-      Number(youtubeIngestConfig.maxDownloadsPerQuery ?? 2),
-    ),
-    maxDurationSeconds: Math.max(
-      5,
-      Number(youtubeIngestConfig.maxDurationSeconds ?? 60),
-    ),
+    maxResultsPerQuery: Math.max(1, Number(youtubeIngestConfig.maxResultsPerQuery ?? 6)),
+    maxDownloadsPerQuery: Math.max(1, Number(youtubeIngestConfig.maxDownloadsPerQuery ?? 2)),
+    maxDurationSeconds: Math.max(5, Number(youtubeIngestConfig.maxDurationSeconds ?? 60)),
     channelId: args['youtube-channel-id']
       ? String(args['youtube-channel-id'])
       : youtubeIngestConfig.channelId
@@ -1258,14 +1080,14 @@ const config = {
       ),
       minCandidateScore: Number(
         args['movie-scenes']
-          ? queryStyleConfig.movieSceneMinCandidateScore ?? queryStyleConfig.minCandidateScore ?? 20
-          : queryStyleConfig.minCandidateScore ?? 0,
+          ? (queryStyleConfig.movieSceneMinCandidateScore ??
+              queryStyleConfig.minCandidateScore ??
+              20)
+          : (queryStyleConfig.minCandidateScore ?? 0),
       ),
       preferMotion: queryStyleConfig.preferMotion !== false,
       preferCinematic: queryStyleConfig.preferCinematic !== false,
-      preferMovieScenes: args['movie-scenes']
-        ? true
-        : Boolean(queryStyleConfig.preferMovieScenes),
+      preferMovieScenes: args['movie-scenes'] ? true : Boolean(queryStyleConfig.preferMovieScenes),
       avoidTalkingHeads: queryStyleConfig.avoidTalkingHeads !== false,
       officialClipBoost: Number(queryStyleConfig.officialClipBoost ?? 10),
       movieSceneBoost: Number(queryStyleConfig.movieSceneBoost ?? 12),
@@ -1318,11 +1140,7 @@ const selectionClip = loadSelectionClip(
 );
 const selectionPath = args['selection-path'] ? path.resolve(String(args['selection-path'])) : null;
 const clipNumber = Number(args['clip-number'] ?? 1);
-const blockedSceneIds = usedIdsFromSelection(
-  selectionPath,
-  'contextScenes',
-  clipNumber,
-);
+const blockedSceneIds = usedIdsFromSelection(selectionPath, 'contextScenes', clipNumber);
 
 const captions = readCaptions(captionsPath);
 const metadata = probeVideo(video);
@@ -1398,10 +1216,7 @@ Editorial context:
 
 Transcript chunks:
 ${transcriptChunks
-  .map(
-    (chunk) =>
-      `[${chunk.startSeconds.toFixed(1)}-${chunk.endSeconds.toFixed(1)}] ${chunk.text}`,
-  )
+  .map((chunk) => `[${chunk.startSeconds.toFixed(1)}-${chunk.endSeconds.toFixed(1)}] ${chunk.text}`)
   .join('\n')}`;
 
 const response = await client.chat.completions.create({
@@ -1457,15 +1272,17 @@ if (config.popCultureResearch.enabled && insertions.length > 0) {
   }
 }
 
-const autoIngestQueries = [...new Set(
-  insertions
-    .flatMap((insertion) => [
-      insertion.query,
-      ...(Array.isArray(insertion.searchQueries) ? insertion.searchQueries : []),
-    ])
-    .map((query) => String(query ?? '').trim())
-    .filter(Boolean),
-)];
+const autoIngestQueries = [
+  ...new Set(
+    insertions
+      .flatMap((insertion) => [
+        insertion.query,
+        ...(Array.isArray(insertion.searchQueries) ? insertion.searchQueries : []),
+      ])
+      .map((query) => String(query ?? '').trim())
+      .filter(Boolean),
+  ),
+];
 let autoIngestResult = null;
 
 if (config.youtubeIngest.enabled && autoIngestQueries.length > 0) {

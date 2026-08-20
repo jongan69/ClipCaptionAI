@@ -1,15 +1,8 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  buildViralScorecard,
-  slugify,
-} from './clipkit-lib.mjs';
-import {
-  ensureDir,
-  parseArgs,
-  outputsRoot,
-} from './lib.mjs';
+import {buildViralScorecard, slugify} from './clipkit-lib.mjs';
+import {ensureDir, parseArgs, outputsRoot} from './lib.mjs';
 
 const usage = `
 Usage:
@@ -104,7 +97,9 @@ const selectedPaths = (() => {
 
   const runDir = resolveRunDir();
   const paths = selectionPathsForRun(runDir);
-  const filter = String(args['video-slug'] ?? '').trim().toLowerCase();
+  const filter = String(args['video-slug'] ?? '')
+    .trim()
+    .toLowerCase();
   if (!filter) {
     return paths;
   }
@@ -165,7 +160,9 @@ for (const selectionPath of selectedPaths) {
   }
 }
 
-reportItems.sort((a, b) => b.overallScore - a.overallScore || a.videoSlug.localeCompare(b.videoSlug));
+reportItems.sort(
+  (a, b) => b.overallScore - a.overallScore || a.videoSlug.localeCompare(b.videoSlug),
+);
 
 const topLimit = Number(args.top ?? 0);
 const limitedItems =
@@ -185,9 +182,7 @@ const buildTextReport = () => {
     lines.push(
       `[${item.overallScore}/100] ${item.videoSlug} :: ${formatSeconds(item.startSeconds)}-${formatSeconds(item.endSeconds)} :: ${item.title}`,
     );
-    lines.push(
-      `  Why: ${item.viralScorecard.strongestSignals.join(', ')}`,
-    );
+    lines.push(`  Why: ${item.viralScorecard.strongestSignals.join(', ')}`);
     lines.push(
       `  Breakdown: hook ${item.viralScorecard.hookStrength} | emotion ${item.viralScorecard.emotionalIntensity} | practical ${item.viralScorecard.practicalValue} | identity ${item.viralScorecard.identityResonance} | visual ${item.viralScorecard.visualPayoff} | complete ${item.viralScorecard.thoughtCompleteness}`,
     );
@@ -230,7 +225,9 @@ const buildMarkdownReport = () => {
     lines.push(`## ${item.title}`);
     lines.push('');
     lines.push(`- Video: \`${item.videoSlug}\``);
-    lines.push(`- Window: \`${formatSeconds(item.startSeconds)}-${formatSeconds(item.endSeconds)}\``);
+    lines.push(
+      `- Window: \`${formatSeconds(item.startSeconds)}-${formatSeconds(item.endSeconds)}\``,
+    );
     lines.push(`- Score: \`${item.overallScore}/100\``);
     lines.push(`- Why: ${item.viralScorecard.explanation}`);
     lines.push(
@@ -252,12 +249,17 @@ const buildMarkdownReport = () => {
   return `${lines.join('\n')}\n`;
 };
 
-const buildJsonReport = () => JSON.stringify({
-  runDir,
-  generatedAt: new Date().toISOString(),
-  clipCount: limitedItems.length,
-  clips: limitedItems,
-}, null, 2) + '\n';
+const buildJsonReport = () =>
+  JSON.stringify(
+    {
+      runDir,
+      generatedAt: new Date().toISOString(),
+      clipCount: limitedItems.length,
+      clips: limitedItems,
+    },
+    null,
+    2,
+  ) + '\n';
 
 const reportContent =
   format === 'json'
@@ -271,10 +273,7 @@ const writeDefault = Boolean(args.write);
 const derivedOut =
   explicitOut ??
   (writeDefault
-    ? path.join(
-        runDir,
-        `viral-scorecards.${format === 'json' ? 'json' : 'md'}`,
-      )
+    ? path.join(runDir, `viral-scorecards.${format === 'json' ? 'json' : 'md'}`)
     : null);
 
 if (derivedOut) {

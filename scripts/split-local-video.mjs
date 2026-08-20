@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
-import {ensureDir, parseArgs, outputsRoot, probeVideo, projectRoot} from './lib.mjs';
+import {ensureDir, parseArgs, outputsRoot, probeVideo} from './lib.mjs';
 import {slugify, timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `

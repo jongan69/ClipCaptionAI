@@ -33,7 +33,10 @@ if (args.help || args.h) {
   process.exit(0);
 }
 
-const cleanText = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+const cleanText = (value) =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const requireValue = (value, label) => {
   const resolved = cleanText(value);
@@ -98,15 +101,22 @@ const audio = Buffer.from(await response.arrayBuffer());
 if (!audio.length) throw new Error('ElevenLabs returned an empty audio response.');
 ensureDir(path.dirname(output));
 fs.writeFileSync(output, audio);
-fs.writeFileSync(manifestPath, `${JSON.stringify({
-  ...requestPlan,
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  audio_sha256: sha256(audio),
-  audio_bytes: audio.length,
-  character_cost: response.headers.get('character-cost'),
-  request_id: response.headers.get('request-id'),
-}, null, 2)}\n`);
+fs.writeFileSync(
+  manifestPath,
+  `${JSON.stringify(
+    {
+      ...requestPlan,
+      created_at: new Date().toISOString(),
+      script: scriptName,
+      audio_sha256: sha256(audio),
+      audio_bytes: audio.length,
+      character_cost: response.headers.get('character-cost'),
+      request_id: response.headers.get('request-id'),
+    },
+    null,
+    2,
+  )}\n`,
+);
 
 console.log(`ElevenLabs voiceover written to ${output}`);
 console.log(`Generation manifest written to ${manifestPath}`);

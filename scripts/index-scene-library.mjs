@@ -6,6 +6,7 @@ import {
   parseArgs,
   probeVideo,
   projectRoot,
+  slugify as canonicalSlugify,
 } from './lib.mjs';
 
 const usage = `
@@ -47,11 +48,7 @@ if (args.help || args.h) {
 
 const isVideoFile = (file) => /\.(mp4|mov|m4v|webm)$/i.test(file);
 
-const slugify = (value) =>
-  String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+const slugify = (value) => canonicalSlugify(value, '');
 
 const normalizeToken = (value) =>
   String(value ?? '')
@@ -67,8 +64,9 @@ const humanize = (value) =>
     .trim()
     .replace(/\b\w/g, (char) => char.toUpperCase());
 
-const uniqueList = (items) =>
-  [...new Set(items.map((item) => String(item ?? '').trim()).filter(Boolean))];
+const uniqueList = (items) => [
+  ...new Set(items.map((item) => String(item ?? '').trim()).filter(Boolean)),
+];
 
 const scanSceneDir = (dir) => {
   const files = [];
@@ -128,12 +126,32 @@ const builtinProfiles = {
   miami: {
     match: ['miami'],
     description: 'Miami travel, waterfront, nightlife, palm trees, warm weather, luxury lifestyle.',
-    tags: ['miami', 'travel', 'city', 'waterfront', 'beach', 'nightlife', 'luxury', 'lifestyle', 'palm'],
+    tags: [
+      'miami',
+      'travel',
+      'city',
+      'waterfront',
+      'beach',
+      'nightlife',
+      'luxury',
+      'lifestyle',
+      'palm',
+    ],
   },
   vegas: {
     match: ['vegas', 'lasvegas'],
     description: 'Las Vegas nightlife, casino, neon, luxury, city energy, travel.',
-    tags: ['vegas', 'las vegas', 'travel', 'city', 'nightlife', 'casino', 'money', 'luxury', 'neon'],
+    tags: [
+      'vegas',
+      'las vegas',
+      'travel',
+      'city',
+      'nightlife',
+      'casino',
+      'money',
+      'luxury',
+      'neon',
+    ],
   },
   la: {
     match: ['la', 'losangeles'],
@@ -156,7 +174,9 @@ const normalizeProfile = (key, value) => {
   const profile = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   return {
     key,
-    match: uniqueList([key, ...(Array.isArray(profile.match) ? profile.match : [])]).map(normalizeToken),
+    match: uniqueList([key, ...(Array.isArray(profile.match) ? profile.match : [])]).map(
+      normalizeToken,
+    ),
     description: String(profile.description ?? '').trim(),
     tags: uniqueList(profile.tags ?? []),
   };
@@ -184,9 +204,7 @@ if (!fs.existsSync(sceneLibraryDir)) {
   throw new Error(`Scene library not found: ${sceneLibraryDir}`);
 }
 
-const config = fs.existsSync(configPath)
-  ? JSON.parse(fs.readFileSync(configPath, 'utf8'))
-  : {};
+const config = fs.existsSync(configPath) ? JSON.parse(fs.readFileSync(configPath, 'utf8')) : {};
 const mergedProfiles = Object.fromEntries(
   Object.entries({...builtinProfiles, ...(config.profiles ?? {})}).map(([key, value]) => [
     key,
@@ -196,7 +214,9 @@ const mergedProfiles = Object.fromEntries(
 const defaultSource = String(config.defaultSource ?? 'Custom Scenes Library').trim();
 const defaultTags = uniqueList(config.defaultTags ?? ['custom', 'broll', 'travel', 'lifestyle']);
 const clipOverrides =
-  config.clipOverrides && typeof config.clipOverrides === 'object' && !Array.isArray(config.clipOverrides)
+  config.clipOverrides &&
+  typeof config.clipOverrides === 'object' &&
+  !Array.isArray(config.clipOverrides)
     ? config.clipOverrides
     : {};
 
@@ -209,9 +229,7 @@ const existingByFile = new Map(
 
 const buildGeneratedDescription = ({matchedProfiles, coreTokens, title}) => {
   const matchedDescriptions = uniqueList(
-    matchedProfiles
-      .map((profile) => profile.description)
-      .filter(Boolean),
+    matchedProfiles.map((profile) => profile.description).filter(Boolean),
   );
 
   if (matchedDescriptions.length > 0) {
@@ -242,10 +260,7 @@ const scenes = videoFiles.map((filePath) => {
   );
   const existing = existingByFile.get(relativeFile) ?? {};
   const override =
-    clipOverrides[relativeFile] ??
-    clipOverrides[baseName] ??
-    clipOverrides[baseWithoutExt] ??
-    {};
+    clipOverrides[relativeFile] ?? clipOverrides[baseName] ?? clipOverrides[baseWithoutExt] ?? {};
   const metadata = probeVideo(filePath);
   const generatedTitle = humanize(baseWithoutExt);
   const tags = uniqueList([
@@ -261,7 +276,8 @@ const scenes = videoFiles.map((filePath) => {
       existing.description ??
       buildGeneratedDescription({matchedProfiles, coreTokens, title}),
   ).trim();
-  const source = String(override.source ?? existing.source ?? defaultSource).trim() || defaultSource;
+  const source =
+    String(override.source ?? existing.source ?? defaultSource).trim() || defaultSource;
   const startSeconds = Math.max(0, Number(override.startSeconds ?? existing.startSeconds ?? 0));
   const requestedEndSeconds = Number(
     override.endSeconds ?? existing.endSeconds ?? metadata.durationSeconds,
@@ -283,10 +299,14 @@ const scenes = videoFiles.map((filePath) => {
     startSeconds,
     endSeconds,
     attribution: {
-      ...(existing.attribution && typeof existing.attribution === 'object' && !Array.isArray(existing.attribution)
+      ...(existing.attribution &&
+      typeof existing.attribution === 'object' &&
+      !Array.isArray(existing.attribution)
         ? existing.attribution
         : {}),
-      ...(override.attribution && typeof override.attribution === 'object' && !Array.isArray(override.attribution)
+      ...(override.attribution &&
+      typeof override.attribution === 'object' &&
+      !Array.isArray(override.attribution)
         ? override.attribution
         : {}),
       kind: 'custom-library',

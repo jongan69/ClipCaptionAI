@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
+import {ensureDir, loadEnv, parseArgs, projectRoot} from '../lib.mjs';
 import {ebayCinematicAdsOutputRoot} from '../lib.mjs';
 import {slugify, timestampSlug} from '../clipkit-lib.mjs';
 
@@ -110,7 +110,17 @@ Options:
 
 const rawArgs = process.argv.slice(2);
 const args = parseArgs(rawArgs);
-const knownCommands = new Set(['roi-plan', 'competitive-plan', 'prepare', 'find-broll', 'seed-local-broll', 'assemble', 'upload', 'status', 'help']);
+const knownCommands = new Set([
+  'roi-plan',
+  'competitive-plan',
+  'prepare',
+  'find-broll',
+  'seed-local-broll',
+  'assemble',
+  'upload',
+  'status',
+  'help',
+]);
 const command = knownCommands.has(rawArgs[0]) ? rawArgs[0] : 'prepare';
 
 if (args.help || args.h || command === 'help') {
@@ -119,6 +129,8 @@ if (args.help || args.h || command === 'help') {
 }
 
 const mcpUrl = String(args['mcp-url'] ?? defaultMcpUrl);
+
+loadEnv();
 
 const requireValue = (key) => {
   if (!args[key]) {
@@ -157,11 +169,16 @@ const resolveProjectPath = (value) => {
 };
 
 const mcpTool = async (name, toolArgs = {}) => {
+  const token = process.env.EBAY_MCP_TOKEN;
+  if (!token) {
+    throw new Error('EBAY_MCP_TOKEN is required for eBay MCP calls — add it to your .env');
+  }
   const response = await fetch(mcpUrl, {
     method: 'POST',
     headers: {
       accept: 'application/json, text/event-stream',
       'content-type': 'application/json',
+      authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       jsonrpc: '2.0',
@@ -209,7 +226,8 @@ const numberValue = (value, fallback = 0) => {
   return Number.isFinite(number) ? number : fallback;
 };
 
-const getPrice = (listing) => numberValue(listing.price?.value ?? listing.current_price ?? listing.price, 0);
+const getPrice = (listing) =>
+  numberValue(listing.price?.value ?? listing.current_price ?? listing.price, 0);
 
 const listingRoiScore = (listing) => {
   const price = getPrice(listing);
@@ -245,11 +263,13 @@ const renderTierForListing = (listing, {strategy = 'lean', maxHiggsShots = 1} = 
 
   if (strategy === 'lean' || strategy === 'high-energy') {
     return {
-      tier: strategy === 'high-energy' ? 'high-energy-hero' : price >= 500 ? 'lean-hero' : 'lean-test',
+      tier:
+        strategy === 'high-energy' ? 'high-energy-hero' : price >= 500 ? 'lean-hero' : 'lean-test',
       shots: capShots(1),
-      strategy: strategy === 'high-energy'
-        ? 'One paid product-proof shot. Make the finished ad feel expensive with high-quality yt-dlp B-roll, hard pacing, camera/money/impact SFX, and fast interleaved cuts.'
-        : 'One paid Higgs hero/product-proof shot only. Build perceived production value with strong B-roll, pacing, captions, and final assembly.',
+      strategy:
+        strategy === 'high-energy'
+          ? 'One paid product-proof shot. Make the finished ad feel expensive with high-quality yt-dlp B-roll, hard pacing, camera/money/impact SFX, and fast interleaved cuts.'
+          : 'One paid Higgs hero/product-proof shot only. Build perceived production value with strong B-roll, pacing, captions, and final assembly.',
     };
   }
 
@@ -257,7 +277,8 @@ const renderTierForListing = (listing, {strategy = 'lean', maxHiggsShots = 1} = 
     return {
       tier: 'hero',
       shots: capShots(4),
-      strategy: 'Full 18-24s cinematic product ad: hero reveal, condition macro, bundle/accessory pass, buyer-confidence close.',
+      strategy:
+        'Full 18-24s cinematic product ad: hero reveal, condition macro, bundle/accessory pass, buyer-confidence close.',
     };
   }
 
@@ -265,7 +286,8 @@ const renderTierForListing = (listing, {strategy = 'lean', maxHiggsShots = 1} = 
     return {
       tier: 'focused',
       shots: capShots(2),
-      strategy: 'One hero reveal plus one condition/included-items macro. Use this when upside is real but not worth a full four-shot spend.',
+      strategy:
+        'One hero reveal plus one condition/included-items macro. Use this when upside is real but not worth a full four-shot spend.',
     };
   }
 
@@ -296,7 +318,16 @@ const reasonsForListing = (listing) => {
   return reasons;
 };
 
-const writeRoiPlan = ({dashboard, ranked, selected, outRoot, creditBudget, creditsPerShot, adStrategy, maxHiggsShots}) => {
+const writeRoiPlan = ({
+  dashboard,
+  ranked,
+  selected,
+  outRoot,
+  creditBudget,
+  creditsPerShot,
+  adStrategy,
+  maxHiggsShots,
+}) => {
   const plan = {
     created_at: new Date().toISOString(),
     mcp_url: mcpUrl,
@@ -318,9 +349,12 @@ const writeRoiPlan = ({dashboard, ranked, selected, outRoot, creditBudget, credi
         'Stage eBay media revisions first; apply live only after reviewing final proof frames.',
       ],
       tier_meaning: {
-        'lean-hero': '1 paid shot for a high-value listing, with B-roll carrying the rest of the ad.',
-        'lean-test': '1 paid shot for a lower-value listing; skip extra Higgs unless the first ad proves useful.',
-        'high-energy-hero': '1 paid product-proof shot plus aggressive yt-dlp B-roll, faster cuts, and SFX-driven motion.',
+        'lean-hero':
+          '1 paid shot for a high-value listing, with B-roll carrying the rest of the ad.',
+        'lean-test':
+          '1 paid shot for a lower-value listing; skip extra Higgs unless the first ad proves useful.',
+        'high-energy-hero':
+          '1 paid product-proof shot plus aggressive yt-dlp B-roll, faster cuts, and SFX-driven motion.',
         hero: '4 shots, best for $500+ camera/drone gear and other high-value listings.',
         focused: '2 shots, best for mid-value items or listings missing video.',
         micro: '1 shot only, best for tests or cheap items with obvious visual upside.',
@@ -372,30 +406,44 @@ const conversionBriefForListing = (listing, listingPlan = null) => {
     camera: {
       buyer: 'creator, hybrid shooter, or travel filmmaker who wants a compact serious camera kit',
       emotional_hook: 'ready-to-shoot creator kit without hunting for the lens and cage separately',
-      proof_points: ['Sony a6700 body', 'wide E 11mm f/1.8 lens', 'cage included', 'actual item photos'],
+      proof_points: [
+        'Sony a6700 body',
+        'wide E 11mm f/1.8 lens',
+        'cage included',
+        'actual item photos',
+      ],
       visual_tone: 'premium creator desk, Miami street/photo energy, compact professional kit',
-      objection_to_answer: 'buyer needs confidence that the exact camera, lens, cage, and condition are real',
+      objection_to_answer:
+        'buyer needs confidence that the exact camera, lens, cage, and condition are real',
     },
     gimbal: {
       buyer: 'solo creator or camera operator who wants smoother handheld footage fast',
       emotional_hook: 'turn shaky handheld footage into clean cinematic movement',
       proof_points: ['DJI RS 4 Mini', 'SmallRig handle', 'tracker module', 'actual item photos'],
       visual_tone: 'behind-the-scenes creator setup, smooth motion, compact travel rig',
-      objection_to_answer: 'buyer needs to see what is included and that the kit is not missing key pieces',
+      objection_to_answer:
+        'buyer needs to see what is included and that the kit is not missing key pieces',
     },
     collectible: {
       buyer: 'sports card collector looking for graded Kobe Bryant inventory',
       emotional_hook: 'a clean graded Kobe card that feels display-worthy and collectible',
-      proof_points: ['PSA slab', 'Kobe Bryant card', 'front and back actual photos', 'grade visible'],
+      proof_points: [
+        'PSA slab',
+        'Kobe Bryant card',
+        'front and back actual photos',
+        'grade visible',
+      ],
       visual_tone: 'collector desk, soft premium light, careful handling, no hype clutter',
-      objection_to_answer: 'buyer needs a clear view of grade, slab, corners, and authenticity cues',
+      objection_to_answer:
+        'buyer needs a clear view of grade, slab, corners, and authenticity cues',
     },
     projector: {
       buyer: 'budget home-theater buyer who wants a simple movie-night projector',
       emotional_hook: 'turn a room into a quick movie-night setup without spending big',
       proof_points: ['projector shown', 'remote shown', 'actual item photos', 'compact setup'],
       visual_tone: 'cozy home cinema, warm room light, simple setup, practical value',
-      objection_to_answer: 'buyer needs clarity on included remote, visible condition, and realistic expectations',
+      objection_to_answer:
+        'buyer needs clarity on included remote, visible condition, and realistic expectations',
     },
     product: {
       buyer: 'marketplace buyer comparing used items and looking for confidence',
@@ -435,7 +483,9 @@ const conversionBriefForListing = (listing, listingPlan = null) => {
 
 const plannedShotsForListing = (listing, listingPlan = null) => {
   const allShots = shotPromptsForListing(listing);
-  const shotLimit = listingPlan?.shots ? Math.min(allShots.length, Number(listingPlan.shots)) : allShots.length;
+  const shotLimit = listingPlan?.shots
+    ? Math.min(allShots.length, Number(listingPlan.shots))
+    : allShots.length;
   return allShots.slice(0, shotLimit).map((shot, index) => ({
     ...shot,
     rank: index + 1,
@@ -659,29 +709,25 @@ const shotPromptsForListing = (listing) => {
       id: '01-hero-reveal',
       duration_seconds: 5,
       reference_images: ['01'],
-      prompt:
-        `Cinematic vertical product ad hero reveal for the exact item shown: ${title}. Slow controlled push-in, clean studio surface, premium natural reflections, realistic lens depth, high-end resale marketplace feel. Preserve the real product appearance from the reference image.`,
+      prompt: `Cinematic vertical product ad hero reveal for the exact item shown: ${title}. Slow controlled push-in, clean studio surface, premium natural reflections, realistic lens depth, high-end resale marketplace feel. Preserve the real product appearance from the reference image.`,
     },
     {
       id: '02-condition-macro',
       duration_seconds: 5,
       reference_images: ['02', '03'],
-      prompt:
-        `Macro detail pass across the exact listed item, emphasizing real surfaces, edges, labels, accessories, and condition cues visible in the reference photos. Smooth handheld micro movement, soft directional light, no invented damage or hidden flaws.`,
+      prompt: `Macro detail pass across the exact listed item, emphasizing real surfaces, edges, labels, accessories, and condition cues visible in the reference photos. Smooth handheld micro movement, soft directional light, no invented damage or hidden flaws.`,
     },
     {
       id: '03-included-bundle',
       duration_seconds: 5,
       reference_images: ['all'],
-      prompt:
-        `Cinematic arrangement of only the items visibly included in the listing photos for ${title}. Editorial product-table composition, gentle parallax, crisp focus pulls, no extra accessories, no fake packaging, no altered model labels.`,
+      prompt: `Cinematic arrangement of only the items visibly included in the listing photos for ${title}. Editorial product-table composition, gentle parallax, crisp focus pulls, no extra accessories, no fake packaging, no altered model labels.`,
     },
     {
       id: '04-buyer-confidence',
       duration_seconds: 5,
       reference_images: ['01', 'last'],
-      prompt:
-        `Trust-building closing shot for an eBay listing video: the exact product from the references, clean and honest lighting, subtle camera move, premium but realistic resale presentation, no text overlays, no logos added, no functionality claims.`,
+      prompt: `Trust-building closing shot for an eBay listing video: the exact product from the references, clean and honest lighting, subtle camera move, premium but realistic resale presentation, no text overlays, no logos added, no functionality claims.`,
     },
   ];
 };
@@ -780,9 +826,10 @@ const storyBrollPromptsForListing = (listing, {energy = 'standard'} = {}) => {
   return (shared[category] ?? shared.product).map((prompt, index) => ({
     id: `story-${String(index + 1).padStart(2, '0')}`,
     prompt,
-    use: index === 0
-      ? `Open or finish with a context shot that tells buyers what ${title} helps them do.`
-      : 'Optional supporting cutaway for pacing and story texture.',
+    use:
+      index === 0
+        ? `Open or finish with a context shot that tells buyers what ${title} helps them do.`
+        : 'Optional supporting cutaway for pacing and story texture.',
   }));
 };
 
@@ -822,14 +869,7 @@ const writeStoryBrollPlan = ({listing, listingDir}) => {
     '',
     '## Prompts',
     '',
-    ...prompts.flatMap((item) => [
-      `### ${item.id}`,
-      '',
-      item.prompt,
-      '',
-      item.use,
-      '',
-    ]),
+    ...prompts.flatMap((item) => [`### ${item.id}`, '', item.prompt, '', item.use, '']),
     '## Commands',
     '',
     'Find B-roll candidates:',
@@ -921,38 +961,43 @@ const writeBriefs = ({listing, listingDir, listingPlan = null}) => {
 
   fs.writeFileSync(path.join(listingDir, 'higgsfield-brief.md'), markdown);
   ensureDir(path.join(listingDir, 'higgsfield-renders'));
-  fs.writeFileSync(
-    path.join(listingDir, 'higgsfield-renders', '.gitkeep'),
-    '',
-  );
+  fs.writeFileSync(path.join(listingDir, 'higgsfield-renders', '.gitkeep'), '');
   writeStoryBrollPlan({listing, listingDir});
   writeHiggsProductionKit({listing, listingDir, listingPlan});
 };
 
-const prepareListingProjects = async ({itemIds, outRoot, noDownload, listingPlanById = new Map(), workbenchFile = null}) => {
+const prepareListingProjects = async ({
+  itemIds,
+  outRoot,
+  noDownload,
+  listingPlanById = new Map(),
+  workbenchFile = null,
+}) => {
   ensureDir(outRoot);
 
   const outputDirectory = isInsideProject(outRoot) ? path.relative(projectRoot, outRoot) : outRoot;
   const workbench = workbenchFile
     ? readJson(path.resolve(workbenchFile))
     : await mcpTool('ebay_get_listing_asset_workbench', {
-      item_ids: itemIds,
-      output_directory: outputDirectory,
-      include_download_commands: true,
-      include_ai_edit_briefs: true,
-    });
+        item_ids: itemIds,
+        output_directory: outputDirectory,
+        include_download_commands: true,
+        include_ai_edit_briefs: true,
+      });
 
   safeJsonWrite(path.join(outRoot, 'workbench.json'), workbench);
 
   const selectedItemIds = new Set(itemIds.map((itemId) => String(itemId)));
-  const listings = (workbench.manifest?.listings ?? [])
-    .filter((listing) => selectedItemIds.size === 0 || selectedItemIds.has(String(listing.item_id)));
+  const listings = (workbench.manifest?.listings ?? []).filter(
+    (listing) => selectedItemIds.size === 0 || selectedItemIds.has(String(listing.item_id)),
+  );
   if (listings.length === 0 && itemIds.length > 0) {
     throw new Error(`Workbench did not contain selected item IDs: ${itemIds.join(', ')}`);
   }
 
   for (const listing of listings) {
-    const listingDir = resolveProjectPath(listing.directory) ?? path.join(outRoot, String(listing.item_id));
+    const listingDir =
+      resolveProjectPath(listing.directory) ?? path.join(outRoot, String(listing.item_id));
     ensureDir(listingDir);
     safeJsonWrite(path.join(listingDir, 'listing.json'), listing);
 
@@ -984,13 +1029,13 @@ const prepare = async () => {
     String(args['out-dir'] ?? path.join(ebayCinematicAdsOutputRoot, `run-${timestampSlug()}`)),
   );
 
-    await prepareListingProjects({
-      itemIds,
-      outRoot,
-      noDownload: Boolean(args['no-download']),
-      listingPlanById: new Map(),
-      workbenchFile: args['workbench-file'] ? String(args['workbench-file']) : null,
-    });
+  await prepareListingProjects({
+    itemIds,
+    outRoot,
+    noDownload: Boolean(args['no-download']),
+    listingPlanById: new Map(),
+    workbenchFile: args['workbench-file'] ? String(args['workbench-file']) : null,
+  });
 };
 
 const buildRoiQueue = async ({outRoot}) => {
@@ -1008,9 +1053,9 @@ const buildRoiQueue = async ({outRoot}) => {
   const dashboard = args['dashboard-file']
     ? readJson(path.resolve(String(args['dashboard-file'])))
     : await mcpTool('ebay_get_listing_performance_dashboard', {
-      include_traffic: false,
-      last_days: 7,
-    });
+        include_traffic: false,
+        last_days: 7,
+      });
 
   const ranked = (dashboard.listings ?? [])
     .filter((listing) => listing.ok !== false)
@@ -1084,7 +1129,9 @@ const roiPlan = async () => {
   const plan = await buildRoiQueue({outRoot});
 
   if (args['prepare-selected'] && plan.selected.length > 0) {
-    const listingPlanById = new Map(plan.selected.map((listing) => [String(listing.item_id), listing]));
+    const listingPlanById = new Map(
+      plan.selected.map((listing) => [String(listing.item_id), listing]),
+    );
     await prepareListingProjects({
       itemIds: plan.selected.map((listing) => listing.item_id),
       outRoot: path.join(outRoot, 'projects'),
@@ -1095,18 +1142,25 @@ const roiPlan = async () => {
   }
 
   console.log(`ROI plan: ${path.join(outRoot, 'higgsfield-roi-plan.md')}`);
-  console.log(`Selected ${plan.selected.length} listing(s), estimated ${plan.spent}/${plan.creditBudget} credits.`);
+  console.log(
+    `Selected ${plan.selected.length} listing(s), estimated ${plan.spent}/${plan.creditBudget} credits.`,
+  );
 };
 
 const competitivePlan = async () => {
   const outRoot = path.resolve(
-    String(args['out-dir'] ?? path.join(ebayCinematicAdsOutputRoot, `competitive-plan-${timestampSlug()}`)),
+    String(
+      args['out-dir'] ??
+        path.join(ebayCinematicAdsOutputRoot, `competitive-plan-${timestampSlug()}`),
+    ),
   );
   const plan = await buildRoiQueue({outRoot});
   const projectsDir = path.join(outRoot, 'projects');
 
   if (plan.selected.length > 0) {
-    const listingPlanById = new Map(plan.selected.map((listing) => [String(listing.item_id), listing]));
+    const listingPlanById = new Map(
+      plan.selected.map((listing) => [String(listing.item_id), listing]),
+    );
     await prepareListingProjects({
       itemIds: plan.selected.map((listing) => listing.item_id),
       outRoot: projectsDir,
@@ -1168,14 +1222,33 @@ const competitivePlan = async () => {
       '--max-jobs-per-listing',
       String(args['max-higgs-shots'] ?? 1),
     ];
-    for (const key of ['width', 'height', 'fps', 'music-track', 'music-volume', 'voiceover', 'voiceover-volume', 'sfx-library', 'sfx-volume', 'min-fit-score', 'min-trend-score']) {
-      if (args[key] !== undefined && args[key] !== false) controlLoopArgs.push(`--${key}`, String(args[key]));
+    for (const key of [
+      'width',
+      'height',
+      'fps',
+      'music-track',
+      'music-volume',
+      'voiceover',
+      'voiceover-volume',
+      'sfx-library',
+      'sfx-volume',
+      'min-fit-score',
+      'min-trend-score',
+    ]) {
+      if (args[key] !== undefined && args[key] !== false)
+        controlLoopArgs.push(`--${key}`, String(args[key]));
     }
     if (args['allow-weak-research'] === true) controlLoopArgs.push('--allow-weak-research');
     if (args['run-higgsfield-renders'] === true) controlLoopArgs.push('--run-higgsfield-renders');
-    if (args['higgs-render-model']) controlLoopArgs.push('--higgs-render-model', String(args['higgs-render-model']));
-    if (args['higgs-render-credit-budget']) controlLoopArgs.push('--higgs-render-credit-budget', String(args['higgs-render-credit-budget']));
-    if (args['higgs-render-max-jobs']) controlLoopArgs.push('--higgs-render-max-jobs', String(args['higgs-render-max-jobs']));
+    if (args['higgs-render-model'])
+      controlLoopArgs.push('--higgs-render-model', String(args['higgs-render-model']));
+    if (args['higgs-render-credit-budget'])
+      controlLoopArgs.push(
+        '--higgs-render-credit-budget',
+        String(args['higgs-render-credit-budget']),
+      );
+    if (args['higgs-render-max-jobs'])
+      controlLoopArgs.push('--higgs-render-max-jobs', String(args['higgs-render-max-jobs']));
     if (args['higgs-render-skip-cost'] === true) controlLoopArgs.push('--higgs-render-skip-cost');
     if (args['higgs-render-dry-run'] === true) controlLoopArgs.push('--higgs-render-dry-run');
     if (args['preview-duration'] !== undefined && args['preview-duration'] !== false) {
@@ -1187,13 +1260,29 @@ const competitivePlan = async () => {
     execFileSync('npm', controlLoopArgs, {cwd: projectRoot, stdio: 'inherit'});
     const premiumPlanDir = path.join(creativeOutDir, 'competitive-premium-render-plan');
     controlLoop = {
-      control_loop_manifest: path.join(creativeOutDir, 'competitive-control-loop', 'competitive-control-loop-manifest.json'),
+      control_loop_manifest: path.join(
+        creativeOutDir,
+        'competitive-control-loop',
+        'competitive-control-loop-manifest.json',
+      ),
       preview_manifest: path.join(creativeOutDir, 'competitive-preview-render-manifest.json'),
       qa_report: path.join(creativeOutDir, 'competitive-video-qa-report.json'),
       premium_plan: path.join(premiumPlanDir, 'competitive-premium-render-plan.json'),
-      handoff_manifest: path.join(premiumPlanDir, 'competitive-render-handoff', 'competitive-render-handoff-manifest.json'),
-      higgsfield_render_manifest: path.join(premiumPlanDir, 'competitive-higgsfield-render-run', 'competitive-higgsfield-render-manifest.json'),
-      higgsfield_render_url_map: path.join(premiumPlanDir, 'competitive-higgsfield-render-run', 'higgsfield-render-url-map.json'),
+      handoff_manifest: path.join(
+        premiumPlanDir,
+        'competitive-render-handoff',
+        'competitive-render-handoff-manifest.json',
+      ),
+      higgsfield_render_manifest: path.join(
+        premiumPlanDir,
+        'competitive-higgsfield-render-run',
+        'competitive-higgsfield-render-manifest.json',
+      ),
+      higgsfield_render_url_map: path.join(
+        premiumPlanDir,
+        'competitive-higgsfield-render-run',
+        'higgsfield-render-url-map.json',
+      ),
       status_report: path.join(premiumPlanDir, 'competitive-video-pipeline-status.json'),
       review_board: path.join(premiumPlanDir, 'competitive-review-board.html'),
       dry_run: Boolean(args['control-loop-dry-run']),
@@ -1234,8 +1323,12 @@ const competitivePlan = async () => {
   };
   safeJsonWrite(path.join(outRoot, 'competitive-pipeline-manifest.json'), pipelineManifest);
 
-  console.log(`Competitive pipeline manifest: ${path.join(outRoot, 'competitive-pipeline-manifest.json')}`);
-  console.log(`Selected ${plan.selected.length} listing(s), estimated ${plan.spent}/${plan.creditBudget} credits if rendered.`);
+  console.log(
+    `Competitive pipeline manifest: ${path.join(outRoot, 'competitive-pipeline-manifest.json')}`,
+  );
+  console.log(
+    `Selected ${plan.selected.length} listing(s), estimated ${plan.spent}/${plan.creditBudget} credits if rendered.`,
+  );
 };
 
 const listVideoFiles = (dir) =>
@@ -1322,7 +1415,10 @@ const findBroll = () => {
   const clips = listNestedVideoFiles(runDir);
   for (const [index, clip] of clips.entries()) {
     const ext = path.extname(clip) || '.mp4';
-    const outPath = path.join(storyBrollDir, `${String(index + 1).padStart(2, '0')}-${slugify(path.basename(clip, ext))}${ext}`);
+    const outPath = path.join(
+      storyBrollDir,
+      `${String(index + 1).padStart(2, '0')}-${slugify(path.basename(clip, ext))}${ext}`,
+    );
     fs.copyFileSync(clip, outPath);
   }
 
@@ -1448,13 +1544,15 @@ const readMusicLibrary = (libraryDir) => {
   const manifest = fs.existsSync(manifestPath)
     ? JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
     : {tracks: []};
-  const files = listNestedVideoFiles(libraryDir)
-    .concat(
-      fs.readdirSync(libraryDir, {withFileTypes: true})
-        .filter((entry) => entry.isFile() && /\.(mp3|m4a|aac|wav|flac|opus)$/i.test(entry.name))
-        .map((entry) => path.join(libraryDir, entry.name)),
-    );
-  const byFile = new Map((manifest.tracks ?? []).map((track) => [path.basename(track.file ?? ''), track]));
+  const files = listNestedVideoFiles(libraryDir).concat(
+    fs
+      .readdirSync(libraryDir, {withFileTypes: true})
+      .filter((entry) => entry.isFile() && /\.(mp3|m4a|aac|wav|flac|opus)$/i.test(entry.name))
+      .map((entry) => path.join(libraryDir, entry.name)),
+  );
+  const byFile = new Map(
+    (manifest.tracks ?? []).map((track) => [path.basename(track.file ?? ''), track]),
+  );
   return [...new Set(files)]
     .map((file) => ({
       ...(byFile.get(path.basename(file)) ?? {}),
@@ -1506,7 +1604,10 @@ const buildEnergySfxEvents = ({clipInfos, library, durationSeconds, volume, ener
     const sound = pickSfx(library, categories, index * 13 + info.kind.length);
     if (sound) {
       events.push({
-        startSeconds: Math.min(Math.max(0.04, boundary + (index === 0 ? 0.04 : 0.02)), Math.max(0, durationSeconds - 0.2)),
+        startSeconds: Math.min(
+          Math.max(0.04, boundary + (index === 0 ? 0.04 : 0.02)),
+          Math.max(0, durationSeconds - 0.2),
+        ),
         sound,
         durationSeconds: Math.min(0.72, Number(sound.durationSeconds ?? 0.72)),
         volume: Number((volume * (info.kind === 'broll' ? 1.08 : 0.95)).toFixed(4)),
@@ -1527,9 +1628,7 @@ const buildEnergySfxEvents = ({clipInfos, library, durationSeconds, volume, ener
     });
   }
 
-  return events
-    .filter((event) => event.startSeconds < durationSeconds)
-    .slice(0, 12);
+  return events.filter((event) => event.startSeconds < durationSeconds).slice(0, 12);
 };
 
 const mixEnergySfx = ({
@@ -1546,9 +1645,7 @@ const mixEnergySfx = ({
 }) => {
   const library = readSfxLibrary(libraryDir);
   const durationSeconds = ffprobeDuration(inputPath);
-  const selectedMusic = musicEnabled
-    ? pickMusicTrack({musicTrack, musicLibraryDir})
-    : null;
+  const selectedMusic = musicEnabled ? pickMusicTrack({musicTrack, musicLibraryDir}) : null;
   const events = buildEnergySfxEvents({
     clipInfos,
     library,
@@ -1647,12 +1744,12 @@ const mixEnergySfx = ({
     volume,
     music: selectedMusic
       ? {
-        file: selectedMusic.file,
-        title: selectedMusic.title,
-        source_url: selectedMusic.source_url ?? selectedMusic.url ?? null,
-        volume: musicVolume,
-        license_status: selectedMusic.license_status ?? 'review_before_commercial_use',
-      }
+          file: selectedMusic.file,
+          title: selectedMusic.title,
+          source_url: selectedMusic.source_url ?? selectedMusic.url ?? null,
+          volume: musicVolume,
+          license_status: selectedMusic.license_status ?? 'review_before_commercial_use',
+        }
       : null,
     events: events.map((event) => ({
       start_seconds: event.startSeconds,
@@ -1670,7 +1767,9 @@ const mixEnergySfx = ({
 
 const assemble = () => {
   const projectDir = path.resolve(requireValue('project-dir'));
-  const clipsDir = path.resolve(String(args['clips-dir'] ?? path.join(projectDir, 'higgsfield-renders')));
+  const clipsDir = path.resolve(
+    String(args['clips-dir'] ?? path.join(projectDir, 'higgsfield-renders')),
+  );
   const sourceClips = fs.existsSync(clipsDir) ? listVideoFiles(clipsDir) : [];
   if (sourceClips.length === 0) {
     throw new Error(
@@ -1689,16 +1788,20 @@ const assemble = () => {
   const brollDir = path.resolve(String(args['broll-dir'] ?? path.join(projectDir, 'story-broll')));
   const brollPosition = String(args['broll-position'] ?? (maxEnergy ? 'interleave' : 'end'));
   const includeBroll = Boolean(args['include-broll'] || maxEnergy);
-  const sfxLibraryDir = path.resolve(String(args['sfx-library'] ?? path.join(projectRoot, 'sfx-library')));
-  const sfxEnabled = args['no-sfx'] !== true && args.sfx !== false && (maxEnergy || args.sfx === true);
+  const sfxLibraryDir = path.resolve(
+    String(args['sfx-library'] ?? path.join(projectRoot, 'sfx-library')),
+  );
+  const sfxEnabled =
+    args['no-sfx'] !== true && args.sfx !== false && (maxEnergy || args.sfx === true);
   const sfxVolume = Number(args['sfx-volume'] ?? (maxEnergy ? 0.11 : 0.075));
-  const musicLibraryDir = path.resolve(String(args['music-library'] ?? path.join(projectRoot, 'music-library', 'lofi-house')));
-  const musicEnabled = args['no-music'] !== true && (maxEnergy || args.music === true || args['music-track']);
+  const musicLibraryDir = path.resolve(
+    String(args['music-library'] ?? path.join(projectRoot, 'music-library', 'lofi-house')),
+  );
+  const musicEnabled =
+    args['no-music'] !== true && (maxEnergy || args.music === true || args['music-track']);
   const musicVolume = Number(args['music-volume'] ?? (maxEnergy ? 0.035 : 0.025));
   const selectedMusicTrack = args['music-track'] ? path.resolve(String(args['music-track'])) : null;
-  const brollClips = includeBroll
-    ? listVideoFiles(brollDir).slice(0, maxBrollClips)
-    : [];
+  const brollClips = includeBroll ? listVideoFiles(brollDir).slice(0, maxBrollClips) : [];
   const assemblyClips = orderAssemblyClips({
     productClips: sourceClips,
     brollClips,
@@ -1825,7 +1928,19 @@ const assemble = () => {
   const proofFrame = path.join(finalDir, `${itemId}-proof-frame.jpg`);
   execFileSync(
     'ffmpeg',
-    ['-hide_banner', '-loglevel', 'error', '-y', '-ss', '1', '-i', finalPath, '-frames:v', '1', proofFrame],
+    [
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-y',
+      '-ss',
+      '1',
+      '-i',
+      finalPath,
+      '-frames:v',
+      '1',
+      proofFrame,
+    ],
     {stdio: 'inherit'},
   );
 
@@ -1921,7 +2036,9 @@ const upload = async () => {
       apply_immediately: Boolean(args['apply-immediately']),
     });
     safeJsonWrite(path.join(path.dirname(videoPath), `${itemId}-revise-result.json`), revision);
-    console.log(Boolean(args['apply-immediately']) ? 'Attached video live.' : 'Staged video attachment preview.');
+    console.log(
+      args['apply-immediately'] ? 'Attached video live.' : 'Staged video attachment preview.',
+    );
   }
 
   if (args.poll && videoId) {
@@ -1937,22 +2054,29 @@ const status = async () => {
   console.log(JSON.stringify(result, null, 2));
 };
 
-if (command === 'roi-plan') {
-  await roiPlan();
-} else if (command === 'competitive-plan') {
-  await competitivePlan();
-} else if (command === 'prepare') {
-  await prepare();
-} else if (command === 'find-broll') {
-  findBroll();
-} else if (command === 'seed-local-broll') {
-  seedLocalBroll();
-} else if (command === 'assemble') {
-  assemble();
-} else if (command === 'upload') {
-  await upload();
-} else if (command === 'status') {
-  await status();
-} else {
-  throw new Error(`Unknown command: ${command}\n${usage}`);
-}
+const main = async () => {
+  if (command === 'roi-plan') {
+    await roiPlan();
+  } else if (command === 'competitive-plan') {
+    await competitivePlan();
+  } else if (command === 'prepare') {
+    await prepare();
+  } else if (command === 'find-broll') {
+    findBroll();
+  } else if (command === 'seed-local-broll') {
+    seedLocalBroll();
+  } else if (command === 'assemble') {
+    assemble();
+  } else if (command === 'upload') {
+    await upload();
+  } else if (command === 'status') {
+    await status();
+  } else {
+    throw new Error(`Unknown command: ${command}\n${usage}`);
+  }
+};
+
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

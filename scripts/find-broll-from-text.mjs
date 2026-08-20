@@ -8,12 +8,14 @@ import {
   projectRoot,
   outputsRoot,
   readCaptionStyleConfig,
+  slugify as canonicalSlugify,
 } from './lib.mjs';
 import {
   ingestYouTubeScenes,
   loadSceneBlacklist,
   sceneIsBlacklisted,
 } from './lib-youtube-scenes.mjs';
+import {timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
@@ -38,42 +40,24 @@ Options:
   --no-copy                  Only ingest into scene-library; do not copy clips into the run folder.
 `;
 
-const slugify = (value, fallback = 'prompt') => {
-  const slug = String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 70);
-  return slug || fallback;
-};
-
-const timestampSlug = () => {
-  const now = new Date();
-  const pad = (value) => String(value).padStart(2, '0');
-  return [
-    now.getFullYear(),
-    pad(now.getMonth() + 1),
-    pad(now.getDate()),
-    pad(now.getHours()),
-    pad(now.getMinutes()),
-    pad(now.getSeconds()),
-  ].join('-');
-};
+const slugify = (value, fallback = 'prompt') => canonicalSlugify(value, fallback);
 
 const readPrompts = (promptsPath) =>
-  fs.readFileSync(promptsPath, 'utf8')
+  fs
+    .readFileSync(promptsPath, 'utf8')
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#'));
 
-const mergeStringLists = (...lists) =>
-  [...new Set(
+const mergeStringLists = (...lists) => [
+  ...new Set(
     lists
       .filter(Array.isArray)
       .flat()
       .map((item) => String(item ?? '').trim())
       .filter(Boolean),
-  )];
+  ),
+];
 
 const manualBrollAvoidTerms = [
   'jail',
@@ -186,7 +170,12 @@ const sceneFilePath = (sceneLibraryDir, scene) =>
   path.resolve(sceneLibraryDir, String(scene.file ?? ''));
 
 const sameQuery = (a, b) =>
-  String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
+  String(a ?? '')
+    .trim()
+    .toLowerCase() ===
+  String(b ?? '')
+    .trim()
+    .toLowerCase();
 
 const sceneMatchesPrompt = (scene, prompt) => {
   const attribution = scene.attribution ?? {};
@@ -255,7 +244,9 @@ if (!fs.existsSync(promptsPath)) {
 
 const prompts = readPrompts(promptsPath);
 if (prompts.length === 0) {
-  throw new Error(`No prompts found in ${promptsPath}. Add one phrase, sentence, or visual idea per line.`);
+  throw new Error(
+    `No prompts found in ${promptsPath}. Add one phrase, sentence, or visual idea per line.`,
+  );
 }
 
 const styleConfig = readCaptionStyleConfig(
@@ -273,7 +264,11 @@ const outRoot = path.resolve(String(args['out-dir'] ?? outputsRoot));
 const runName = String(args['run-name'] ?? `broll-run-${timestampSlug()}`);
 const runDir = path.join(outRoot, runName);
 const sceneLibraryDir = path.resolve(
-  String(args['scene-library'] ?? styleConfig.contextScenes?.libraryDir ?? path.join(projectRoot, 'scene-library')),
+  String(
+    args['scene-library'] ??
+      styleConfig.contextScenes?.libraryDir ??
+      path.join(projectRoot, 'scene-library'),
+  ),
 );
 const shouldCopy = args.copy === true || args['no-copy'] !== true;
 
@@ -289,7 +284,9 @@ const config = {
   quality: brollQuality,
   maxResultsPerPrompt: Math.max(
     1,
-    Number(args['max-results'] ?? youtubeIngestConfig.maxResultsPerQuery ?? (highQualityMode ? 12 : 8)),
+    Number(
+      args['max-results'] ?? youtubeIngestConfig.maxResultsPerQuery ?? (highQualityMode ? 12 : 8),
+    ),
   ),
   maxDownloadsPerPrompt: Math.max(
     1,
@@ -297,7 +294,11 @@ const config = {
   ),
   maxDurationSeconds: Math.max(
     5,
-    Number(args['max-duration-seconds'] ?? youtubeIngestConfig.maxDurationSeconds ?? (highQualityMode ? 20 : 60)),
+    Number(
+      args['max-duration-seconds'] ??
+        youtubeIngestConfig.maxDurationSeconds ??
+        (highQualityMode ? 20 : 60),
+    ),
   ),
   channelId: args['channel-id']
     ? String(args['channel-id'])
@@ -307,18 +308,12 @@ const config = {
   queryStyle: {
     maxExpandedQueriesPerBase: Math.max(
       1,
-      Math.min(
-        10,
-        Number(args['max-expanded-queries'] ?? (highQualityMode ? 7 : 5)),
-      ),
+      Math.min(10, Number(args['max-expanded-queries'] ?? (highQualityMode ? 7 : 5))),
     ),
     minCandidateScore: Number(
       args['min-candidate-score'] ?? (movieScenesMode ? 14 : highQualityMode ? 6 : 5),
     ),
-    minCoreQueryMatches: Math.max(
-      1,
-      Number(args['min-core-query-matches'] ?? 1),
-    ),
+    minCoreQueryMatches: Math.max(1, Number(args['min-core-query-matches'] ?? 1)),
     preferMotion: queryStyleConfig.preferMotion !== false,
     preferCinematic: queryStyleConfig.preferCinematic !== false,
     preferMovieScenes: movieScenesMode,
@@ -337,14 +332,14 @@ const config = {
         ? queryStyleConfig.styleModifiers
         : highQualityMode
           ? [
-            'cinematic 4k',
-            'b roll',
-            'commercial',
-            'professionally shot',
-            'macro detail',
-            'close up',
-            'smooth camera movement',
-          ]
+              'cinematic 4k',
+              'b roll',
+              'commercial',
+              'professionally shot',
+              'macro detail',
+              'close up',
+              'smooth camera movement',
+            ]
           : undefined,
     themeBoosts: Array.isArray(queryStyleConfig.themeBoosts)
       ? queryStyleConfig.themeBoosts
@@ -382,9 +377,7 @@ for (const [promptIndex, prompt] of prompts.entries()) {
     sceneLibraryDir,
     queries: searchQueries,
     maxResultsPerQuery: config.maxResultsPerPrompt,
-    maxDownloadsPerQuery: movieScenesMode
-      ? 1
-      : config.maxDownloadsPerPrompt,
+    maxDownloadsPerQuery: movieScenesMode ? 1 : config.maxDownloadsPerPrompt,
     maxDurationSeconds: config.maxDurationSeconds,
     channelId: config.channelId,
     quality: config.quality,

@@ -6,8 +6,8 @@ import {
   parseArgs,
   outputsRoot,
   probeVideo,
-  projectRoot,
   run,
+  slugify as canonicalSlugify,
 } from './lib.mjs';
 
 const usage = `
@@ -37,11 +37,7 @@ if (args.help || args.h) {
   process.exit(0);
 }
 
-const slugify = (value) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+const slugify = (value) => canonicalSlugify(value, '');
 
 const findFiles = (dir, predicate) => {
   if (!fs.existsSync(dir)) {
@@ -70,11 +66,7 @@ const latestRunDir = () => {
         .readdirSync(outputsRoot, {withFileTypes: true})
         .filter((entry) => entry.isDirectory() && entry.name.startsWith('run-'))
         .map((entry) => path.join(outputsRoot, entry.name))
-        .sort(
-          (a, b) =>
-            fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs ||
-            b.localeCompare(a),
-        )
+        .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs || b.localeCompare(a))
     : [];
 
   if (runs.length === 0) {
@@ -88,9 +80,7 @@ const runDir = path.resolve(args.run ? String(args.run) : latestRunDir());
 const generatedDir = path.join(runDir, 'generated-assets');
 const finalDir = path.join(runDir, 'captioned-clips');
 
-const captionsFiles = findFiles(generatedDir, (file) =>
-  file.endsWith('.captions.json'),
-).sort();
+const captionsFiles = findFiles(generatedDir, (file) => file.endsWith('.captions.json')).sort();
 
 const clipRows = captionsFiles.map((captionsPath) => {
   const stem = path.basename(captionsPath, '.captions.json');
@@ -121,9 +111,7 @@ const printList = () => {
 
   console.log(`Editable clips in ${runDir}:\n`);
   for (const row of clipRows) {
-    const number = Number.isFinite(row.clipNumber)
-      ? String(row.clipNumber).padStart(2, '0')
-      : '--';
+    const number = Number.isFinite(row.clipNumber) ? String(row.clipNumber).padStart(2, '0') : '--';
     console.log(`${number}  ${row.videoSlug} / ${row.stem}`);
     console.log(`    captions: ${row.captionsPath}`);
     console.log(`    output:   ${row.renderedPath}`);
@@ -137,7 +125,9 @@ if (args.list) {
 
 if (!args.clip) {
   printList();
-  throw new Error('Choose a clip with --clip 1, --clip title-fragment, or --clip path/to/file.captions.json');
+  throw new Error(
+    'Choose a clip with --clip 1, --clip title-fragment, or --clip path/to/file.captions.json',
+  );
 }
 
 const clipQuery = String(args.clip);
@@ -152,9 +142,7 @@ if (fs.existsSync(resolvedQuery) && resolvedQuery.endsWith('.captions.json')) {
 } else {
   const normalizedQuery = slugify(clipQuery);
   matches = clipRows.filter(
-    (row) =>
-      row.stem.includes(normalizedQuery) ||
-      row.videoSlug.includes(normalizedQuery),
+    (row) => row.stem.includes(normalizedQuery) || row.videoSlug.includes(normalizedQuery),
   );
 }
 
@@ -179,10 +167,7 @@ const sourceVideoPath = fs.existsSync(clip.sfxMixPath)
     ? clip.sceneMixPath
     : clip.rawClipPath;
 
-const correctedPath = path.join(
-  path.dirname(clip.renderedPath),
-  `${clip.stem}.corrected.mp4`,
-);
+const correctedPath = path.join(path.dirname(clip.renderedPath), `${clip.stem}.corrected.mp4`);
 const outPath = path.resolve(
   args.out ? String(args.out) : args.replace ? clip.renderedPath : correctedPath,
 );

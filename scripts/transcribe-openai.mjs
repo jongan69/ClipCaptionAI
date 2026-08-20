@@ -8,7 +8,12 @@ import {OpenAI} from 'openai';
 import {openAiWhisperApiToCaptions} from '@remotion/openai-whisper';
 import {ensureDir, loadEnv, parseArgs, projectRoot, requireArg} from './lib.mjs';
 import {commandExists} from './command-utils.mjs';
-import {resolveProvider, createClient, resolveModel} from './ai-provider.mjs';
+import {
+  resolveProvider,
+  createClient,
+  resolveModel,
+  structuredChatCompletion,
+} from './ai-provider.mjs';
 
 const usage = `
 Usage:
@@ -91,9 +96,7 @@ const transcribeWithRetry = async ({openai, model, promptText, audioPath, label}
 
   for (let attempt = 1; attempt <= retries; attempt += 1) {
     try {
-      console.log(
-        `Transcribing ${label} with OpenAI (${model}), attempt ${attempt}/${retries}...`,
-      );
+      console.log(`Transcribing ${label} with OpenAI (${model}), attempt ${attempt}/${retries}...`);
       return await openai.audio.transcriptions.create({
         file: fs.createReadStream(audioPath),
         model,
@@ -121,15 +124,7 @@ const transcribeWithRetry = async ({openai, model, promptText, audioPath, label}
 const probeDurationSeconds = (audioPath) => {
   const output = execFileSync(
     'ffprobe',
-    [
-      '-v',
-      'error',
-      '-show_entries',
-      'format=duration',
-      '-of',
-      'default=nw=1:nk=1',
-      audioPath,
-    ],
+    ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', audioPath],
     {encoding: 'utf8'},
   );
 
@@ -137,10 +132,7 @@ const probeDurationSeconds = (audioPath) => {
 };
 
 const makeAudioChunk = ({offsetSeconds, durationSeconds, index}) => {
-  const chunkPath = path.join(
-    os.tmpdir(),
-    `caption-audio-${Date.now()}-${index}.mp3`,
-  );
+  const chunkPath = path.join(os.tmpdir(), `caption-audio-${Date.now()}-${index}.mp3`);
   chunkAudioPaths.push(chunkPath);
 
   execFileSync(
@@ -229,9 +221,7 @@ const combineTranscriptions = (parts, durationSeconds) => {
       (transcription.words ?? []).map((word) => offsetWord(word, offsetSeconds)),
     ),
     segments: parts.flatMap(({transcription, offsetSeconds}) =>
-      (transcription.segments ?? []).map((segment) =>
-        offsetSegment(segment, offsetSeconds),
-      ),
+      (transcription.segments ?? []).map((segment) => offsetSegment(segment, offsetSeconds)),
     ),
   };
 };
@@ -269,7 +259,11 @@ const safeProviderErrorLabel = (error) => {
 };
 
 const parseTimestampSeconds = (value) => {
-  const parts = String(value ?? '').trim().replace(',', '.').split(':').map(Number);
+  const parts = String(value ?? '')
+    .trim()
+    .replace(',', '.')
+    .split(':')
+    .map(Number);
   if (parts.length !== 3 || parts.some((part) => !Number.isFinite(part))) {
     return 0;
   }
@@ -313,9 +307,7 @@ const parseYoutubeWordCaptions = (vttText) => {
       continue;
     }
 
-    const cueMatch = line.match(
-      /^(\d{2}:\d{2}:\d{2}[.,]\d{3}) --> (\d{2}:\d{2}:\d{2}[.,]\d{3})/,
-    );
+    const cueMatch = line.match(/^(\d{2}:\d{2}:\d{2}[.,]\d{3}) --> (\d{2}:\d{2}:\d{2}[.,]\d{3})/);
     if (cueMatch) {
       cueStartSeconds = parseTimestampSeconds(cueMatch[1]);
       cueEndSeconds = parseTimestampSeconds(cueMatch[2]);
@@ -333,11 +325,7 @@ const parseYoutubeWordCaptions = (vttText) => {
 
     const leadingText = line.slice(0, matches[0].index ?? 0);
     if (normalizeSubtitleToken(leadingText)) {
-      pushCaption(
-        leadingText,
-        cueStartSeconds,
-        parseTimestampSeconds(matches[0][1]),
-      );
+      pushCaption(leadingText, cueStartSeconds, parseTimestampSeconds(matches[0][1]));
     }
 
     for (const [index, match] of matches.entries()) {
@@ -547,14 +535,15 @@ const parseWhisperCppCaptions = (jsonPath) => {
       startMs: current.startMs,
       endMs: Math.max(current.startMs + 1, current.endMs),
       timestampMs: Math.round((current.startMs + current.endMs) / 2),
-      confidence: current.confidenceValues.length > 0
-        ? Number(
-            (
-              current.confidenceValues.reduce((sum, value) => sum + value, 0) /
-              current.confidenceValues.length
-            ).toFixed(4),
-          )
-        : null,
+      confidence:
+        current.confidenceValues.length > 0
+          ? Number(
+              (
+                current.confidenceValues.reduce((sum, value) => sum + value, 0) /
+                current.confidenceValues.length
+              ).toFixed(4),
+            )
+          : null,
     });
   };
 
@@ -609,7 +598,11 @@ const parseWhisperCppCaptions = (jsonPath) => {
     });
   }
 
-  const text = captions.map((caption) => caption.text).join(' ').replace(/\s+/g, ' ').trim();
+  const text = captions
+    .map((caption) => caption.text)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   return {
     raw: parsed,
@@ -654,18 +647,7 @@ const transcribeAudioWithWhisperCpp = async () => {
   );
 
   const jsonStem = path.join(os.tmpdir(), `clipcaption-whispercpp-${Date.now()}`);
-  const cliArgs = [
-    '-m',
-    modelPath,
-    '-f',
-    tempWav,
-    '-l',
-    language,
-    '-ojf',
-    '-of',
-    jsonStem,
-    '-np',
-  ];
+  const cliArgs = ['-m', modelPath, '-f', tempWav, '-l', language, '-ojf', '-of', jsonStem, '-np'];
 
   if (prompt) {
     cliArgs.push('--prompt', prompt);
@@ -806,36 +788,19 @@ const enhanceTranscriptText = async ({captions, provider}) => {
     'You clean up raw speech-to-text transcript chunks for downstream editorial analysis. Keep the same order, meaning, and near-literal wording. Fix only obvious ASR mistakes, casing, punctuation, and proper nouns strongly implied by context. Do not summarize. Do not embellish. Do not add facts. Return one corrected text string per chunk index.';
 
   for (const batch of batchItems(chunks, 12)) {
-    const response = await client.chat.completions.create({
+    const parsed = await structuredChatCompletion(client, {
       model: enhancementModel,
-      messages: [
-        {
-          role: 'system',
-          content: `${systemPrompt}\n\nReturn ONLY a valid JSON object with this exact structure:\n${jsonExample}`,
-        },
-        {
-          role: 'user',
-          content: `Transcription source: ${provider}
+      systemPrompt: `${systemPrompt}\n\nReturn ONLY a valid JSON object with this exact structure:\n${jsonExample}`,
+      userPrompt: `Transcription source: ${provider}
 Language: ${language}
 Context hints: ${prompt ?? 'none'}
 
 Return corrected text for each chunk index below.
 
 ${buildTranscriptCleanupInput(batch)}`,
-        },
-      ],
-      response_format: {type: 'json_object'},
       temperature: 0.3,
     });
 
-    const rawText = response.choices?.[0]?.message?.content ?? '';
-    const jsonText = rawText
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/, '')
-      .replace(/```\s*$/, '')
-      .trim();
-
-    const parsed = JSON.parse(jsonText);
     for (const item of parsed.chunks ?? []) {
       correctedByIndex.set(Number(item.index), String(item.text ?? '').trim());
     }
@@ -851,8 +816,7 @@ ${buildTranscriptCleanupInput(batch)}`,
 
   const changeCount = normalizedChunks.filter(
     (chunk) =>
-      chunk.correctedText.replace(/\s+/g, ' ').trim() !==
-      chunk.rawText.replace(/\s+/g, ' ').trim(),
+      chunk.correctedText.replace(/\s+/g, ' ').trim() !== chunk.rawText.replace(/\s+/g, ' ').trim(),
   ).length;
 
   return {
@@ -862,7 +826,10 @@ ${buildTranscriptCleanupInput(batch)}`,
     sourceProvider: provider,
     chunkCount: normalizedChunks.length,
     changeCount,
-    correctedText: normalizedChunks.map((chunk) => chunk.correctedText).join(' ').trim(),
+    correctedText: normalizedChunks
+      .map((chunk) => chunk.correctedText)
+      .join(' ')
+      .trim(),
     chunks: normalizedChunks,
   };
 };
@@ -986,14 +953,14 @@ try {
 
   let analysis = null;
   const aiProviderAvailable = Boolean(process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY);
-  const wantsTextEnhancement = Boolean(args['force-text-enhance']) || (
-    !args['disable-text-enhance'] &&
-    result.provider !== 'openai' &&
-    aiProviderAvailable
-  );
+  const wantsTextEnhancement =
+    Boolean(args['force-text-enhance']) ||
+    (!args['disable-text-enhance'] && result.provider !== 'openai' && aiProviderAvailable);
 
   if (args['force-text-enhance'] && !aiProviderAvailable) {
-    throw new Error('DEEPSEEK_API_KEY or OPENAI_API_KEY is required when --force-text-enhance is used.');
+    throw new Error(
+      'DEEPSEEK_API_KEY or OPENAI_API_KEY is required when --force-text-enhance is used.',
+    );
   }
 
   if (wantsTextEnhancement) {
@@ -1033,7 +1000,11 @@ try {
     metadata,
     analysis,
   });
-  process.exit(0);
+  // NOTE: no process.exit here — returning normally lets the finally block
+  // below clean up temp audio, and the script already exits 0 on success.
+} catch (error) {
+  console.error(`Transcription failed: ${error?.message ?? error}`);
+  process.exitCode = 1;
 } finally {
   fs.rmSync(tempAudio, {force: true});
   fs.rmSync(tempWav, {force: true});

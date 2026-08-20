@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {ensureDir, outputsRoot, parseArgs} from '../lib.mjs';
-import {slugify, timestampSlug} from '../clipkit-lib.mjs';
+import {timestampSlug} from '../clipkit-lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
 const args = parseArgs(process.argv.slice(2));
@@ -93,11 +93,15 @@ const percentValue = (value) => {
 };
 
 const readTrafficReport = (file) => {
-  const lines = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '').split(/\r?\n/);
+  const lines = fs
+    .readFileSync(file, 'utf8')
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/);
   const headerIndex = lines.findIndex((line) => line.startsWith('Listing title,'));
   if (headerIndex < 0) throw new Error(`Could not find Listing title header in ${file}`);
   const headers = parseCsvLine(lines[headerIndex]).map(clean);
-  return lines.slice(headerIndex + 1)
+  return lines
+    .slice(headerIndex + 1)
     .filter((line) => line.trim())
     .map((line) => {
       const cells = parseCsvLine(line);
@@ -116,7 +120,9 @@ const metricRow = (row) => {
   const promoted = clean(row['Current promoted listings status']);
   const top20 = percentValue(row['% Top 20 Search Impressions']);
   const searchImpressions = numberValue(row['Total Search Impressions']);
-  const promotedImpressions = numberValue(row['Total Promoted Listings impressions (applies to eBay site only)']);
+  const promotedImpressions = numberValue(
+    row['Total Promoted Listings impressions (applies to eBay site only)'],
+  );
   const organicImpressions = numberValue(row['Total organic impressions on eBay site']);
   const startDate = clean(row['Item Start Date']);
   const quantityAvailable = numberValue(row['Quantity available']);
@@ -126,27 +132,39 @@ const metricRow = (row) => {
   if (sold === 0) issueTags.push('no_sales');
   if (impressions >= 500 && ctr < 0.005) {
     issueTags.push('ctr_crisis');
-    actions.push('Replace main image with a cleaner high-contrast staged hero and rewrite title for exact buyer query.');
+    actions.push(
+      'Replace main image with a cleaner high-contrast staged hero and rewrite title for exact buyer query.',
+    );
   }
   if (impressions >= 75 && ctr > 0 && ctr < 0.01) {
     issueTags.push('weak_ctr');
-    actions.push('Improve first photo, title tokens, and item specifics; current search exposure is not earning enough clicks.');
+    actions.push(
+      'Improve first photo, title tokens, and item specifics; current search exposure is not earning enough clicks.',
+    );
   }
   if (impressions >= 100 && views === 0) {
     issueTags.push('zero_clicks');
-    actions.push('Fix thumbnail/title mismatch before spending on video; current listing is being seen but ignored.');
+    actions.push(
+      'Fix thumbnail/title mismatch before spending on video; current listing is being seen but ignored.',
+    );
   }
   if (views >= 25 && sold === 0) {
     issueTags.push('conversion_crisis');
-    actions.push('Add trust media: detail photos, condition proof, included-items proof, and a short competitive-structure video.');
+    actions.push(
+      'Add trust media: detail photos, condition proof, included-items proof, and a short competitive-structure video.',
+    );
   }
   if (views >= 5 && sold === 0 && ctr >= 0.01) {
     issueTags.push('offer_trust_gap');
-    actions.push('Keep price unless margin review says otherwise; improve description proof, shipping clarity, and buyer-confidence close.');
+    actions.push(
+      'Keep price unless margin review says otherwise; improve description proof, shipping clarity, and buyer-confidence close.',
+    );
   }
   if (promoted.toLowerCase() !== 'promoted' && impressions >= 75) {
     issueTags.push('promotion_gap');
-    actions.push('Review margin for low-rate promoted listing coverage; do not promote if fees erase profit.');
+    actions.push(
+      'Review margin for low-rate promoted listing coverage; do not promote if fees erase profit.',
+    );
   }
   if (top20 < 0.2 && searchImpressions >= 75) {
     issueTags.push('search_rank_gap');
@@ -154,7 +172,9 @@ const metricRow = (row) => {
   }
   if (views >= 1 || impressions >= 75) {
     issueTags.push('video_candidate');
-    actions.push('Run competitor-video blueprint workflow and prioritize product-truth clips over slideshow ads.');
+    actions.push(
+      'Run competitor-video blueprint workflow and prioritize product-truth clips over slideshow ads.',
+    );
   }
 
   let priorityScore = 0;
@@ -200,176 +220,230 @@ const metricRow = (row) => {
   };
 };
 
-const trafficReport = path.resolve(requireArg('traffic-report'));
-if (!fs.existsSync(trafficReport)) throw new Error(`Traffic report not found: ${trafficReport}`);
-const outDir = path.resolve(String(args['out-dir'] ?? path.join(outputsRoot, 'ebay-traffic-optimization', `run-${timestampSlug()}`)));
-const maxListings = Math.max(1, Math.floor(numberValue(args['max-listings'] ?? 15)));
-const minImpressions = Math.max(0, numberValue(args['min-impressions'] ?? 50));
-const dropshipOnly = args['dropship-only'] === true;
-const dropshipMinQuantity = Math.max(1, Math.floor(numberValue(args['dropship-min-quantity'] ?? 2)));
-const dropshipStartDate = args['dropship-start-date'] ? String(args['dropship-start-date']) : null;
-ensureDir(outDir);
+const main = async () => {
+  const trafficReport = path.resolve(requireArg('traffic-report'));
+  if (!fs.existsSync(trafficReport)) throw new Error(`Traffic report not found: ${trafficReport}`);
+  const outDir = path.resolve(
+    String(
+      args['out-dir'] ??
+        path.join(outputsRoot, 'ebay-traffic-optimization', `run-${timestampSlug()}`),
+    ),
+  );
+  const maxListings = Math.max(1, Math.floor(numberValue(args['max-listings'] ?? 15)));
+  const minImpressions = Math.max(0, numberValue(args['min-impressions'] ?? 50));
+  const dropshipOnly = args['dropship-only'] === true;
+  const dropshipMinQuantity = Math.max(
+    1,
+    Math.floor(numberValue(args['dropship-min-quantity'] ?? 2)),
+  );
+  const dropshipStartDate = args['dropship-start-date']
+    ? String(args['dropship-start-date'])
+    : null;
+  ensureDir(outDir);
 
-const allRows = readTrafficReport(trafficReport).map(metricRow);
-const rows = allRows.filter((row) => {
-  if (!dropshipOnly) return true;
-  if (row.quantity_available >= dropshipMinQuantity) return true;
-  return Boolean(dropshipStartDate && row.start_date >= dropshipStartDate);
-}).map((row) => {
-  if (!dropshipOnly || row.primary_action !== 'monitor' || row.sold > 0 || row.impressions < minImpressions) return row;
-  const primaryAction = row.views <= 1 || row.ctr < 0.015 ? 'main_image_title' : 'description_media_trust';
-  return {
-    ...row,
-    primary_action: primaryAction,
-    issue_tags: [...new Set([...row.issue_tags, 'dropship_active_optimization'])],
-    action_notes: [
-      ...row.action_notes,
-      primaryAction === 'main_image_title'
-        ? 'Supplier listing has enough exposure to act: refresh main image/title even without a classic CTR crisis.'
-        : 'Supplier listing has clicks without sales: add proof media, shipping clarity, and buyer-confidence copy.',
-    ],
-    priority_score: Math.round((row.priority_score + 10) * 10) / 10,
-  };
-});
-const immediate = rows
-  .filter((row) => row.impressions >= minImpressions)
-  .filter((row) => row.issue_tags.includes('no_sales'))
-  .sort((a, b) => b.priority_score - a.priority_score || b.views - a.views || b.impressions - a.impressions)
-  .slice(0, maxListings);
+  const allRows = readTrafficReport(trafficReport).map(metricRow);
+  const rows = allRows
+    .filter((row) => {
+      if (!dropshipOnly) return true;
+      if (row.quantity_available >= dropshipMinQuantity) return true;
+      return Boolean(dropshipStartDate && row.start_date >= dropshipStartDate);
+    })
+    .map((row) => {
+      if (
+        !dropshipOnly ||
+        row.primary_action !== 'monitor' ||
+        row.sold > 0 ||
+        row.impressions < minImpressions
+      )
+        return row;
+      const primaryAction =
+        row.views <= 1 || row.ctr < 0.015 ? 'main_image_title' : 'description_media_trust';
+      return {
+        ...row,
+        primary_action: primaryAction,
+        issue_tags: [...new Set([...row.issue_tags, 'dropship_active_optimization'])],
+        action_notes: [
+          ...row.action_notes,
+          primaryAction === 'main_image_title'
+            ? 'Supplier listing has enough exposure to act: refresh main image/title even without a classic CTR crisis.'
+            : 'Supplier listing has clicks without sales: add proof media, shipping clarity, and buyer-confidence copy.',
+        ],
+        priority_score: Math.round((row.priority_score + 10) * 10) / 10,
+      };
+    });
+  const immediate = rows
+    .filter((row) => row.impressions >= minImpressions)
+    .filter((row) => row.issue_tags.includes('no_sales'))
+    .sort(
+      (a, b) =>
+        b.priority_score - a.priority_score || b.views - a.views || b.impressions - a.impressions,
+    )
+    .slice(0, maxListings);
 
-const summary = {
-  listing_count: rows.length,
-  all_listing_count: allRows.length,
-  filter: {
-    dropship_only: dropshipOnly,
-    dropship_min_quantity: dropshipOnly ? dropshipMinQuantity : null,
-    dropship_start_date: dropshipOnly ? dropshipStartDate : null,
-  },
-  total_impressions: rows.reduce((sum, row) => sum + row.impressions, 0),
-  total_views: rows.reduce((sum, row) => sum + row.views, 0),
-  total_sold: rows.reduce((sum, row) => sum + row.sold, 0),
-  overall_ctr: rows.reduce((sum, row) => sum + row.views, 0) / Math.max(1, rows.reduce((sum, row) => sum + row.impressions, 0)),
-  promoted_count: rows.filter((row) => row.promoted_status.toLowerCase() === 'promoted').length,
-  non_promoted_count: rows.filter((row) => row.promoted_status.toLowerCase() !== 'promoted').length,
-  ctr_crisis_count: rows.filter((row) => row.issue_tags.includes('ctr_crisis')).length,
-  conversion_crisis_count: rows.filter((row) => row.issue_tags.includes('conversion_crisis')).length,
-  zero_click_over_100_impressions_count: rows.filter((row) => row.issue_tags.includes('zero_clicks')).length,
-  immediate_queue_count: immediate.length,
-};
-
-const dashboardSnapshot = {
-  summary: {
-    source: trafficReport,
-    generated_by: scriptName,
-    active_listing_count: rows.length,
-    total_impressions: summary.total_impressions,
-    total_page_views: summary.total_views,
-    total_sold: summary.total_sold,
-    overall_ctr: summary.overall_ctr,
-  },
-  listings: immediate.map((row) => ({
-    ok: true,
-    item_id: row.item_id,
-    title: row.title,
-    url: row.url,
-    current_price: 0,
-    price: {value: 0, currency: 'USD'},
-    asset_score: row.primary_action === 'main_image_title' ? 35 : 50,
-    picture_count: 0,
-    video_count: row.issue_tags.includes('video_candidate') ? 0 : 1,
-    bid_count: 0,
-    watch_count: 0,
-    traffic: {
-      impressions: row.impressions,
-      page_views: row.views,
-      ctr: row.ctr,
-      quantity_sold: row.sold,
-      conversion_rate: row.conversion,
+  const summary = {
+    listing_count: rows.length,
+    all_listing_count: allRows.length,
+    filter: {
+      dropship_only: dropshipOnly,
+      dropship_min_quantity: dropshipOnly ? dropshipMinQuantity : null,
+      dropship_start_date: dropshipOnly ? dropshipStartDate : null,
     },
-  })),
+    total_impressions: rows.reduce((sum, row) => sum + row.impressions, 0),
+    total_views: rows.reduce((sum, row) => sum + row.views, 0),
+    total_sold: rows.reduce((sum, row) => sum + row.sold, 0),
+    overall_ctr:
+      rows.reduce((sum, row) => sum + row.views, 0) /
+      Math.max(
+        1,
+        rows.reduce((sum, row) => sum + row.impressions, 0),
+      ),
+    promoted_count: rows.filter((row) => row.promoted_status.toLowerCase() === 'promoted').length,
+    non_promoted_count: rows.filter((row) => row.promoted_status.toLowerCase() !== 'promoted')
+      .length,
+    ctr_crisis_count: rows.filter((row) => row.issue_tags.includes('ctr_crisis')).length,
+    conversion_crisis_count: rows.filter((row) => row.issue_tags.includes('conversion_crisis'))
+      .length,
+    zero_click_over_100_impressions_count: rows.filter((row) =>
+      row.issue_tags.includes('zero_clicks'),
+    ).length,
+    immediate_queue_count: immediate.length,
+  };
+
+  const dashboardSnapshot = {
+    summary: {
+      source: trafficReport,
+      generated_by: scriptName,
+      active_listing_count: rows.length,
+      total_impressions: summary.total_impressions,
+      total_page_views: summary.total_views,
+      total_sold: summary.total_sold,
+      overall_ctr: summary.overall_ctr,
+    },
+    listings: immediate.map((row) => ({
+      ok: true,
+      item_id: row.item_id,
+      title: row.title,
+      url: row.url,
+      current_price: 0,
+      price: {value: 0, currency: 'USD'},
+      asset_score: row.primary_action === 'main_image_title' ? 35 : 50,
+      picture_count: 0,
+      video_count: row.issue_tags.includes('video_candidate') ? 0 : 1,
+      bid_count: 0,
+      watch_count: 0,
+      traffic: {
+        impressions: row.impressions,
+        page_views: row.views,
+        ctr: row.ctr,
+        quantity_sold: row.sold,
+        conversion_rate: row.conversion,
+      },
+    })),
+  };
+
+  const jsonPath = path.join(outDir, 'traffic-optimization-worklist.json');
+  const csvPath = path.join(outDir, 'traffic-optimization-worklist.csv');
+  const markdownPath = path.join(outDir, 'traffic-optimization-worklist.md');
+  const dashboardPath = path.join(outDir, 'traffic-dashboard-snapshot.json');
+  const itemIdsPath = path.join(outDir, 'selected-item-ids.txt');
+
+  fs.writeFileSync(
+    jsonPath,
+    `${JSON.stringify({created_at: new Date().toISOString(), source: trafficReport, summary, immediate, rows}, null, 2)}\n`,
+  );
+  fs.writeFileSync(dashboardPath, `${JSON.stringify(dashboardSnapshot, null, 2)}\n`);
+  fs.writeFileSync(itemIdsPath, `${immediate.map((row) => row.item_id).join(',')}\n`);
+
+  const csvHeaders = [
+    'Priority',
+    'Item ID',
+    'Title',
+    'Primary Action',
+    'Issue Tags',
+    'Impressions',
+    'Views',
+    'CTR',
+    'Sold',
+    'Promoted',
+    'Top 20 Search %',
+    'URL',
+    'Action Notes',
+  ];
+  fs.writeFileSync(
+    csvPath,
+    `${[
+      csvHeaders.join(','),
+      ...immediate.map((row, index) =>
+        [
+          index + 1,
+          row.item_id,
+          row.title,
+          row.primary_action,
+          row.issue_tags.join('; '),
+          row.impressions,
+          row.views,
+          `${(row.ctr * 100).toFixed(2)}%`,
+          row.sold,
+          row.promoted_status,
+          `${(row.top20_search_impression_rate * 100).toFixed(1)}%`,
+          row.url,
+          row.action_notes.join(' '),
+        ]
+          .map(csvCell)
+          .join(','),
+      ),
+    ].join('\n')}\n`,
+  );
+
+  const formatPct = (value) => `${(value * 100).toFixed(2)}%`;
+  fs.writeFileSync(
+    markdownPath,
+    `${[
+      '# eBay Traffic Optimization Worklist',
+      '',
+      `Source: ${trafficReport}`,
+      `Listings: ${summary.listing_count}`,
+      `Impressions: ${summary.total_impressions.toLocaleString()}`,
+      `Page views: ${summary.total_views.toLocaleString()}`,
+      `Sold: ${summary.total_sold.toLocaleString()}`,
+      `Overall CTR: ${formatPct(summary.overall_ctr)}`,
+      `Promoted / non-promoted: ${summary.promoted_count} / ${summary.non_promoted_count}`,
+      '',
+      '## Immediate Queue',
+      '',
+      '| # | Item | Action | Impressions | Views | CTR | Why |',
+      '| ---: | --- | --- | ---: | ---: | ---: | --- |',
+      ...immediate.map(
+        (row, index) =>
+          `| ${index + 1} | [${row.item_id}](${row.url}) ${row.title.replaceAll('|', '/')} | ${row.primary_action} | ${row.impressions.toLocaleString()} | ${row.views.toLocaleString()} | ${formatPct(row.ctr)} | ${row.issue_tags.join(', ')} |`,
+      ),
+      '',
+      '## Execution Rules',
+      '',
+      '- Do not reprice from traffic data alone.',
+      '- CTR crisis means fix main image and title before buying more ads.',
+      '- Conversion crisis means the listing got attention; add proof media, condition/included-item clarity, and a short competitive-structure video.',
+      '- Promotion gap means review margin first, then add low-rate promoted coverage only if profit survives fees.',
+      '- Feed `traffic-dashboard-snapshot.json` into `ebay:cinematic-ads --dashboard-file` when live eBay dashboard calls are blocked.',
+      '',
+      '## Next Commands',
+      '',
+      '```bash',
+      `npm run ebay:cinematic-ads -- competitive-plan --dashboard-file "${dashboardPath}" --only-item-ids "$(cat "${itemIdsPath}")" --min-price 0 --max-listings ${Math.min(5, immediate.length)} --credit-budget 40 --credits-per-shot 10 --max-higgs-shots 4 --run-control-loop --control-loop-dry-run --run-higgsfield-renders --higgs-render-dry-run --higgs-render-skip-cost`,
+      '```',
+      '',
+    ].join('\n')}\n`,
+  );
+
+  console.log(`Traffic optimization worklist: ${jsonPath}`);
+  console.log(`Immediate queue CSV: ${csvPath}`);
+  console.log(`Markdown brief: ${markdownPath}`);
+  console.log(`Dashboard snapshot: ${dashboardPath}`);
+  console.log(`Immediate listings: ${immediate.length}`);
+  console.log(`Top item IDs: ${immediate.map((row) => row.item_id).join(',')}`);
 };
 
-const jsonPath = path.join(outDir, 'traffic-optimization-worklist.json');
-const csvPath = path.join(outDir, 'traffic-optimization-worklist.csv');
-const markdownPath = path.join(outDir, 'traffic-optimization-worklist.md');
-const dashboardPath = path.join(outDir, 'traffic-dashboard-snapshot.json');
-const itemIdsPath = path.join(outDir, 'selected-item-ids.txt');
-
-fs.writeFileSync(jsonPath, `${JSON.stringify({created_at: new Date().toISOString(), source: trafficReport, summary, immediate, rows}, null, 2)}\n`);
-fs.writeFileSync(dashboardPath, `${JSON.stringify(dashboardSnapshot, null, 2)}\n`);
-fs.writeFileSync(itemIdsPath, `${immediate.map((row) => row.item_id).join(',')}\n`);
-
-const csvHeaders = [
-  'Priority',
-  'Item ID',
-  'Title',
-  'Primary Action',
-  'Issue Tags',
-  'Impressions',
-  'Views',
-  'CTR',
-  'Sold',
-  'Promoted',
-  'Top 20 Search %',
-  'URL',
-  'Action Notes',
-];
-fs.writeFileSync(csvPath, `${[
-  csvHeaders.join(','),
-  ...immediate.map((row, index) => [
-    index + 1,
-    row.item_id,
-    row.title,
-    row.primary_action,
-    row.issue_tags.join('; '),
-    row.impressions,
-    row.views,
-    `${(row.ctr * 100).toFixed(2)}%`,
-    row.sold,
-    row.promoted_status,
-    `${(row.top20_search_impression_rate * 100).toFixed(1)}%`,
-    row.url,
-    row.action_notes.join(' '),
-  ].map(csvCell).join(',')),
-].join('\n')}\n`);
-
-const formatPct = (value) => `${(value * 100).toFixed(2)}%`;
-fs.writeFileSync(markdownPath, `${[
-  '# eBay Traffic Optimization Worklist',
-  '',
-  `Source: ${trafficReport}`,
-  `Listings: ${summary.listing_count}`,
-  `Impressions: ${summary.total_impressions.toLocaleString()}`,
-  `Page views: ${summary.total_views.toLocaleString()}`,
-  `Sold: ${summary.total_sold.toLocaleString()}`,
-  `Overall CTR: ${formatPct(summary.overall_ctr)}`,
-  `Promoted / non-promoted: ${summary.promoted_count} / ${summary.non_promoted_count}`,
-  '',
-  '## Immediate Queue',
-  '',
-  '| # | Item | Action | Impressions | Views | CTR | Why |',
-  '| ---: | --- | --- | ---: | ---: | ---: | --- |',
-  ...immediate.map((row, index) => `| ${index + 1} | [${row.item_id}](${row.url}) ${row.title.replaceAll('|', '/')} | ${row.primary_action} | ${row.impressions.toLocaleString()} | ${row.views.toLocaleString()} | ${formatPct(row.ctr)} | ${row.issue_tags.join(', ')} |`),
-  '',
-  '## Execution Rules',
-  '',
-  '- Do not reprice from traffic data alone.',
-  '- CTR crisis means fix main image and title before buying more ads.',
-  '- Conversion crisis means the listing got attention; add proof media, condition/included-item clarity, and a short competitive-structure video.',
-  '- Promotion gap means review margin first, then add low-rate promoted coverage only if profit survives fees.',
-  '- Feed `traffic-dashboard-snapshot.json` into `ebay:cinematic-ads --dashboard-file` when live eBay dashboard calls are blocked.',
-  '',
-  '## Next Commands',
-  '',
-  '```bash',
-  `npm run ebay:cinematic-ads -- competitive-plan --dashboard-file "${dashboardPath}" --only-item-ids "$(cat "${itemIdsPath}")" --min-price 0 --max-listings ${Math.min(5, immediate.length)} --credit-budget 40 --credits-per-shot 10 --max-higgs-shots 4 --run-control-loop --control-loop-dry-run --run-higgsfield-renders --higgs-render-dry-run --higgs-render-skip-cost`,
-  '```',
-  '',
-].join('\n')}\n`);
-
-console.log(`Traffic optimization worklist: ${jsonPath}`);
-console.log(`Immediate queue CSV: ${csvPath}`);
-console.log(`Markdown brief: ${markdownPath}`);
-console.log(`Dashboard snapshot: ${dashboardPath}`);
-console.log(`Immediate listings: ${immediate.length}`);
-console.log(`Top item IDs: ${immediate.map((row) => row.item_id).join(',')}`);
+main().catch((err) => {
+  console.error(err?.message || err);
+  process.exit(1);
+});

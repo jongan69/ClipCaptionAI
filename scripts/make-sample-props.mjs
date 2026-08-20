@@ -1,12 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  ensureDir,
-  outputsRoot,
-  probeVideo,
-  videoToSrc,
-} from './lib.mjs';
+import {ensureDir, outputsRoot, probeVideo, videoToSrc} from './lib.mjs';
 
 const sampleVideo =
   '/Users/jonathangan/Desktop/SnapInsta.to_AQOnjXcwwSsXCDfDeK6kDri2SJIf3xFt-Sc2P-5BY-evzUrBK7sh8-VS_TR65thlO1hRJdjzIOiCGX8S4p11s2QppnRd8sapBcGxk1I.mp4';
@@ -53,9 +48,6 @@ const outPath = path.join(samplePropsDir, 'sample-props.json');
 const captionsPath = path.join(samplePropsDir, 'sample-captions.json');
 ensureDir(samplePropsDir);
 fs.writeFileSync(outPath, JSON.stringify(props, null, 2));
-fs.writeFileSync(
-  captionsPath,
-  JSON.stringify({captions: props.captions}, null, 2),
-);
+fs.writeFileSync(captionsPath, JSON.stringify({captions: props.captions}, null, 2));
 console.log(outPath);
 console.log(captionsPath);

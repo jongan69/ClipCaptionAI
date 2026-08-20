@@ -11,7 +11,9 @@ import {
   readCaptionStyleConfig,
   requireArg,
   run,
+  slugify as canonicalSlugify,
 } from './lib.mjs';
+import {timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
@@ -42,27 +44,7 @@ if (args.help || args.h) {
 
 loadEnv();
 
-const slugify = (value, fallback = 'video') => {
-  const slug = String(value ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 80);
-  return slug || fallback;
-};
-
-const timestampSlug = () => {
-  const now = new Date();
-  const pad = (value) => String(value).padStart(2, '0');
-  return [
-    now.getFullYear(),
-    pad(now.getMonth() + 1),
-    pad(now.getDate()),
-    pad(now.getHours()),
-    pad(now.getMinutes()),
-    pad(now.getSeconds()),
-  ].join('-');
-};
+const slugify = (value, fallback = 'video') => canonicalSlugify(value, fallback);
 
 const sourceVideo = path.resolve(requireArg(args, 'video', usage));
 if (!fs.existsSync(sourceVideo)) {
@@ -92,15 +74,7 @@ if (args.captions) {
   fs.copyFileSync(path.resolve(String(args.captions)), captionsPath);
 } else {
   const transcriptionPrompt = String(args['transcription-prompt'] ?? '');
-  const transcribeArgs = [
-    'run',
-    'transcribe',
-    '--',
-    '--video',
-    sourceVideo,
-    '--out',
-    captionsPath,
-  ];
+  const transcribeArgs = ['run', 'transcribe', '--', '--video', sourceVideo, '--out', captionsPath];
 
   if (transcriptionPrompt) {
     transcribeArgs.push('--prompt', transcriptionPrompt);
@@ -181,3 +155,8 @@ if (manifest.finalPath) {
 }
 console.log(`Captions: ${captionsPath}`);
 console.log(`Manifest: ${manifestPath}`);
+
+process.on('unhandledRejection', (error) => {
+  console.error(`Fatal error: ${error?.message ?? error}`);
+  process.exit(1);
+});

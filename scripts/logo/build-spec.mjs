@@ -35,7 +35,7 @@ if (!slug) {
 
 const dir = path.join('assets', 'logos', slug);
 const svgPath = [path.join(dir, 'logo.svg'), path.join(dir, 'logo.traced.svg')].find((p) =>
-  fs.existsSync(p)
+  fs.existsSync(p),
 );
 if (!svgPath) {
   console.error(`No logo.svg or logo.traced.svg found in ${dir}`);
@@ -65,7 +65,7 @@ const svg = stripXmlComments(svgRaw);
 const brandPath = path.join(dir, 'brand.json');
 const brand = fs.existsSync(brandPath)
   ? JSON.parse(fs.readFileSync(brandPath, 'utf8'))
-  : { name: slug, wordmark: null, palette: {} };
+  : {name: slug, wordmark: null, palette: {}};
 
 /* ------------------------------------------------------------------ parsing */
 
@@ -83,11 +83,15 @@ const [vbX, vbY, vbW, vbH] = viewBox.split(/[\s,]+/).map(Number);
  * position and pivot to a model, and it never under-reports.
  */
 const bboxOf = (dList) => {
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
   for (const d of dList) {
     const nums = (d.match(/-?\d*\.?\d+(?:e-?\d+)?/gi) || []).map(Number);
     for (let i = 0; i + 1 < nums.length; i += 2) {
-      const x = nums[i], y = nums[i + 1];
+      const x = nums[i],
+        y = nums[i + 1];
       if (x < minX) minX = x;
       if (y < minY) minY = y;
       if (x > maxX) maxX = x;
@@ -95,17 +99,22 @@ const bboxOf = (dList) => {
     }
   }
   if (!isFinite(minX)) return null;
-  return { x: +minX.toFixed(1), y: +minY.toFixed(1), w: +(maxX - minX).toFixed(1), h: +(maxY - minY).toFixed(1) };
+  return {
+    x: +minX.toFixed(1),
+    y: +minY.toFixed(1),
+    w: +(maxX - minX).toFixed(1),
+    h: +(maxY - minY).toFixed(1),
+  };
 };
 
 const rectBox = (tag) => {
   const n = (k) => Number(attr(tag, k) || 0);
-  return { x: n('x'), y: n('y'), w: n('width'), h: n('height') };
+  return {x: n('x'), y: n('y'), w: n('width'), h: n('height')};
 };
 const circleBox = (tag) => {
   const n = (k) => Number(attr(tag, k) || 0);
   const r = n('r');
-  return { x: n('cx') - r, y: n('cy') - r, w: r * 2, h: r * 2 };
+  return {x: n('cx') - r, y: n('cy') - r, w: r * 2, h: r * 2};
 };
 
 const mergeBoxes = (boxes) => {
@@ -115,7 +124,12 @@ const mergeBoxes = (boxes) => {
   const minY = Math.min(...b.map((r) => r.y));
   const maxX = Math.max(...b.map((r) => r.x + r.w));
   const maxY = Math.max(...b.map((r) => r.y + r.h));
-  return { x: +minX.toFixed(1), y: +minY.toFixed(1), w: +(maxX - minX).toFixed(1), h: +(maxY - minY).toFixed(1) };
+  return {
+    x: +minX.toFixed(1),
+    y: +minY.toFixed(1),
+    w: +(maxX - minX).toFixed(1),
+    h: +(maxY - minY).toFixed(1),
+  };
 };
 
 // Top-level <g> only — nested groups stay inside their parent layer's markup.
@@ -130,13 +144,17 @@ const topLevelGroups = () => {
     const closes = (before.match(/<\/g>/g) || []).length;
     if (opens !== closes) continue; // nested
     // find matching close
-    let depth = 0, i = m.index;
+    let depth = 0,
+      i = m.index;
     const scan = /<g\b|<\/g>/g;
     scan.lastIndex = m.index;
     let s;
     while ((s = scan.exec(svg)) !== null) {
       depth += s[0] === '</g>' ? -1 : 1;
-      if (depth === 0) { i = s.index + 4; break; }
+      if (depth === 0) {
+        i = s.index + 4;
+        break;
+      }
     }
     out.push(svg.slice(m.index, i));
   }
@@ -181,22 +199,33 @@ const groups = topLevelGroups().map((g) => {
     .filter((cid) => cid !== id);
 
   const dataAttrs = Object.fromEntries(
-    [...openTag.matchAll(/data-([a-z-]+)="([^"]*)"/g)].map((x) => [x[1], x[2]])
+    [...openTag.matchAll(/data-([a-z-]+)="([^"]*)"/g)].map((x) => [x[1], x[2]]),
   );
 
-  return { id, role, box, fill, stroke, strokeWidth, children, dataAttrs, markup: g, pathCount: ds.length };
+  return {
+    id,
+    role,
+    box,
+    fill,
+    stroke,
+    strokeWidth,
+    children,
+    dataAttrs,
+    markup: g,
+    pathCount: ds.length,
+  };
 });
 
-const gradients = [...svg.matchAll(/<(linear|radial)Gradient\b[^>]*\bid="([^"]+)"[\s\S]*?<\/\1Gradient>/g)].map(
-  (m) => ({
-    id: m[2],
-    type: m[1],
-    stops: [...m[0].matchAll(/<stop[^>]*offset="([^"]*)"[^>]*stop-color="([^"]*)"/g)].map((s) => ({
-      offset: s[1],
-      color: s[2],
-    })),
-  })
-);
+const gradients = [
+  ...svg.matchAll(/<(linear|radial)Gradient\b[^>]*\bid="([^"]+)"[\s\S]*?<\/\1Gradient>/g),
+].map((m) => ({
+  id: m[2],
+  type: m[1],
+  stops: [...m[0].matchAll(/<stop[^>]*offset="([^"]*)"[^>]*stop-color="([^"]*)"/g)].map((s) => ({
+    offset: s[1],
+    color: s[2],
+  })),
+}));
 
 /* ------------------------------------------------------------------- output */
 
@@ -205,9 +234,7 @@ const pct = (v, total) => `${((v / total) * 100).toFixed(1)}%`;
 const layerTable = groups
   .map((g) => {
     const b = g.box;
-    const pos = b
-      ? `x ${b.x} y ${b.y} w ${b.w} h ${b.h}`
-      : 'n/a (text or empty)';
+    const pos = b ? `x ${b.x} y ${b.y} w ${b.w} h ${b.h}` : 'n/a (text or empty)';
     const center = b ? `${(b.x + b.w / 2).toFixed(0)}, ${(b.y + b.h / 2).toFixed(0)}` : 'n/a';
     return `| \`${g.id}\` | ${g.role} | ${pos} | ${center} | ${g.fill || g.stroke || '—'} |`;
   })
@@ -223,12 +250,18 @@ const layerDetail = groups
       b
         ? `- **Bounding box:** x=${b.x}, y=${b.y}, w=${b.w}, h=${b.h} — occupies ${pct(b.w, vbW)} of canvas width, ${pct(b.h, vbH)} of height`
         : `- **Bounding box:** not geometric (text layer)`,
-      b ? `- **Transform origin / pivot:** \`${(b.x + b.w / 2).toFixed(0)}px ${(b.y + b.h / 2).toFixed(0)}px\`` : null,
+      b
+        ? `- **Transform origin / pivot:** \`${(b.x + b.w / 2).toFixed(0)}px ${(b.y + b.h / 2).toFixed(0)}px\``
+        : null,
       g.fill ? `- **Fill:** \`${g.fill}\`` : null,
       g.stroke ? `- **Stroke:** \`${g.stroke}\` at width \`${g.strokeWidth || 1}\`` : null,
-      g.children.length ? `- **Addressable children:** ${g.children.map((c) => `\`${c}\``).join(', ')}` : null,
+      g.children.length
+        ? `- **Addressable children:** ${g.children.map((c) => `\`${c}\``).join(', ')}`
+        : null,
       Object.keys(g.dataAttrs).length
-        ? `- **Data:** ${Object.entries(g.dataAttrs).map(([k, v]) => `\`${k}=${v}\``).join(', ')}`
+        ? `- **Data:** ${Object.entries(g.dataAttrs)
+            .map(([k, v]) => `\`${k}=${v}\``)
+            .join(', ')}`
         : null,
       '',
       '```svg',
@@ -275,7 +308,7 @@ ${
           (g) =>
             `- \`#${g.id}\` (${g.type}): ${g.stops
               .map((s) => `${s.offset} → \`${s.color}\``)
-              .join(', ')}`
+              .join(', ')}`,
         )
         .join('\n')
     : '_None._'
@@ -367,7 +400,20 @@ const layersJson = groups.map((g) => ({
 
 fs.writeFileSync(
   path.join(dir, 'layers.json'),
-  JSON.stringify({ slug, viewBox, width: vbW, height: vbH, brand, gradients, defs: (svg.match(/<defs>[\s\S]*?<\/defs>/) || [''])[0], layers: layersJson }, null, 2)
+  JSON.stringify(
+    {
+      slug,
+      viewBox,
+      width: vbW,
+      height: vbH,
+      brand,
+      gradients,
+      defs: (svg.match(/<defs>[\s\S]*?<\/defs>/) || [''])[0],
+      layers: layersJson,
+    },
+    null,
+    2,
+  ),
 );
 
 console.log(`\nWrote ${outPath}`);

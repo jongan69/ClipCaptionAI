@@ -33,20 +33,35 @@ if (args.help || args.h) {
   process.exit(0);
 }
 
-const valuesFor = (key) => process.argv.slice(2).flatMap((value, index, all) => value === `--${key}` && all[index + 1] && !all[index + 1].startsWith('--') ? [all[index + 1]] : []);
+const valuesFor = (key) =>
+  process.argv
+    .slice(2)
+    .flatMap((value, index, all) =>
+      value === `--${key}` && all[index + 1] && !all[index + 1].startsWith('--')
+        ? [all[index + 1]]
+        : [],
+    );
 const prompt = String(args.prompt ?? '').trim();
 const images = valuesFor('image');
 if (!prompt) throw new Error(`Missing --prompt.\n${usage}`);
 if (!images.length) throw new Error(`Provide at least one --image.\n${usage}`);
 if (args['approved-for-generated-marketing'] !== true) {
-  throw new Error('Refusing to run without --approved-for-generated-marketing. Generated assets must not be used as source-of-truth or eBay main listing images.');
+  throw new Error(
+    'Refusing to run without --approved-for-generated-marketing. Generated assets must not be used as source-of-truth or eBay main listing images.',
+  );
 }
 loadEnv();
-if (!process.env.FAL_KEY && args['dry-run'] !== true) throw new Error('FAL_KEY is required in .env or the environment.');
+if (!process.env.FAL_KEY && args['dry-run'] !== true)
+  throw new Error('FAL_KEY is required in .env or the environment.');
 
 const quality = String(args.quality ?? 'medium');
-if (!['low', 'medium', 'high'].includes(quality)) throw new Error('--quality must be low, medium, or high.');
-const outDir = path.resolve(args.output ? path.dirname(String(args.output)) : path.join(outputsRoot, 'fal', `image-edit-${timestampSlug()}`));
+if (!['low', 'medium', 'high'].includes(quality))
+  throw new Error('--quality must be low, medium, or high.');
+const outDir = path.resolve(
+  args.output
+    ? path.dirname(String(args.output))
+    : path.join(outputsRoot, 'fal', `image-edit-${timestampSlug()}`),
+);
 const output = path.resolve(args.output ?? path.join(outDir, 'edited.png'));
 const manifestPath = path.join(path.dirname(output), `${path.parse(output).name}.generation.json`);
 
@@ -56,7 +71,21 @@ if (args['dry-run'] === true) {
     const resolved = path.resolve(source);
     return {source: resolved, remote: false, exists: fs.existsSync(resolved)};
   });
-  console.log(JSON.stringify({provider: 'fal', model: 'openai/gpt-image-2/edit', prompt, quality, sources, output, dry_run: true}, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        provider: 'fal',
+        model: 'openai/gpt-image-2/edit',
+        prompt,
+        quality,
+        sources,
+        output,
+        dry_run: true,
+      },
+      null,
+      2,
+    ),
+  );
   process.exit(0);
 }
 
@@ -81,23 +110,30 @@ const generated = result.data?.images?.[0];
 if (!generated?.url) throw new Error('fal returned no edited image URL.');
 ensureDir(path.dirname(output));
 const downloaded = await downloadRemoteFile(generated.url, output);
-fs.writeFileSync(manifestPath, `${JSON.stringify({
-  created_at: new Date().toISOString(),
-  script: scriptName,
-  provider: 'fal',
-  model: 'openai/gpt-image-2/edit',
-  request_id: result.requestId,
-  prompt,
-  quality,
-  approved_for_generated_marketing: true,
-  source_images: references,
-  mask_image: mask,
-  generated_url: generated.url,
-  output,
-  output_sha256: downloaded.sha256,
-  output_bytes: downloaded.bytes,
-  qa_status: 'pending_human_review',
-  prohibited_use: 'Not an eBay source-of-truth or main listing image.',
-}, null, 2)}\n`);
+fs.writeFileSync(
+  manifestPath,
+  `${JSON.stringify(
+    {
+      created_at: new Date().toISOString(),
+      script: scriptName,
+      provider: 'fal',
+      model: 'openai/gpt-image-2/edit',
+      request_id: result.requestId,
+      prompt,
+      quality,
+      approved_for_generated_marketing: true,
+      source_images: references,
+      mask_image: mask,
+      generated_url: generated.url,
+      output,
+      output_sha256: downloaded.sha256,
+      output_bytes: downloaded.bytes,
+      qa_status: 'pending_human_review',
+      prohibited_use: 'Not an eBay source-of-truth or main listing image.',
+    },
+    null,
+    2,
+  )}\n`,
+);
 console.log(`fal edited image written to ${output}`);
 console.log(`Human review is required before use. Manifest: ${manifestPath}`);
