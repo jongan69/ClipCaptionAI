@@ -6,7 +6,7 @@
  * missing layers, NaN transforms, an animation that never resolves to the static
  * logo — without paying for a full Remotion video render.
  *
- *   npx tsx scripts/logo/verify-variant.tsx --slug listingos --variant 01-scan-in
+ *   bunx tsx scripts/logo/verify-variant.tsx --slug listingos --variant 01-scan-in
  *
  * Exits non-zero on failure, so it drops straight into CI.
  */
@@ -58,7 +58,7 @@ const run = async () => {
     let markup: string;
     try {
       markup = renderToStaticMarkup(
-        React.createElement(Variant, {logo, frame, fps: 30, width: 1080, height: 1080})
+        React.createElement(Variant, {logo, frame, fps: 30, width: 1080, height: 1080}),
       );
     } catch (err) {
       failures.push(`frame ${frame}: threw ${(err as Error).message}`);
@@ -82,7 +82,7 @@ const run = async () => {
         ...(markup.match(/opacity="[\d.]+"/g) ?? []),
         ...(markup.match(/stroke-dashoffset="[-\d.]+"/g) ?? []),
         ...(markup.match(/(?:translate|scale|rotate)\([^)]*\)/g) ?? []),
-      ].join('|')
+      ].join('|'),
     );
 
     const file = path.join(outDir, `${slug}-${meta.id}-f${String(frame).padStart(3, '0')}.svg`);
@@ -91,21 +91,21 @@ const run = async () => {
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${logo.viewBox}">` +
         `<rect width="100%" height="100%" fill="${logo.brand.palette.background ?? '#000'}"/>` +
         markup.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '') +
-        `</svg>`
+        `</svg>`,
     );
     console.log(`  frame ${String(frame).padStart(3)} -> ${file}`);
   }
 
   // The final frame must be the resolved logo: no lingering transforms, full opacity.
   const finalMarkup = renderToStaticMarkup(
-    React.createElement(Variant, {logo, frame: last, fps: 30, width: 1080, height: 1080})
+    React.createElement(Variant, {logo, frame: last, fps: 30, width: 1080, height: 1080}),
   );
   const lowOpacity = [...finalMarkup.matchAll(/opacity="([\d.]+)"/g)]
     .map((m) => Number(m[1]))
     .filter((o) => o < 0.99);
   if (lowOpacity.length) {
     failures.push(
-      `final frame still has faded elements (opacity ${lowOpacity.join(', ')}) — animation does not resolve`
+      `final frame still has faded elements (opacity ${lowOpacity.join(', ')}) — animation does not resolve`,
     );
   }
 

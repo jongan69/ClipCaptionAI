@@ -2,9 +2,9 @@
 /**
  * render-all.mjs — Step 5: batch-render every brand x variant composition.
  *
- *   npm run logo:render                      # everything
- *   npm run logo:render -- --slug listingos  # one brand
- *   npm run logo:render -- --format webm     # transparent background
+ *   bun run logo:render                      # everything
+ *   bun run logo:render -- --slug listingos  # one brand
+ *   bun run logo:render -- --format webm     # transparent background
  *
  * Composition ids come from src/logo/registry.ts and follow Logo-<slug>-<variant>.
  */
@@ -25,9 +25,13 @@ const format = arg('--format', 'mp4');
 const outRoot = arg('--out', path.join('outputs', 'logo-animations'));
 
 // Ask Remotion for the composition list rather than duplicating the registry here.
-const raw = execFileSync('npx', ['remotion', 'compositions', 'src/showcase-index.tsx', '--quiet'], {
-  encoding: 'utf8',
-});
+const raw = execFileSync(
+  'bunx',
+  ['remotion', 'compositions', 'src/showcase-index.tsx', '--quiet'],
+  {
+    encoding: 'utf8',
+  },
+);
 
 const ids = (raw.match(/\S+/g) ?? [])
   .filter((id) => id && id.startsWith('Logo-'))
@@ -50,7 +54,7 @@ for (const id of ids) {
   process.stdout.write(`  ${id} ... `);
   try {
     execFileSync(
-      'npx',
+      'bunx',
       [
         'remotion',
         'render',

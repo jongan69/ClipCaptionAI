@@ -3,9 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
+import {ensureDir, loadEnv, parseArgs, projectRoot} from '../lib.mjs';
+import {commandPath} from '../command-utils.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
+loadEnv();
 const args = parseArgs(process.argv.slice(2));
 
 const usage = `
@@ -94,15 +96,36 @@ const completedJobFromFile = (file) => {
 };
 
 const runHiggs = (commandArgs) => {
-  const result = spawnSync(
-    'npm',
-    ['exec', '--yes', '--package=@higgsfield/cli', '--', 'higgs', ...commandArgs],
-    {
-      cwd: projectRoot,
-      encoding: 'utf8',
-      maxBuffer: 1024 * 1024 * 20,
-    },
-  );
+  const executable =
+    process.env.CCA_HIGGSFIELD_BIN ||
+    commandPath('higgsfield') ||
+    commandPath('higgs') ||
+    [
+      path.join(projectRoot, 'node_modules', '.bin', 'higgs'),
+      path.join(projectRoot, 'node_modules', '.bin', 'higgsfield'),
+    ].find((candidate) => fs.existsSync(candidate));
+  if (!executable)
+    return {
+      ok: false,
+      status: 127,
+      stdout: '',
+      stderr: 'Installed Higgsfield CLI not found.',
+      parsed: null,
+    };
+  const result = spawnSync(executable, commandArgs, {
+    cwd: projectRoot,
+    encoding: 'utf8',
+    maxBuffer: 1024 * 1024 * 20,
+    shell: false,
+  });
+  if (result.error)
+    return {
+      ok: false,
+      status: result.status ?? 127,
+      stdout: '',
+      stderr: String(result.error.message ?? result.error),
+      parsed: null,
+    };
   return {
     ok: result.status === 0,
     status: result.status,

@@ -603,10 +603,10 @@ const writeHiggsProductionKit = ({listing, listingDir, listingPlan = null}) => {
   const preflightScript = [
     '#!/usr/bin/env bash',
     'set -euo pipefail',
-    'npm exec --package=@higgsfield/cli -- higgs version',
-    'npm exec --package=@higgsfield/cli -- higgs workspace status || true',
-    'npm exec --package=@higgsfield/cli -- higgs account status',
-    'npm exec --package=@higgsfield/cli -- higgs model get seedance_2_0 >/dev/null',
+    'higgs version',
+    'higgs workspace status || true',
+    'higgs account status',
+    'higgs model get seedance_2_0 >/dev/null',
     '',
   ].join('\n');
 
@@ -618,7 +618,7 @@ const writeHiggsProductionKit = ({listing, listingDir, listingPlan = null}) => {
     ...renderJobs.flatMap((job) => [
       `echo ${shellQuote(`--- ${job.id}`)}`,
       [
-        'npm exec --package=@higgsfield/cli -- higgs generate cost',
+        'higgs generate cost',
         shellQuote(job.model),
         '--prompt',
         shellQuote(job.prompt),
@@ -647,7 +647,7 @@ const writeHiggsProductionKit = ({listing, listingDir, listingPlan = null}) => {
     ...renderJobs.flatMap((job) => [
       `echo ${shellQuote(`--- ${job.id}`)}`,
       [
-        'npm exec --package=@higgsfield/cli -- higgs generate create',
+        'higgs generate create',
         shellQuote(job.model),
         '--prompt',
         shellQuote(job.prompt),
@@ -1202,7 +1202,7 @@ const competitivePlan = async () => {
   }
 
   if (plan.selected.length > 0) {
-    execFileSync('npm', intelArgs, {cwd: projectRoot, stdio: 'inherit'});
+    execFileSync('bun', intelArgs, {cwd: projectRoot, stdio: 'inherit'});
   }
 
   let controlLoop = null;
@@ -1257,7 +1257,7 @@ const competitivePlan = async () => {
     if (args['control-loop-dry-run']) {
       controlLoopArgs.push('--dry-run');
     }
-    execFileSync('npm', controlLoopArgs, {cwd: projectRoot, stdio: 'inherit'});
+    execFileSync('bun', controlLoopArgs, {cwd: projectRoot, stdio: 'inherit'});
     const premiumPlanDir = path.join(creativeOutDir, 'competitive-premium-render-plan');
     controlLoop = {
       control_loop_manifest: path.join(
@@ -1406,7 +1406,7 @@ const findBroll = () => {
     findArgs.push('--movie-scenes');
   }
 
-  execFileSync('npm', findArgs, {cwd: projectRoot, stdio: 'inherit'});
+  execFileSync('bun', findArgs, {cwd: projectRoot, stdio: 'inherit'});
 
   const runDir = path.join(runRoot, runName);
   const storyBrollDir = path.join(projectDir, 'story-broll');

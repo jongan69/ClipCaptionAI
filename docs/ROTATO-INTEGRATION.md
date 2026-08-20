@@ -1,43 +1,15 @@
-# Rotato Integration Notes
+# Rotato integration
 
-Optional local integration (the CLI remains usable without Rotato):
+Rotato is optional. ClipCaptionAI discovers the installed CLI, hashes its current help contract, and routes work through the shared job broker:
 
-- Rotato desktop app exists at `/Applications/Rotato.app`.
-- Rotato CLI exists at `/usr/local/bin/rotato`.
-- The local `VideoAssets` folder (see `scripts/rotato-cli.mjs` defaults) is currently empty — mockup renders land under `outputs/`.
-
-## What We Added
-
-ClipCaptionAI now has a thin Rotato bridge so mockup rendering can live beside the rest of the video tooling:
-
-```bash
+```sh
 clipcaptionai rotato doctor
-clipcaptionai rotato inspect /path/to/project.rotato --json
-clipcaptionai rotato render /path/to/project.rotato --screen-media /path/to/app-capture.mp4 --output outputs/mockups/demo.mp4
+clipcaptionai rotato inspect /path/to/scene.rotato --json --wait
+clipcaptionai rotato render /path/to/scene.rotato --screen-media /path/to/capture.mp4 --output outputs/mockups/demo.mp4 --wait
 ```
 
-This is intentionally small. It does not generate `.rotato` projects from AI prompts yet. It just makes Rotato reachable from the same CLI surface as captions, B-roll, and renders.
+Rendering always runs `inspect --json` first. Template folders contain a real `scene.rotato` and `template.json`; semantic slots compile to inspected device indexes and overlay IDs. A changed inspect fingerprint or missing mapped ID fails with `TEMPLATE_INSPECT_MISMATCH`. `--screen-media` and `--screen-media-for` are mutually exclusive.
 
-## Why This Is The Right First Step
+The wrapper uses safe argv execution and preserves Rotato app handoff, timeout, codec, size, quality, and wait flags. It never persists overlay mutations. Completed files are hashed and probed. `rotato raw` remains available for advanced debugging through the same safe argv path.
 
-- It keeps Rotato useful without turning ClipCaption into a full mockup editor yet.
-- It gives us one CLI entry point for future demo-video workflows.
-- It lets future automation swap app recordings, screenshots, and overlay text into existing Rotato scenes.
-
-## Best Candidates To Absorb Before Deleting Any Old Video-Assets Workspace
-
-- Reusable `.rotato` scene templates for phones, laptops, browser windows, and side-by-side product demos.
-- Naming conventions for screen recordings, overlay copy, and export targets.
-- Prebuilt animation recipes such as app reveal, feature tour, testimonial montage, and CTA end cards.
-- Any shell scripts or JSON manifests that already map source media into repeatable demo exports.
-
-## Good Next Step Later
-
-If we want phase two, the smart move is probably a ClipCaption command that:
-
-1. takes a rendered app clip or screenshots,
-2. selects a Rotato template,
-3. swaps media and overlay text,
-4. exports a polished mockup video into `outputs/mockups/`.
-
-That would give you AI-assisted demo generation without keeping a separate orphaned video-assets repo around. Until then, a Rotato scene must exist locally and a successful bridge command is not proof that a final product video has passed visual QA.
+Rotato rendering success is not visual approval or publication readiness; marketing QA records those as separate states.

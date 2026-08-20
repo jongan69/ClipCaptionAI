@@ -1,0 +1,33 @@
+id: clipcaptionai-launch
+product: ./product.example.yaml
+objective: Demonstrate a reusable CLI-first marketing workflow.
+approvedClaims:
+  - Campaign work is resumable through shared jobs.
+variants:
+  - id: vertical-demo
+    width: 1080
+    height: 1920
+    fps: 30
+    durationSeconds: 15
+    cta: Try ClipCaptionAI
+    intents:
+      - type: generation
+        provider: higgsfield
+        model: configured-model
+        estimateCredits: 8
+        prompt: Product UI moving through a clean studio scene.
+    timeline:
+      - type: text
+        startSeconds: 0
+        durationSeconds: 12
+        text: One workflow, CLI or desktop
+        transition: fade
+      - type: end-card
+        startSeconds: 12
+        durationSeconds: 3
+        text: Try ClipCaptionAI
+    captions:
+      - text: One workflow, CLI or desktop.
+        startSeconds: 0
+        endSeconds: 3
+        yPercent: 82

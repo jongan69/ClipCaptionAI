@@ -65,7 +65,7 @@ try {
   });
   const child = spawn(spec.command, spec.args, {
     cwd: spec.cwd,
-    env: {...process.env, ...spec.env},
+    env: {...process.env, CCA_JOB_ID: id, ...spec.env},
     shell: false,
     detached: process.platform !== 'win32',
     windowsHide: true,

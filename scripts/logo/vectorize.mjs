@@ -15,7 +15,7 @@
  * hand-layered logo.svg in the same folder and skip this step entirely — the
  * spec generator reads either one.
  *
- * Deps (pure JS, no native build): npm i -D imagetracerjs pngjs
+ * Deps (pure JS, no native build): bun add -d imagetracerjs pngjs
  */
 
 import fs from 'node:fs';
@@ -51,7 +51,7 @@ try {
   ({PNG} = await import('pngjs'));
 } catch {
   console.error(
-    'Missing tracer dependencies. Install them once with:\n\n  npm i -D imagetracerjs pngjs\n',
+    'Missing tracer dependencies. Install them once with:\n\n  bun add -d imagetracerjs pngjs\n',
   );
   process.exit(1);
 }

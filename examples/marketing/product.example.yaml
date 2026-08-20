@@ -1,0 +1,13 @@
+id: clipcaptionai
+name: ClipCaptionAI
+seedVersion: "1"
+approvedClaims:
+  - Create captioned video workflows from a CLI or desktop app.
+captureFlows:
+  demo:
+    argv: ["bun", "--version"]
+    outputs: []
+platformProfiles:
+  desktop-1080p:
+    width: 1920
+    height: 1080

@@ -53,7 +53,6 @@ const workflows = [
   workflow('enhance', 'Enhance Video', 'Add contextual B-roll and captions.', [], videoArg),
   workflow('broll', 'Find B-roll', 'Find reusable B-roll from a prompt.', ['finder']),
   workflow('video', 'Model Video Run', 'Plan, render, inspect, and QA model-directed video.'),
-  workflow('rotato', 'Rotato', 'Use the compatibility Rotato wrapper.', ['mockup']),
   workflow('voiceover', 'Voiceover', 'Generate ElevenLabs narration.', ['elevenlabs']),
   workflow('fal-image-edit', 'fal Image Edit', 'Create a reviewed image edit.'),
   workflow('fal-reference-video', 'fal Reference Video', 'Create a reviewed reference video.'),
