@@ -13,7 +13,13 @@ import {
   slugify,
   splitVideoSegment,
 } from './lib.mjs';
-import {resolveProvider, createClient, resolveModel, chatCompletion} from './ai-provider.mjs';
+import {
+  resolveProvider,
+  prepareProvider,
+  createClient,
+  resolveModel,
+  chatCompletion,
+} from './ai-provider.mjs';
 
 const usage = `
 Usage:
@@ -53,7 +59,7 @@ const shouldSplit = Boolean(args.split);
 
 // ── Resolve provider ──────────────────────────────────────────────────
 
-const resolved = resolveProvider({provider: args.provider});
+const resolved = await prepareProvider(resolveProvider({provider: args.provider}));
 const chapterModel = resolveModel({
   resolved,
   model: args['chapter-model'],

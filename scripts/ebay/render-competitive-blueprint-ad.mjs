@@ -11,8 +11,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/render-competitive-blueprint-ad.mjs --blueprint outputs/.../creative-blueprint.json
-  npm run ebay:render-blueprint-ad -- --blueprint outputs/.../creative-blueprint.json
+  bun scripts/render-competitive-blueprint-ad.mjs --blueprint outputs/.../creative-blueprint.json
+  bun run ebay:render-blueprint-ad -- --blueprint outputs/.../creative-blueprint.json
 
 Options:
   --blueprint FILE          Competitive creative blueprint JSON.

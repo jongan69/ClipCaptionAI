@@ -11,8 +11,8 @@ import {
 
 const usage = `
 Usage:
-  npm run scene:blacklist
-  npm run scene:blacklist -- --scene-library scene-library
+  bun run scene:blacklist
+  bun run scene:blacklist -- --scene-library scene-library
 
 Options:
   --scene-library DIR   Scene cache folder. Default: ./scene-library

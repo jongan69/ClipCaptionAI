@@ -44,7 +44,7 @@ Export as SVG and hand-name the groups. Skip to step 2.
 **If you only have a PNG:**
 
 ```bash
-npm run logo:vectorize -- --in path/to/logo.png --slug acme
+bun run logo:vectorize -- --in path/to/logo.png --slug acme
 ```
 
 This traces the raster into `assets/logos/acme/logo.traced.svg`, grouping paths by
@@ -93,7 +93,7 @@ only the ones that make sense for your logo.
 ### 2. Generate the spec
 
 ```bash
-npm run logo:spec -- --slug acme
+bun run logo:spec -- --slug acme
 ```
 
 Writes two files:
@@ -123,7 +123,7 @@ Save the output into `src/logo/variants/` and register each variant in
 ### 4. Verify before rendering
 
 ```bash
-npm run logo:verify -- --slug acme --variant 02-assemble
+bun run logo:verify -- --slug acme --variant 02-assemble
 ```
 
 Server-renders the variant at four frames in about a second and fails on the things
@@ -140,9 +140,9 @@ a video render.
 ### 5. Render
 
 ```bash
-npm run logo:render -- --slug acme              # mp4
-npm run logo:render -- --slug acme --format webm # transparent background
-npm run studio                                   # preview interactively
+bun run logo:render -- --slug acme              # mp4
+bun run logo:render -- --slug acme --format webm # transparent background
+bun run studio                                   # preview interactively
 ```
 
 Compositions are auto-registered as `Logo-<slug>-<variant>`, so N brands x M

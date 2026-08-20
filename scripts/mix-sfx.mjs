@@ -14,7 +14,7 @@ import {
 
 const usage = `
 Usage:
-  npm run sfx:mix -- --video input.mp4 --captions clip.captions.json --out output.mp4 [options]
+  bun run sfx:mix -- --video input.mp4 --captions clip.captions.json --out output.mp4 [options]
 
 Options:
   --style-config FILE     Caption style JSON. Default: ./caption-style.json if present.
@@ -497,7 +497,7 @@ const scenePlan = loadScenePlan();
 const library = loadSfxLibrary();
 
 if (library.length === 0) {
-  console.warn(`No indexed SFX were found in ${libraryDir}. Run npm run sfx:standardize first.`);
+  console.warn(`No indexed SFX were found in ${libraryDir}. Run bun run sfx:standardize first.`);
   copyVideo();
   process.exit(0);
 }

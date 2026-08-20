@@ -10,8 +10,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/finalize-competitive-premium-ads.mjs --premium-plan outputs/.../competitive-premium-render-plan.json
-  npm run ebay:finalize-premium-ads -- --premium-plan outputs/.../competitive-premium-render-plan.json
+  bun scripts/finalize-competitive-premium-ads.mjs --premium-plan outputs/.../competitive-premium-render-plan.json
+  bun run ebay:finalize-premium-ads -- --premium-plan outputs/.../competitive-premium-render-plan.json
 
 Options:
   --premium-plan FILE      Plan from ebay:prep-premium-renders.

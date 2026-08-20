@@ -7,7 +7,7 @@ ClipCaptionAI v0.1.0 is a CLI-first public beta. The supported first-run path is
 Prerequisites are Node.js 20 or newer plus `ffmpeg` and `ffprobe` on `PATH`.
 
 ```bash
-npm install --global ./clipcaptionai-0.1.0.tgz
+bun install --global ./clipcaptionai-0.1.0.tgz
 clipcaptionai doctor
 clipcaptionai video run --example --run-id first-video
 clipcaptionai video qa --run outputs/video-runs/first-video

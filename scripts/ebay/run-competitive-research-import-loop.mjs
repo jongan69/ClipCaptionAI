@@ -10,8 +10,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/run-competitive-research-import-loop.mjs --queue outputs/.../competitive-research-queue.json --results automatio-results.csv
-  npm run ebay:competitive-research-loop -- --queue outputs/.../competitive-research-queue.json --results automatio-results.csv
+  bun scripts/run-competitive-research-import-loop.mjs --queue outputs/.../competitive-research-queue.json --results automatio-results.csv
+  bun run ebay:competitive-research-loop -- --queue outputs/.../competitive-research-queue.json --results automatio-results.csv
 
 Options:
   --queue FILE              Queue from ebay:competitive-research-queue.

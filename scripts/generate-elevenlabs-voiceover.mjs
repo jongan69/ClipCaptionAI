@@ -11,8 +11,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  npm run voiceover:elevenlabs -- --script narration.txt --voice-id VOICE_ID
-  npm run voiceover:elevenlabs -- --text "A short narration." --voice-id VOICE_ID --output outputs/demo/narration.mp3
+  bun run voiceover:elevenlabs -- --script narration.txt --voice-id VOICE_ID
+  bun run voiceover:elevenlabs -- --text "A short narration." --voice-id VOICE_ID --output outputs/demo/narration.mp3
 
 Options:
   --script FILE            UTF-8 narration text file.

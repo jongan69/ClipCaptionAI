@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
-import {resolveProvider, createClient, resolveModel} from './ai-provider.mjs';
+import {resolveProvider, prepareProvider, createClient, resolveModel} from './ai-provider.mjs';
 import {loadEnv, parseArgs, probeVideo, readCaptions, requireArg} from './lib.mjs';
 import {researchPopCultureScenes} from './lib-pop-culture-scenes.mjs';
 
 const usage = `
 Usage:
-  npm run scene:research-pop-culture -- --scene-plan clip.scene-plan.json [options]
+  bun run scene:research-pop-culture -- --scene-plan clip.scene-plan.json [options]
 
 Options:
   --scene-plan FILE    Existing *.scene-plan.json to research.
@@ -27,7 +27,7 @@ if (args.help || args.h) {
 
 loadEnv();
 
-const resolved = resolveProvider({provider: args.provider});
+const resolved = await prepareProvider(resolveProvider({provider: args.provider}));
 if (!resolved.config) {
   throw new Error('DEEPSEEK_API_KEY or OPENAI_API_KEY is required. Add one to .env or your shell.');
 }

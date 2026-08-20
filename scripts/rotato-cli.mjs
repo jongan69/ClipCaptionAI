@@ -10,9 +10,9 @@ const args = process.argv.slice(2);
 const helpText = `ClipCaptionAI Rotato bridge
 
 Usage:
-  npm run rotato -- doctor
-  npm run rotato -- inspect /path/to/project.rotato [--json]
-  npm run rotato -- render /path/to/project.rotato --output /path/to/output.mp4 [rotato flags]
+  bun run rotato -- doctor
+  bun run rotato -- inspect /path/to/project.rotato [--json]
+  bun run rotato -- render /path/to/project.rotato --output /path/to/output.mp4 [rotato flags]
 
 Examples:
   clipcaptionai rotato doctor

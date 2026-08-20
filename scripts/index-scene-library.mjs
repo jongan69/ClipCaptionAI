@@ -11,7 +11,7 @@ import {
 
 const usage = `
 Usage:
-  npm run scene:index -- --scene-library ./custom-scenes-library [options]
+  bun run scene:index -- --scene-library ./custom-scenes-library [options]
 
 Options:
   --scene-library DIR    Folder containing reusable local B-roll clips.

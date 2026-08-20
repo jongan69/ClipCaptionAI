@@ -3,7 +3,7 @@ import {create} from 'zustand';
 export interface WorkflowArg {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'boolean' | 'select' | 'path' | 'textarea';
+  type: 'text' | 'number' | 'boolean' | 'select' | 'path' | 'textarea' | 'array';
   placeholder?: string;
   required?: boolean;
   value?: string | number | boolean;
@@ -18,6 +18,8 @@ export interface WorkflowDefinition {
   args?: WorkflowArg[];
   source?: string;
   group?: string;
+  adapterId?: string;
+  actionId?: string;
 }
 
 interface WorkflowStore {

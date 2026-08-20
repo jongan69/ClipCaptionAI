@@ -6,7 +6,7 @@ import {ensureDir, parseArgs, outputsRoot} from './lib.mjs';
 
 const usage = `
 Usage:
-  npm run moments:review -- [options]
+  bun run moments:review -- [options]
 
 Options:
   --run DIR               Review one run folder. Default: latest outputs/run-*
@@ -33,13 +33,9 @@ const formatSeconds = (value) => {
 };
 
 const escapeMarkdownTableCell = (value) =>
-  String(value)
-    .replaceAll('\\', '\\\\')
-    .replaceAll('|', '\\|')
-    .replace(/\r?\n/g, ' ');
+  String(value).replaceAll('\\', '\\\\').replaceAll('|', '\\|').replace(/\r?\n/g, ' ');
 
-const escapeMarkdownInlineCode = (value) =>
-  escapeMarkdownTableCell(value).replaceAll('`', '\\`');
+const escapeMarkdownInlineCode = (value) => escapeMarkdownTableCell(value).replaceAll('`', '\\`');
 
 const latestRunDir = () => {
   if (!fs.existsSync(outputsRoot)) {

@@ -9,7 +9,7 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/render-ebay-photo-ad.mjs --project-dir outputs/.../398155636462 --voiceover voiceover.mp3
+  bun scripts/render-ebay-photo-ad.mjs --project-dir outputs/.../398155636462 --voiceover voiceover.mp3
 
 Options:
   --project-dir DIR        Listing project folder with listing.json and product photos.

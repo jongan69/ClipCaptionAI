@@ -21,4 +21,4 @@ This table describes what the repository can currently prove locally. “Support
 
 ## Release evidence
 
-Production reporting must distinguish source changes, local checks, rendered artifacts, provider transactions, visual review, external-tool output, hosted deployment, and publication. A passing `npm test` or `ffprobe` check cannot substitute for those other claims.
+Production reporting must distinguish source changes, local checks, rendered artifacts, provider transactions, visual review, external-tool output, hosted deployment, and publication. A passing `bun test` or `ffprobe` check cannot substitute for those other claims.

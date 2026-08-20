@@ -12,8 +12,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/generate-ebay-main-photo-candidates.mjs --worklist outputs/.../traffic-optimization-worklist.json --source-root /path/to/supplier-video-repairs
-  npm run ebay:main-photo-candidates -- --worklist outputs/.../traffic-optimization-worklist.json --source-root /path/to/supplier-video-repairs
+  bun scripts/generate-ebay-main-photo-candidates.mjs --worklist outputs/.../traffic-optimization-worklist.json --source-root /path/to/supplier-video-repairs
+  bun run ebay:main-photo-candidates -- --worklist outputs/.../traffic-optimization-worklist.json --source-root /path/to/supplier-video-repairs
 
 Options:
   --worklist FILE       Dropship optimization worklist JSON.

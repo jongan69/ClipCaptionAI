@@ -10,9 +10,9 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/process-competitive-research-queue.mjs --queue outputs/.../competitive-research-queue.json
-  npm run ebay:competitive-research-process -- --queue outputs/.../competitive-research-queue.json
-  npm run ebay:competitive-research-process -- --status outputs/.../competitive-video-pipeline-status.json
+  bun scripts/process-competitive-research-queue.mjs --queue outputs/.../competitive-research-queue.json
+  bun run ebay:competitive-research-process -- --queue outputs/.../competitive-research-queue.json
+  bun run ebay:competitive-research-process -- --status outputs/.../competitive-video-pipeline-status.json
 
 Options:
   --queue FILE              Queue from ebay:competitive-research-queue.

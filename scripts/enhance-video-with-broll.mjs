@@ -17,7 +17,7 @@ import {timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
-  npm run broll:enhance -- --video /path/to/video.mp4
+  bun run broll:enhance -- --video /path/to/video.mp4
 
 Options:
   --video FILE              Already-edited base video to enhance.
@@ -161,7 +161,7 @@ if (args.captions) {
     args['transcription-prompt'] ??
       'Budapest, Hungary, Hungarian, szia, hogy van, jó napot, living abroad, making money online, Airbnb, Reddit, apartment hunting.',
   );
-  run('npm', [
+  run('bun', [
     'run',
     'transcribe',
     '--',
@@ -201,7 +201,7 @@ if (contextScenesEnabled) {
     if (args['reindex-scene-library']) {
       indexArgs.push('--reindex');
     }
-    run('npm', indexArgs);
+    run('bun', indexArgs);
   }
 
   const sceneArgs = [
@@ -246,7 +246,7 @@ if (contextScenesEnabled) {
     sceneArgs.push('--disable-pop-culture-research');
   }
 
-  run('npm', sceneArgs);
+  run('bun', sceneArgs);
   if (fs.existsSync(sceneMixPath)) {
     videoForRender = sceneMixPath;
   }
@@ -280,7 +280,7 @@ if (!args['no-render']) {
     renderArgs.push('--vertical');
   }
 
-  run('npm', renderArgs);
+  run('bun', renderArgs);
 }
 
 const manifest = {

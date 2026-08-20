@@ -7,7 +7,7 @@ import {slugify, timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
-  npm run video:split -- --video /path/to/video.mp4
+  bun run video:split -- --video /path/to/video.mp4
 
 Options:
   --video FILE             Local source video to split. Required.

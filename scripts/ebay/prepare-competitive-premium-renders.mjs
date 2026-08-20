@@ -9,8 +9,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/prepare-competitive-premium-renders.mjs --preview-manifest outputs/.../competitive-preview-render-manifest.json
-  npm run ebay:prep-premium-renders -- --preview-manifest outputs/.../competitive-preview-render-manifest.json --roi-plan outputs/.../higgsfield-roi-plan.json
+  bun scripts/prepare-competitive-premium-renders.mjs --preview-manifest outputs/.../competitive-preview-render-manifest.json
+  bun run ebay:prep-premium-renders -- --preview-manifest outputs/.../competitive-preview-render-manifest.json --roi-plan outputs/.../higgsfield-roi-plan.json
 
 Options:
   --preview-manifest FILE   Batch preview manifest from ebay:render-blueprint-batch.
@@ -414,7 +414,7 @@ const writePerListingArtifacts = ({packet}) => {
     'After approved clips are saved into `higgsfield-renders/`:',
     '',
     '```bash',
-    `npm run ebay:cinematic-ads -- assemble --project-dir "${packet.project_dir}" --energy max --include-broll --broll-position interleave`,
+    `bun run ebay:cinematic-ads -- assemble --project-dir "${packet.project_dir}" --energy max --include-broll --broll-position interleave`,
     '```',
     '',
   ].join('\n');

@@ -10,6 +10,7 @@ import {ensureDir, loadEnv, parseArgs, projectRoot, requireArg} from './lib.mjs'
 import {commandExists} from './command-utils.mjs';
 import {
   resolveProvider,
+  prepareProvider,
   createClient,
   resolveModel,
   structuredChatCompletion,
@@ -17,7 +18,7 @@ import {
 
 const usage = `
 Usage:
-  npm run transcribe -- --video input.mp4 --out captions.json [options]
+  bun run transcribe -- --video input.mp4 --out captions.json [options]
 
 Options:
   --provider ID           Transcription provider: auto, local-whispercpp, openai, youtube
@@ -235,8 +236,9 @@ const HTML_ENTITIES = new Map([
 ]);
 
 const decodeHtml = (value) =>
-  String(value ?? '').replace(/&(amp|lt|gt|quot|#39);/g, (entity, name) =>
-    HTML_ENTITIES.get(name) ?? entity,
+  String(value ?? '').replace(
+    /&(amp|lt|gt|quot|#39);/g,
+    (entity, name) => HTML_ENTITIES.get(name) ?? entity,
   );
 
 const safeProviderErrorLabel = (error) => {
@@ -749,7 +751,7 @@ const buildTranscriptCleanupInput = (chunks) =>
     .join('\n');
 
 const enhanceTranscriptText = async ({captions, provider}) => {
-  const resolved = resolveProvider();
+  const resolved = await prepareProvider(resolveProvider());
   if (!resolved.config) {
     throw new Error(
       'DEEPSEEK_API_KEY or OPENAI_API_KEY is required for transcript text enhancement.',

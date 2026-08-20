@@ -7,8 +7,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/build-competitive-review-board.mjs --status outputs/.../competitive-video-pipeline-status.json
-  npm run ebay:competitive-review -- --status outputs/.../competitive-video-pipeline-status.json
+  bun scripts/build-competitive-review-board.mjs --status outputs/.../competitive-video-pipeline-status.json
+  bun run ebay:competitive-review -- --status outputs/.../competitive-video-pipeline-status.json
 
 Options:
   --status FILE      Pipeline status JSON from ebay:competitive-status.

@@ -10,8 +10,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/export-competitive-voiceover-plan.mjs --blueprints-dir outputs/.../competitive-creative
-  npm run ebay:voiceover-plan -- --blueprints-dir outputs/.../competitive-creative
+  bun scripts/export-competitive-voiceover-plan.mjs --blueprints-dir outputs/.../competitive-creative
+  bun run ebay:voiceover-plan -- --blueprints-dir outputs/.../competitive-creative
 
 Options:
   --blueprints-dir DIR       Directory to scan recursively for creative-blueprint.json files.
@@ -253,7 +253,7 @@ const main = async () => {
       '',
     ].join('\n');
     const renderCommand = [
-      'npm run ebay:render-blueprint-ad --',
+      'bun run ebay:render-blueprint-ad --',
       '--blueprint',
       shellQuote(blueprintPath),
       '--voiceover',

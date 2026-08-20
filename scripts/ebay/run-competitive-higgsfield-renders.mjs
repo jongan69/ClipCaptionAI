@@ -10,8 +10,8 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/run-competitive-higgsfield-renders.mjs --premium-plan outputs/.../competitive-premium-render-plan.json
-  npm run ebay:competitive-higgsfield-render -- --premium-plan outputs/.../competitive-premium-render-plan.json --model seedance_2_0_mini --credit-budget 40
+  bun scripts/run-competitive-higgsfield-renders.mjs --premium-plan outputs/.../competitive-premium-render-plan.json
+  bun run ebay:competitive-higgsfield-render -- --premium-plan outputs/.../competitive-premium-render-plan.json --model seedance_2_0_mini --credit-budget 40
 
 Options:
   --premium-plan FILE       Premium render plan from ebay:prep-premium-renders.

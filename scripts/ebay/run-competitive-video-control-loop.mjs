@@ -10,9 +10,9 @@ const args = parseArgs(process.argv.slice(2));
 
 const usage = `
 Usage:
-  node scripts/run-competitive-video-control-loop.mjs --blueprints-dir outputs/.../competitive-creative
-  npm run ebay:competitive-loop -- --blueprints-dir outputs/.../competitive-creative
-  npm run ebay:competitive-loop -- --preview-manifest outputs/.../competitive-preview-render-manifest.json
+  bun scripts/run-competitive-video-control-loop.mjs --blueprints-dir outputs/.../competitive-creative
+  bun run ebay:competitive-loop -- --blueprints-dir outputs/.../competitive-creative
+  bun run ebay:competitive-loop -- --preview-manifest outputs/.../competitive-preview-render-manifest.json
 
 Options:
   --blueprints-dir DIR       Render previews from every creative-blueprint.json under this folder.

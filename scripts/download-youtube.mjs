@@ -9,7 +9,7 @@ const defaultLinks = path.join(projectRoot, 'links.txt');
 
 const usage = `
 Usage:
-  npm run download:youtube -- --links links.txt
+  bun run download:youtube -- --links links.txt
 
 Options:
   --links FILE        Text file with one YouTube URL per line. Default: ./links.txt

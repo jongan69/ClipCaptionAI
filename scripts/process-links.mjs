@@ -16,7 +16,7 @@ const localLinks = path.join(projectRoot, 'links.txt');
 
 const usage = `
 Usage:
-  npm run process -- [options]
+  bun run process -- [options]
 
 Options:
   --links FILE            Links file. Default: ./links.txt, then $CCA_LINKS_PATH
@@ -206,7 +206,7 @@ for (const [index, entry] of linkEntries.entries()) {
     smartArgs.push('--vertical-contain');
   }
 
-  run('npm', smartArgs);
+  run('bun', smartArgs);
 }
 
 const manifest = {

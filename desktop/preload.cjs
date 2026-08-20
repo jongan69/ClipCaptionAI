@@ -17,8 +17,10 @@ contextBridge.exposeInMainWorld('cca', {
   listWorkflows: () => ipcRenderer.invoke('cca:list-workflows'),
   getEnvironment: () => ipcRenderer.invoke('cca:get-environment'),
   runWorkflow: (payload) => ipcRenderer.invoke('cca:run-workflow', payload),
-  runRawCommand: (payload) => ipcRenderer.invoke('cca:run-raw-command', payload),
   stopWorkflow: (session) => ipcRenderer.invoke('cca:stop-workflow', session),
+  listJobs: () => ipcRenderer.invoke('cca:list-jobs'),
+  getJob: (id) => ipcRenderer.invoke('cca:job-status', id),
+  getJobLogs: (id, offsets) => ipcRenderer.invoke('cca:job-logs', {id, offsets}),
 
   // ── Preferences & secrets ────────────────────────────────────
   getPreferences: () => ipcRenderer.invoke('cca:get-preferences'),

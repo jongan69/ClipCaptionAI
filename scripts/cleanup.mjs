@@ -14,10 +14,10 @@ import {
 
 const usage = `
 Usage:
-  npm run cleanup
-  npm run cleanup -- --temp --yes
-  npm run cleanup -- --outputs --keep-latest 5 --yes
-  npm run cleanup -- --all --yes
+  bun run cleanup
+  bun run cleanup -- --temp --yes
+  bun run cleanup -- --outputs --keep-latest 5 --yes
+  bun run cleanup -- --all --yes
 
 Options:
   --temp             Clean temporary render staging: outputs/work/ and public/media/.

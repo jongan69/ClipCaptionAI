@@ -1,7 +1,7 @@
 /**
  * Shared AI provider abstraction for ClipCaptionAI.
  *
- * Supports DeepSeek and OpenAI through a common chat-completions interface.
+ * Supports local Ollama, DeepSeek, and OpenAI through one chat interface.
  * DeepSeek's API is OpenAI-compatible — the same `openai` npm SDK works for
  * both, with only baseURL and model names changing.
  *
@@ -16,11 +16,30 @@
  *   4. null (no provider available)
  */
 
+import {spawn} from 'node:child_process';
 import OpenAI from 'openai';
+
+import {commandExists} from './command-utils.mjs';
 
 // ── Provider registry ─────────────────────────────────────────────────
 
 export const PROVIDERS = {
+  ollama: {
+    id: 'ollama',
+    label: 'Ollama',
+    baseURL: 'http://127.0.0.1:11434/v1',
+    apiKeyEnv: null,
+    defaultModel: 'qwen3:4b',
+    fastModel: 'qwen3:4b',
+    supports: {
+      chatCompletions: true,
+      jsonMode: true,
+      streaming: true,
+      transcription: false,
+      responsesApi: false,
+      strictJsonSchema: false,
+    },
+  },
   deepseek: {
     id: 'deepseek',
     label: 'DeepSeek',
@@ -69,11 +88,14 @@ export const resolveProvider = (opts = {}) => {
     .trim();
 
   // Explicit CLI flag
+  if (requested === 'ollama') {
+    return {provider: 'ollama', config: PROVIDERS.ollama, explicit: true};
+  }
   if (requested === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
-    return {provider: 'deepseek', config: PROVIDERS.deepseek};
+    return {provider: 'deepseek', config: PROVIDERS.deepseek, explicit: true};
   }
   if (requested === 'openai' && process.env.OPENAI_API_KEY) {
-    return {provider: 'openai', config: PROVIDERS.openai};
+    return {provider: 'openai', config: PROVIDERS.openai, explicit: true};
   }
   if (requested && !PROVIDERS[requested]) {
     throw new Error(`Unknown provider "${requested}". Valid options: deepseek, openai`);
@@ -82,16 +104,103 @@ export const resolveProvider = (opts = {}) => {
     throw new Error(`${PROVIDERS[requested].apiKeyEnv} is required for provider "${requested}"`);
   }
 
-  // Auto-detect: prefer DeepSeek
+  // Auto-detect: prefer the installed local provider.
+  if (
+    process.env.CCA_DISABLE_OLLAMA !== '1' &&
+    (process.env.CCA_OLLAMA_AVAILABLE === '1' || commandExists('ollama'))
+  ) {
+    return {provider: 'ollama', config: PROVIDERS.ollama, explicit: false};
+  }
   if (process.env.DEEPSEEK_API_KEY) {
-    return {provider: 'deepseek', config: PROVIDERS.deepseek};
+    return {provider: 'deepseek', config: PROVIDERS.deepseek, explicit: false};
   }
   if (process.env.OPENAI_API_KEY) {
-    return {provider: 'openai', config: PROVIDERS.openai};
+    return {provider: 'openai', config: PROVIDERS.openai, explicit: false};
   }
 
   return {provider: null, config: null};
 };
+
+const cloudFallback = () => {
+  if (process.env.DEEPSEEK_API_KEY)
+    return {provider: 'deepseek', config: PROVIDERS.deepseek, explicit: false};
+  if (process.env.OPENAI_API_KEY)
+    return {provider: 'openai', config: PROVIDERS.openai, explicit: false};
+  return null;
+};
+
+const waitForExit = (child) =>
+  new Promise((resolve, reject) => {
+    child.once('error', reject);
+    child.once('close', (code) =>
+      code === 0 ? resolve() : reject(new Error(`Ollama exited with code ${code}.`)),
+    );
+  });
+
+export async function ensureOllamaReady({
+  fetchImpl = fetch,
+  spawnImpl = spawn,
+  attempts = 30,
+  intervalMs = 250,
+} = {}) {
+  const tagsUrl = 'http://127.0.0.1:11434/api/tags';
+  const readTags = async () => {
+    const response = await fetchImpl(tagsUrl, {signal: AbortSignal.timeout(2_000)});
+    if (!response.ok) throw new Error(`Ollama readiness returned HTTP ${response.status}.`);
+    return response.json();
+  };
+
+  let tags;
+  try {
+    tags = await readTags();
+  } catch {
+    if (!commandExists('ollama') && process.env.CCA_OLLAMA_AVAILABLE !== '1') {
+      throw new Error('Ollama is not installed.');
+    }
+    const server = spawnImpl('ollama', ['serve'], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+    server.unref?.();
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      try {
+        tags = await readTags();
+        break;
+      } catch {
+        // Service startup is bounded below.
+      }
+    }
+    if (!tags) throw new Error('Ollama did not become ready before the setup timeout.');
+  }
+
+  const installed = (tags.models ?? []).some((model) =>
+    [model.name, model.model].includes(PROVIDERS.ollama.defaultModel),
+  );
+  if (!installed) {
+    await waitForExit(
+      spawnImpl('ollama', ['pull', PROVIDERS.ollama.defaultModel], {
+        stdio: 'inherit',
+        windowsHide: true,
+      }),
+    );
+  }
+  return tags;
+}
+
+export async function prepareProvider(resolved, options) {
+  if (resolved.provider !== 'ollama') return resolved;
+  try {
+    await ensureOllamaReady(options);
+    return resolved;
+  } catch (error) {
+    if (resolved.explicit) throw error;
+    const fallback = cloudFallback();
+    if (fallback) return fallback;
+    throw error;
+  }
+}
 
 // ── Client creation ────────────────────────────────────────────────────
 
@@ -109,7 +218,7 @@ export const createClient = (resolved, opts = {}) => {
 
   return new OpenAI({
     baseURL: resolved.config.baseURL,
-    apiKey: process.env[resolved.config.apiKeyEnv],
+    apiKey: resolved.provider === 'ollama' ? 'ollama' : process.env[resolved.config.apiKeyEnv],
     maxRetries: opts.maxRetries ?? 1,
     // Bound any single model call so a hung provider can't hang a pipeline.
     timeout: opts.timeout ?? 180_000,

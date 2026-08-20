@@ -17,7 +17,7 @@ const defaultFrame = path.join(path.dirname(projectRoot), 'Frame.png');
 
 const usage = `
 Usage:
-  npm run frame:links -- --frame /Users/jonathangan/Desktop/Frame.png
+  bun run frame:links -- --frame /Users/jonathangan/Desktop/Frame.png
 
 Options:
   --links FILE       Text file with YouTube URLs. Default: ./links.txt

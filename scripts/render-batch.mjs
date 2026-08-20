@@ -5,11 +5,11 @@ import {ensureDir, parseArgs, requireArg, run} from './lib.mjs';
 
 const usage = `
 Usage:
-  npm run render:batch -- --clips-dir ./clips --out-dir ./captioned [options]
+  bun run render:batch -- --clips-dir ./clips --out-dir ./captioned [options]
 
 Options:
   --captions-dir DIR      Where caption JSON files live. Default: ./captions inside clips-dir parent.
-  --auto-transcribe       Create missing caption JSON files with npm run transcribe.
+  --auto-transcribe       Create missing caption JSON files with bun run transcribe.
   --vertical              Render 1080x1920.
   --position NAME         left-hook, right-hook, lower-left, center-bottom, center-impact.
   --style-config FILE     Caption style JSON. Default: ./caption-style.json if present.
@@ -53,7 +53,7 @@ for (const clip of clips) {
       continue;
     }
 
-    run('npm', ['run', 'transcribe', '--', '--video', videoPath, '--out', captionsPath]);
+    run('bun', ['run', 'transcribe', '--', '--video', videoPath, '--out', captionsPath]);
   }
 
   const renderArgs = [
@@ -81,5 +81,5 @@ for (const clip of clips) {
     renderArgs.push('--combine-ms', String(args['combine-ms']));
   }
 
-  run('npm', renderArgs);
+  run('bun', renderArgs);
 }

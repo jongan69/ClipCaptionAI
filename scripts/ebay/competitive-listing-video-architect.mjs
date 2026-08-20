@@ -8,9 +8,9 @@ import {commandExists} from '../command-utils.mjs';
 
 const usage = `
 Usage:
-  npm run ebay:creative-intel -- plan --project-dir outputs/.../398160795273 --competitors kalodata-export.csv
-  npm run ebay:creative-intel -- plan --projects-dir outputs/ebay-cinematic-ads/.../projects --competitors competitor-refs.json
-  npm run ebay:creative-intel -- plan --project-dir outputs/.../398160795273 --discover-youtube
+  bun run ebay:creative-intel -- plan --project-dir outputs/.../398160795273 --competitors kalodata-export.csv
+  bun run ebay:creative-intel -- plan --projects-dir outputs/ebay-cinematic-ads/.../projects --competitors competitor-refs.json
+  bun run ebay:creative-intel -- plan --project-dir outputs/.../398160795273 --discover-youtube
 
 Commands:
   plan      Rank competitor/trend references and write product-safe video blueprints.
@@ -1125,10 +1125,7 @@ const stripVttMarkup = (value) => {
 };
 
 const cleanVttText = (value) =>
-  stripVttMarkup(value)
-    .replaceAll('&amp;', '&')
-    .replace(/\s+/g, ' ')
-    .trim();
+  stripVttMarkup(value).replaceAll('&amp;', '&').replace(/\s+/g, ' ').trim();
 
 const parseVttCues = (text) => {
   const lines = text.split(/\r?\n/);
@@ -1437,7 +1434,7 @@ const kalodataPromptForListing = (listing) => {
     '- Exclude unrelated accessories, fake giveaways, obvious reposts, and videos with no product match',
     '',
     'Export as CSV or JSON, then run:',
-    'npm run ebay:creative-intel -- plan --project-dir "<listing project>" --competitors "<export.csv>"',
+    'bun run ebay:creative-intel -- plan --project-dir "<listing project>" --competitors "<export.csv>"',
     '',
   ].join('\n');
 };
@@ -1869,8 +1866,8 @@ const markdownForBlueprint = (blueprint, listingDir) => {
     '## Next Commands',
     '',
     '```bash',
-    `npm run ebay:cinematic-ads -- find-broll --project-dir "${listingDir}" --energy max`,
-    `npm run ebay:cinematic-ads -- assemble --project-dir "${listingDir}" --energy max --include-broll --broll-position interleave`,
+    `bun run ebay:cinematic-ads -- find-broll --project-dir "${listingDir}" --energy max`,
+    `bun run ebay:cinematic-ads -- assemble --project-dir "${listingDir}" --energy max --include-broll --broll-position interleave`,
     '```',
     '',
   ].filter((line) => line !== null);

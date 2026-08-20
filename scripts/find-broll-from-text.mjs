@@ -19,8 +19,8 @@ import {timestampSlug} from './clipkit-lib.mjs';
 
 const usage = `
 Usage:
-  npm run broll:find
-  npm run broll:find -- --prompts broll-prompts.txt
+  bun run broll:find
+  bun run broll:find -- --prompts broll-prompts.txt
 
 Options:
   --prompts FILE             Text file with one B-roll prompt per line. Default: ./broll-prompts.txt

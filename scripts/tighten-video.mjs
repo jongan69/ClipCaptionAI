@@ -13,11 +13,17 @@ import {
   run,
   splitVideoSegment,
 } from './lib.mjs';
-import {resolveProvider, createClient, resolveModel, chatCompletion} from './ai-provider.mjs';
+import {
+  resolveProvider,
+  prepareProvider,
+  createClient,
+  resolveModel,
+  chatCompletion,
+} from './ai-provider.mjs';
 
 const usage = `
 Usage:
-  npm run tighten:auto -- --video input.mp4 [options]
+  bun run tighten:auto -- --video input.mp4 [options]
 
 Detects filler words, repetitive sections, and tangents in a conversation
 video, then optionally produces a tightened edit with those sections removed.
@@ -56,7 +62,7 @@ if (!['light', 'medium', 'heavy'].includes(aggressiveness)) {
 
 // ── Resolve provider ──────────────────────────────────────────────────
 
-const resolved = resolveProvider({provider: args.provider});
+const resolved = await prepareProvider(resolveProvider({provider: args.provider}));
 const tightenModel = resolveModel({
   resolved,
   model: args.model,
@@ -92,7 +98,7 @@ if (!fs.existsSync(transcriptPath)) {
   if (args.language) {
     transcribeArgs.push('--language', String(args.language));
   }
-  run('npm', transcribeArgs);
+  run('bun', transcribeArgs);
 } else {
   console.log(`Using existing transcript: ${transcriptPath}`);
 }

@@ -118,7 +118,7 @@ test('moments review helper exposes the standalone report command', () => {
   });
 
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /npm run moments:review/);
+  assert.match(result.stdout, /bun run moments:review/);
   assert.match(result.stdout, /--persist/);
 });
 
@@ -4134,7 +4134,12 @@ test('chapter:auto writes a time-fallback chapters.json when no AI key is config
     {
       cwd: projectRoot,
       encoding: 'utf8',
-      env: {...process.env, OPENAI_API_KEY: '', DEEPSEEK_API_KEY: ''},
+      env: {
+        ...process.env,
+        OPENAI_API_KEY: '',
+        DEEPSEEK_API_KEY: '',
+        CCA_DISABLE_OLLAMA: '1',
+      },
     },
   );
 
