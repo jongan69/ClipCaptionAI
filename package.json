@@ -249,6 +249,7 @@
       "tsconfig.json",
       "package.json"
     ],
+    "afterSign": "desktop/scripts/notarize.cjs",
     "mac": {
       "category": "public.app-category.video",
       "icon": "assets/icon.icns",
@@ -256,8 +257,7 @@
       "gatekeeperAssess": false,
       "entitlements": "desktop/entitlements.mac.plist",
       "entitlementsInherit": "desktop/entitlements.mac.plist",
-      "target": "dmg",
-      "afterSign": "desktop/scripts/notarize.cjs"
+      "target": "dmg"
     },
     "win": {
       "icon": "assets/icon.ico",
