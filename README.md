@@ -162,6 +162,7 @@ The menu is convenient for interactive editing. The direct `bun run clipkit -- .
 
 - Required: Node.js + `ffmpeg` + `ffprobe` + project CLI/runtime files
 - Optional: `yt-dlp`, Ollama; AI provider auto mode prefers local Ollama and falls back to configured DeepSeek/OpenAI
+- Generic marketing campaigns use the same discovered adapters and job broker; see [Marketing platform](docs/MARKETING_PLATFORM.md).
 
 ```bash
 bun run desktop:env-check:json   # machine-readable checks

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "runId": "clipcaptionai-launch-example",
+  "campaignId": "clipcaptionai-launch",
+  "createdAt": "2026-08-20T00:00:00.000Z",
+  "planHash": "generated-by-marketing-plan",
+  "capabilityFingerprint": "generated-by-marketing-plan",
+  "product": {
+    "id": "clipcaptionai",
+    "name": "ClipCaptionAI",
+    "seedVersion": "1",
+    "approvedClaims": [],
+    "captureFlows": {},
+    "platformProfiles": {}
+  },
+  "approvedClaims": [],
+  "variants": []
+}

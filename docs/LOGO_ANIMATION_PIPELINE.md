@@ -29,7 +29,7 @@ logo.png ──vectorize──> layered SVG ──build-spec──> LOGO_SPEC.md
 ## One-time setup
 
 ```bash
-npm i -D imagetracerjs pngjs
+bun add -d imagetracerjs pngjs
 ```
 
 Only needed for the auto-trace path. If you always have vector source, skip it.

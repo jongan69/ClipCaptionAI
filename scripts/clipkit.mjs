@@ -362,7 +362,7 @@ const latestOutputDir = () => {
 };
 
 const printDoctor = () => {
-  const required = ['node', 'npm', 'ffmpeg', 'ffprobe', 'yt-dlp'];
+  const required = ['bun', 'ffmpeg', 'ffprobe', 'yt-dlp'];
   const optional = ['git', 'whisper-cli', 'rotato'];
   const rows = [
     ...required.map((name) => ({name, required: true, ok: commandExists(name)})),

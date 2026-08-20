@@ -1,0 +1,6 @@
+{
+  "inspectFingerprint": "sha256-of-normalized-rotato-inspect-json",
+  "deviceSlots": {"primary-phone": 0},
+  "textOverlays": {"headline": "headline-overlay-id"},
+  "imageOverlays": {"brand-mark": "logo-overlay-id"}
+}

@@ -26,6 +26,7 @@ Use `--dry-run` before any paid provider call or expensive render. Use `--run-id
 - Do not put secrets in prompts, arguments, manifests, or generated logs.
 - The AI provider prefers local Ollama, then configured DeepSeek/OpenAI fallback. Use `--provider` to override. Transcription remains separate and requires OpenAI, local whisper.cpp, or YouTube subtitles.
 - Use existing specialized commands when they provide the right behavior: `caption`, `enhance`, `auto-clips`, `chapter`, `broll`, `voiceover`, `fal-image-edit`, `fal-reference-video`, and `rotato`.
+- Use `marketing plan|estimate|approve|execute|inspect|qa|export` for resumable campaigns. Treat technical QA, claims review, visual review, and publication as separate gates.
 - Generated marketing/B-roll assets require human review and are not product-condition evidence.
 
 ## JSON output

@@ -91,7 +91,7 @@ const flattenJobs = (plan) => {
 
 const higgsCreateArgsForJob = (job) => {
   const args = [
-    'npm exec --package=@higgsfield/cli -- higgs generate create',
+    'higgs generate create',
     shellQuote(job.model),
     '--prompt',
     shellQuote(job.prompt),

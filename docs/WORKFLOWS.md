@@ -1405,7 +1405,7 @@ Useful `rerender:clip` options:
 bun run doctor
 ```
 
-This checks Node, npm, ffmpeg, ffprobe, yt-dlp, `.env`, and optional OpenAI key presence.
+This checks Bun, ffmpeg, ffprobe, yt-dlp, `.env`, and optional OpenAI key presence.
 
 ## Other Useful Everyday Commands
 

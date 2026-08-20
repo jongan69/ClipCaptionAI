@@ -361,11 +361,7 @@ const writePerListingArtifacts = ({packet}) => {
     `echo ${shellQuote(`Estimating competitive premium renders for ${packet.item_id} - ${packet.title}`)}`,
     ...packet.jobs.flatMap((job) => [
       `echo ${shellQuote(`--- ${job.id}`)}`,
-      [
-        'npm exec --package=@higgsfield/cli -- higgs generate cost',
-        shellQuote(job.model),
-        ...higgsParamArgsForJob(job),
-      ].join(' '),
+      ['higgs generate cost', shellQuote(job.model), ...higgsParamArgsForJob(job)].join(' '),
     ]),
     '',
   ].join('\n');
@@ -379,7 +375,7 @@ const writePerListingArtifacts = ({packet}) => {
     ...packet.jobs.flatMap((job) => [
       `echo ${shellQuote(`--- ${job.id}`)}`,
       [
-        'npm exec --package=@higgsfield/cli -- higgs generate create',
+        'higgs generate create',
         shellQuote(job.model),
         ...higgsParamArgsForJob(job),
         '--wait',

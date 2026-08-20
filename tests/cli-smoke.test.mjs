@@ -3931,7 +3931,7 @@ test('competitive voiceover plan exporter replaces generic marketplace narration
 
 test(
   'eBay main photo candidate generator writes buyer-safe image manifest',
-  {skip: spawnSync('which', ['magick']).status !== 0},
+  {skip: spawnSync('which', ['magick']).status !== 0, timeout: 20_000},
   () => {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'clipcaptionai-main-photo-'));
     const sourceRoot = path.join(tempRoot, 'supplier-video-repairs');
