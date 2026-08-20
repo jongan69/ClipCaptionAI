@@ -44,8 +44,10 @@ const renderEnvStatus = () => {
 
   if (!environment.passed) {
     const required = (environment.required || []).join(', ');
-    const files = (environment.files || []).length > 0 ? ` Missing files: ${environment.files.length}` : '';
-    environmentStatusEl.textContent = `Environment check failed. Missing: ${required}. ${files}`.trim();
+    const files =
+      (environment.files || []).length > 0 ? ` Missing files: ${environment.files.length}` : '';
+    environmentStatusEl.textContent =
+      `Environment check failed. Missing: ${required}. ${files}`.trim();
     statusEl.textContent = 'Environment missing required dependencies.';
     statusEl.className = 'status error';
     canRun = false;
@@ -53,7 +55,7 @@ const renderEnvStatus = () => {
     return;
   }
 
-  const optional = (environment.optional || []);
+  const optional = environment.optional || [];
   if (optional.length > 0) {
     environmentStatusEl.textContent = `Environment healthy. Optional tools missing: ${optional.join(', ')}.`;
     canRun = true;
@@ -98,7 +100,7 @@ const renderArgInput = (arg) => {
   label.textContent = `${arg.label}${arg.required ? ' *' : ''}`;
   wrapper.appendChild(label);
 
-  let input = null;
+  let input;
   if (arg.type === 'select') {
     input = document.createElement('select');
     input.dataset.argName = arg.name;
@@ -387,7 +389,7 @@ const hydrateWorkflows = async () => {
 
     workflowListEl.appendChild(item);
 
-    if (workflow.id === (preferences?.lastWorkflowId)) {
+    if (workflow.id === preferences?.lastWorkflowId) {
       item.classList.add('active');
       selectWorkflow(workflow, false);
       return;

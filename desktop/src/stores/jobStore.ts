@@ -1,17 +1,17 @@
-import { create } from "zustand";
+import {create} from 'zustand';
 
 export interface JobState {
   sessionId: string;
   workflowId: string;
   workflowTitle?: string;
-  status: "running" | "completed" | "error";
+  status: 'running' | 'completed' | 'error';
   stage?: string;
   percent?: number;
   startedAt?: string;
   endedAt?: string;
   exitCode?: number;
   error?: string;
-  logs: { timestamp: string; channel: "stdout" | "stderr"; text: string }[];
+  logs: {timestamp: string; channel: 'stdout' | 'stderr'; text: string}[];
 }
 
 interface JobStore {
@@ -19,7 +19,7 @@ interface JobStore {
   jobHistory: JobState[];
   setJob: (job: JobState) => void;
   updateJob: (update: Partial<JobState>) => void;
-  appendLog: (entry: JobState["logs"][0]) => void;
+  appendLog: (entry: JobState['logs'][0]) => void;
   clearJob: () => void;
 }
 
@@ -35,9 +35,7 @@ export const useJobStore = create<JobStore>((set) => ({
 
   updateJob: (update) =>
     set((state) => ({
-      currentJob: state.currentJob
-        ? { ...state.currentJob, ...update }
-        : null,
+      currentJob: state.currentJob ? {...state.currentJob, ...update} : null,
     })),
 
   appendLog: (entry) =>
@@ -50,5 +48,5 @@ export const useJobStore = create<JobStore>((set) => ({
         : null,
     })),
 
-  clearJob: () => set({ currentJob: null }),
+  clearJob: () => set({currentJob: null}),
 }));

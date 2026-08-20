@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import {create} from 'zustand';
 
 export interface SecretState {
   hasOpenAI: boolean;
@@ -10,8 +10,8 @@ export interface SecretState {
 
 export interface Preferences {
   lastWorkflowId?: string;
-  runnerMode?: "form" | "raw";
-  windowBounds?: { width: number; height: number; x?: number; y?: number };
+  runnerMode?: 'form' | 'raw';
+  windowBounds?: {width: number; height: number; x?: number; y?: number};
   formDrafts?: Record<string, Record<string, string>>;
 }
 
@@ -33,8 +33,8 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
     hasElevenLabs: false,
   },
 
-  setPreferences: (preferences) => set({ preferences }),
-  setSecrets: (secrets) => set({ secrets }),
+  setPreferences: (preferences) => set({preferences}),
+  setSecrets: (secrets) => set({secrets}),
 
   updateDraft: (workflowId, key, value) =>
     set((state) => ({

@@ -1,8 +1,8 @@
-import { useState } from "react";
-import GlassPanel from "../components/ui/GlassPanel";
-import GlassButton from "../components/ui/GlassButton";
-import GlassCard from "../components/ui/GlassCard";
-import GlassTabs from "../components/ui/GlassTabs";
+import {useState} from 'react';
+import GlassPanel from '../components/ui/GlassPanel';
+import GlassButton from '../components/ui/GlassButton';
+import GlassCard from '../components/ui/GlassCard';
+import GlassTabs from '../components/ui/GlassTabs';
 
 interface OutputEntry {
   name: string;
@@ -16,12 +16,14 @@ interface OutputEntry {
 const MOCK_OUTPUTS: OutputEntry[] = [];
 
 export default function OutputBrowser() {
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState('all');
 
   const handleOpen = async (outputPath: string) => {
     try {
-      await (window as any).cca?.openPath(outputPath);
-    } catch { /* cca not available */ }
+      await window.cca?.openPath(outputPath);
+    } catch {
+      /* cca not available */
+    }
   };
 
   return (
@@ -30,23 +32,22 @@ export default function OutputBrowser() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold text-text-main">Output Browser</h1>
-            <p className="text-sm text-text-dim">Browse rendered videos, captions, and run artifacts.</p>
+            <p className="text-sm text-text-dim">
+              Browse rendered videos, captions, and run artifacts.
+            </p>
           </div>
-          <GlassButton
-            variant="primary"
-            onClick={() => handleOpen("outputs")}
-          >
+          <GlassButton variant="primary" onClick={() => handleOpen('outputs')}>
             Open in Finder
           </GlassButton>
         </div>
 
         <GlassTabs
           tabs={[
-            { id: "all", label: "All" },
-            { id: "captioned", label: "Captioned" },
-            { id: "chapters", label: "Chapters" },
-            { id: "tighten", label: "Tightened" },
-            { id: "runs", label: "Video Runs" },
+            {id: 'all', label: 'All'},
+            {id: 'captioned', label: 'Captioned'},
+            {id: 'chapters', label: 'Chapters'},
+            {id: 'tighten', label: 'Tightened'},
+            {id: 'runs', label: 'Video Runs'},
           ]}
           activeTab={filter}
           onChange={setFilter}
@@ -67,7 +68,9 @@ export default function OutputBrowser() {
               <GlassCard key={i} hover className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-medium text-text-main">{entry.name}</div>
-                  <div className="text-xs text-text-dim">{entry.date} · {entry.size}</div>
+                  <div className="text-xs text-text-dim">
+                    {entry.date} · {entry.size}
+                  </div>
                 </div>
                 <GlassButton size="sm" onClick={() => handleOpen(entry.path)}>
                   Open

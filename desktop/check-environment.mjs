@@ -107,7 +107,9 @@ if (checkJson) {
   }
 
   if (report.missingOptional.length > 0) {
-    console.log(`Optional command(s) not found (features may be limited): ${report.missingOptional.join(', ')}`);
+    console.log(
+      `Optional command(s) not found (features may be limited): ${report.missingOptional.join(', ')}`,
+    );
   }
 }
 

@@ -5,15 +5,15 @@
  * need to deal with window.cca or null checks directly.
  */
 
-import { useEffect, useCallback, useState } from "react";
-import { useJobStore, type JobState } from "../stores/jobStore";
-import { useWorkflowStore, type WorkflowDefinition } from "../stores/workflowStore";
-import { useSettingsStore, type SecretState, type Preferences } from "../stores/settingsStore";
+import {useEffect, useCallback, useState} from 'react';
+import {useJobStore} from '../stores/jobStore';
+import {useWorkflowStore} from '../stores/workflowStore';
+import {useSettingsStore} from '../stores/settingsStore';
 
 // ── CCA bridge accessor ──────────────────────────────────────────
 
 function cca() {
-  return (window as any).cca;
+  return window.cca;
 }
 
 // ── Workflow hooks ───────────────────────────────────────────────
@@ -37,7 +37,7 @@ export function useWorkflows() {
     })();
   }, []);
 
-  return { loading };
+  return {loading};
 }
 
 export function useRunWorkflow() {
@@ -51,14 +51,14 @@ export function useRunWorkflow() {
     const unsubLog = cca()?.onLog((payload: any) => {
       appendLog({
         timestamp: payload.timestamp || new Date().toISOString(),
-        channel: payload.channel || "stdout",
-        text: payload.text || "",
+        channel: payload.channel || 'stdout',
+        text: payload.text || '',
       });
     });
 
     const unsubComplete = cca()?.onComplete((payload: any) => {
       updateJob({
-        status: payload.error || payload.code !== 0 ? "error" : "completed",
+        status: payload.error || payload.code !== 0 ? 'error' : 'completed',
         exitCode: payload.code,
         error: payload.error,
         endedAt: new Date().toISOString(),
@@ -67,22 +67,19 @@ export function useRunWorkflow() {
       setRunning(false);
     });
 
-    const unsubProgress = cca()?.onJobProgress((payload: any) => {
-      updateJob({
-        percent: payload.percent,
-        stage: payload.stage,
-      });
-    });
-
     return () => {
       unsubLog?.();
       unsubComplete?.();
-      unsubProgress?.();
     };
   }, []);
 
   const run = useCallback(
-    async (workflowId: string, title: string, argValues: Record<string, any> = {}, extraArgs = "") => {
+    async (
+      workflowId: string,
+      title: string,
+      argValues: Record<string, any> = {},
+      extraArgs = '',
+    ) => {
       setRunning(true);
       const sessionId = crypto.randomUUID?.() || Date.now().toString(36);
 
@@ -90,26 +87,26 @@ export function useRunWorkflow() {
         sessionId,
         workflowId,
         workflowTitle: title,
-        status: "running",
+        status: 'running',
         startedAt: new Date().toISOString(),
         logs: [],
       });
 
       try {
-        const result = await cca()?.runWorkflow({ workflowId, argValues, extraArgs });
+        const result = await cca()?.runWorkflow({workflowId, argValues, extraArgs});
         if (result?.session) {
-          updateJob({ sessionId: result.session });
+          updateJob({sessionId: result.session});
         }
       } catch (error: any) {
         updateJob({
-          status: "error",
+          status: 'error',
           error: error?.message || String(error),
           endedAt: new Date().toISOString(),
         });
         setRunning(false);
       }
     },
-    [setJob, updateJob, setRunning]
+    [setJob, updateJob, setRunning],
   );
 
   const stop = useCallback(async () => {
@@ -119,7 +116,7 @@ export function useRunWorkflow() {
     }
   }, []);
 
-  return { run, stop, running };
+  return {run, stop, running};
 }
 
 // ── Settings hooks ──────────────────────────────────────────────
@@ -132,7 +129,9 @@ export function usePreferences() {
       try {
         const prefs = await cca()?.getPreferences();
         if (prefs) setPreferences(prefs);
-      } catch {}
+      } catch {
+        /* CCA not available outside Electron */
+      }
     })();
   }, []);
 
@@ -142,7 +141,7 @@ export function usePreferences() {
     if (updated) setPreferences(updated);
   }, []);
 
-  return { setPref };
+  return {setPref};
 }
 
 export function useSecrets() {
@@ -154,42 +153,44 @@ export function useSecrets() {
       try {
         const state = await cca()?.getSecretState();
         if (state) setSecrets(state);
-      } catch {}
+      } catch {
+        /* CCA not available outside Electron */
+      }
       setLoading(false);
     })();
   }, []);
 
   const saveSecret = useCallback(async (key: string, value: string) => {
-    await cca()?.setSecret({ key, value });
+    await cca()?.setSecret({key, value});
     const state = await cca()?.getSecretState();
     if (state) setSecrets(state);
   }, []);
 
   const clearSecret = useCallback(async (key: string) => {
-    await cca()?.clearSecret({ key });
+    await cca()?.clearSecret({key});
     const state = await cca()?.getSecretState();
     if (state) setSecrets(state);
   }, []);
 
-  return { saveSecret, clearSecret, loading };
+  return {saveSecret, clearSecret, loading};
 }
 
 // ── File/Path hooks ─────────────────────────────────────────────
 
 export function useFilePicker() {
   const pickFile = useCallback(async (options: any = {}) => {
-    const result = await cca()?.pickPath({ ...options });
+    const result = await cca()?.pickPath({...options});
     if (result?.filePaths?.[0]) return result.filePaths[0];
     return null;
   }, []);
 
   const pickDirectory = useCallback(async (options: any = {}) => {
-    const result = await cca()?.pickPath({ directories: true, ...options });
+    const result = await cca()?.pickPath({directories: true, ...options});
     if (result?.filePaths?.[0]) return result.filePaths[0];
     return null;
   }, []);
 
-  return { pickFile, pickDirectory };
+  return {pickFile, pickDirectory};
 }
 
 export function useOpenPath() {
@@ -212,7 +213,9 @@ export function useEnvironment() {
           setEnv(data);
           if (data.environment) setEnvironment(data.environment);
         }
-      } catch {}
+      } catch {
+        /* CCA not available outside Electron */
+      }
     })();
 
     const unsub = cca()?.onEnvironment((payload: any) => {

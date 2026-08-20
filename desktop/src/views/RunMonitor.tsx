@@ -1,13 +1,13 @@
-import { useParams } from "react-router-dom";
-import GlassPanel from "../components/ui/GlassPanel";
-import GlassButton from "../components/ui/GlassButton";
-import GlassProgress from "../components/ui/GlassProgress";
-import { useJobStore } from "../stores/jobStore";
+import {useParams} from 'react-router-dom';
+import GlassPanel from '../components/ui/GlassPanel';
+import GlassButton from '../components/ui/GlassButton';
+import GlassProgress from '../components/ui/GlassProgress';
+import {useJobStore} from '../stores/jobStore';
 
 export default function RunMonitor() {
-  const { session } = useParams<{ session: string }>();
+  const {session} = useParams<{session: string}>();
   const currentJob = useJobStore((s) => s.currentJob);
-  const isActive = currentJob?.sessionId === session && currentJob?.status === "running";
+  const isActive = currentJob?.sessionId === session && currentJob?.status === 'running';
 
   // Fallback: no matching job
   if (!currentJob || currentJob.sessionId !== session) {
@@ -30,7 +30,7 @@ export default function RunMonitor() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold text-text-main">
-              {currentJob.workflowTitle || "Running Workflow"}
+              {currentJob.workflowTitle || 'Running Workflow'}
             </h1>
             <p className="text-xs text-text-muted font-mono mt-0.5">{session}</p>
           </div>
@@ -45,8 +45,14 @@ export default function RunMonitor() {
         <GlassProgress
           value={currentJob.percent ?? 0}
           indeterminate={currentJob.percent === undefined && isActive}
-          variant={currentJob.status === "error" ? "danger" : currentJob.status === "completed" ? "success" : "accent"}
-          label={currentJob.stage || (isActive ? "Running..." : currentJob.status)}
+          variant={
+            currentJob.status === 'error'
+              ? 'danger'
+              : currentJob.status === 'completed'
+                ? 'success'
+                : 'accent'
+          }
+          label={currentJob.stage || (isActive ? 'Running...' : currentJob.status)}
           className="mb-4"
         />
 
@@ -54,14 +60,14 @@ export default function RunMonitor() {
         <div className="glass-sm bg-surface-darkest border border-glass-border p-3 h-80 overflow-y-auto font-mono text-xs">
           <div className="text-text-muted mb-2">
             {currentJob.logs.length === 0
-              ? "Waiting for output..."
+              ? 'Waiting for output...'
               : `Session started at ${currentJob.startedAt}`}
           </div>
           {currentJob.logs.map((entry, i) => (
             <div
               key={i}
               className={`leading-relaxed whitespace-pre-wrap break-all ${
-                entry.channel === "stderr" ? "text-accent-rose" : "text-text-dim"
+                entry.channel === 'stderr' ? 'text-accent-rose' : 'text-text-dim'
               }`}
             >
               {entry.text}
@@ -70,7 +76,7 @@ export default function RunMonitor() {
         </div>
 
         {/* Result */}
-        {currentJob.status === "completed" && (
+        {currentJob.status === 'completed' && (
           <div className="mt-4 p-3 glass-sm bg-accent-green/10 border border-accent-green/30 rounded-xl">
             <div className="text-sm font-semibold text-accent-green">Completed Successfully</div>
             <div className="text-xs text-text-dim mt-1">
@@ -80,7 +86,7 @@ export default function RunMonitor() {
           </div>
         )}
 
-        {currentJob.status === "error" && (
+        {currentJob.status === 'error' && (
           <div className="mt-4 p-3 glass-sm bg-accent-rose/10 border border-accent-rose/30 rounded-xl">
             <div className="text-sm font-semibold text-accent-rose">Failed</div>
             <div className="text-xs text-text-dim mt-1">

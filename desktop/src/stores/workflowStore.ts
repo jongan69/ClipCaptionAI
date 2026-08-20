@@ -1,13 +1,13 @@
-import { create } from "zustand";
+import {create} from 'zustand';
 
 export interface WorkflowArg {
   name: string;
   label: string;
-  type: "text" | "number" | "boolean" | "select" | "path" | "textarea";
+  type: 'text' | 'number' | 'boolean' | 'select' | 'path' | 'textarea';
   placeholder?: string;
   required?: boolean;
   value?: string | number | boolean;
-  options?: { value: string; label: string }[];
+  options?: {value: string; label: string}[];
 }
 
 export interface WorkflowDefinition {
@@ -22,15 +22,15 @@ export interface WorkflowDefinition {
 
 interface WorkflowStore {
   workflows: WorkflowDefinition[];
-  environment: { passed: boolean; required?: string[]; optional?: string[] } | null;
+  environment: {passed: boolean; required?: string[]; optional?: string[]} | null;
   setWorkflows: (workflows: WorkflowDefinition[]) => void;
-  setEnvironment: (env: WorkflowStore["environment"]) => void;
+  setEnvironment: (env: WorkflowStore['environment']) => void;
 }
 
 export const useWorkflowStore = create<WorkflowStore>((set) => ({
   workflows: [],
   environment: null,
 
-  setWorkflows: (workflows) => set({ workflows }),
-  setEnvironment: (environment) => set({ environment }),
+  setWorkflows: (workflows) => set({workflows}),
+  setEnvironment: (environment) => set({environment}),
 }));
