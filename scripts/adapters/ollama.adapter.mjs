@@ -6,7 +6,7 @@ const action = (id, title, description, options = {}) => ({
   description,
   mode: options.mode ?? 'job',
   aliases: [],
-  args: [{name: 'args', type: 'array'}],
+  args: [{name: 'args', label: 'Arguments', type: 'textarea'}],
   requirements: ['ollama'],
   secrets: [],
   locks: options.locks ?? [],

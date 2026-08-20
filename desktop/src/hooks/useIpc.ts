@@ -49,6 +49,8 @@ export function useRunWorkflow() {
   // Subscribe to log/completion events
   useEffect(() => {
     const unsubLog = cca()?.onLog((payload: any) => {
+      const current = useJobStore.getState().currentJob;
+      if (current && current.sessionId !== payload.session) return;
       appendLog({
         timestamp: payload.timestamp || new Date().toISOString(),
         channel: payload.channel || 'stdout',
@@ -57,6 +59,8 @@ export function useRunWorkflow() {
     });
 
     const unsubComplete = cca()?.onComplete((payload: any) => {
+      const current = useJobStore.getState().currentJob;
+      if (current && current.sessionId !== payload.session) return;
       updateJob({
         status: payload.error || payload.code !== 0 ? 'error' : 'completed',
         exitCode: payload.code,
@@ -66,6 +70,41 @@ export function useRunWorkflow() {
       });
       setRunning(false);
     });
+
+    (async () => {
+      const jobs = await cca()?.listJobs();
+      const active = jobs?.find((job: any) => ['queued', 'running'].includes(job.status));
+      if (!active || useJobStore.getState().currentJob) return;
+      const logs: any = await cca()?.getJobLogs(String(active.id));
+      setJob({
+        sessionId: String(active.id),
+        workflowId: `${active.adapter}/${active.action}`,
+        workflowTitle: `${active.adapter}: ${active.action}`,
+        status: 'running',
+        startedAt: String(active.startedAt ?? active.createdAt),
+        logs: [
+          ...(logs?.stdout?.text
+            ? [
+                {
+                  timestamp: new Date().toISOString(),
+                  channel: 'stdout' as const,
+                  text: logs.stdout.text,
+                },
+              ]
+            : []),
+          ...(logs?.stderr?.text
+            ? [
+                {
+                  timestamp: new Date().toISOString(),
+                  channel: 'stderr' as const,
+                  text: logs.stderr.text,
+                },
+              ]
+            : []),
+        ],
+      });
+      setRunning(true);
+    })().catch(() => {});
 
     return () => {
       unsubLog?.();

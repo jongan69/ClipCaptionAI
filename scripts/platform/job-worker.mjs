@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import {sanitizeLogText} from '../../desktop/worker/progress.mjs';
 import {getAdapter, hashValue} from './catalog.mjs';
-import {jobPaths, readJob, updateJob, writeJsonAtomic, stateRoot} from './jobs.mjs';
+import {jobPaths, listJobs, readJob, updateJob, writeJsonAtomic, stateRoot} from './jobs.mjs';
 
 const id = process.argv[2];
 if (!id) process.exit(2);
@@ -26,6 +26,17 @@ async function acquireLocks(names) {
         break;
       } catch (error) {
         if (error.code !== 'EEXIST') throw error;
+        try {
+          const owner = fs.readFileSync(path.join(target, 'owner'), 'utf8').trim();
+          const ownerJob = readJob(owner);
+          if (['completed', 'failed', 'cancelled', 'interrupted'].includes(ownerJob.status)) {
+            fs.rmSync(target, {recursive: true, force: true});
+            continue;
+          }
+        } catch {
+          fs.rmSync(target, {recursive: true, force: true});
+          continue;
+        }
         await sleep(100);
       }
     }
@@ -36,6 +47,7 @@ async function acquireLocks(names) {
 
 let release = () => {};
 try {
+  listJobs();
   const job = readJob(id);
   const adapter = await getAdapter(job.adapter);
   const action = adapter.metadata.actions.find((candidate) => candidate.id === job.action);

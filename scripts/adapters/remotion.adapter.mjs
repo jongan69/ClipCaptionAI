@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import {projectRoot} from '../lib.mjs';
 
-const passthrough = [{name: 'args', type: 'array'}];
+const passthrough = [{name: 'args', label: 'Arguments', type: 'textarea'}];
 const action = (id, title, description, options = {}) => ({
   id,
   title,

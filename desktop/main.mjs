@@ -691,6 +691,9 @@ function installIpcHandlers() {
     }
 
     const argv = buildArgvFromInput(workflow.command, payload.argValues, payload.extraArgs);
+    const adapterArgs = workflow.adapterId
+      ? [...parseArgString(payload.argValues?.args ?? ''), ...parseArgString(payload.extraArgs)]
+      : argv.slice(2);
     const selectedAdapter = ADAPTERS.find(
       (entry) => entry.id === (workflow.adapterId ?? 'workflow'),
     );
@@ -698,8 +701,8 @@ function installIpcHandlers() {
       adapter: workflow.adapterId ?? 'workflow',
       action: workflow.actionId ?? 'run',
       input: workflow.adapterId
-        ? {args: argv.slice(2)}
-        : {workflow: normalizedCommand, args: argv.slice(2)},
+        ? {args: adapterArgs}
+        : {workflow: normalizedCommand, args: adapterArgs},
       capabilityFingerprint: selectedAdapter?.capabilityFingerprint,
     });
     writePreferences({lastWorkflowId: workflow.id});

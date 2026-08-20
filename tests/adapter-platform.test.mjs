@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import {serializeCatalog} from '../scripts/platform/catalog.mjs';
+import {hashValue, serializeCatalog} from '../scripts/platform/catalog.mjs';
 import {
   cancelJob,
   jobPaths,
@@ -110,6 +110,15 @@ test('detached jobs persist results and redact logs', async (t) => {
   });
 });
 
+test('job input rejects inline secrets', async (t) => {
+  await withPlatformEnv(t, async () => {
+    assert.throws(
+      () => submitJob({adapter: 'fixture', action: 'echo', input: {args: ['--api-key', 'secret']}}),
+      /environment/,
+    );
+  });
+});
+
 test('resource locks serialize conflicting jobs', async (t) => {
   await withPlatformEnv(t, async () => {
     const first = submitJob({adapter: 'fixture', action: 'locked'});
@@ -121,7 +130,7 @@ test('resource locks serialize conflicting jobs', async (t) => {
 });
 
 test('jobs can be cancelled and orphaned records are interrupted', async (t) => {
-  await withPlatformEnv(t, async () => {
+  await withPlatformEnv(t, async ({state}) => {
     const active = submitJob({adapter: 'fixture', action: 'long'});
     while (readJob(active.id).status === 'queued') {
       await new Promise((resolve) => setTimeout(resolve, 25));
@@ -140,5 +149,11 @@ test('jobs can be cancelled and orphaned records are interrupted', async (t) => 
       workerPid: 2147483647,
     });
     assert.equal(listJobs().find((job) => job.id === orphanId).status, 'interrupted');
+
+    const staleLock = path.join(state, 'locks', hashValue('gpu'));
+    fs.mkdirSync(staleLock, {recursive: true});
+    fs.writeFileSync(path.join(staleLock, 'owner'), orphanId);
+    const recovered = await waitForJob(submitJob({adapter: 'fixture', action: 'locked'}).id);
+    assert.equal(recovered.status, 'completed');
   });
 });

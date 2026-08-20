@@ -9,7 +9,7 @@ import {projectRoot} from '../lib.mjs';
 const argumentSchema = z.object({
   name: z.string().min(1),
   label: z.string().optional(),
-  type: z.enum(['text', 'number', 'boolean', 'select', 'array']).default('text'),
+  type: z.enum(['text', 'number', 'boolean', 'select', 'textarea', 'array']).default('text'),
   required: z.boolean().optional(),
   placeholder: z.string().optional(),
   options: z.array(z.object({value: z.string(), label: z.string()})).optional(),

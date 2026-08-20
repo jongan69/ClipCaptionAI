@@ -98,6 +98,22 @@ export function listJobs({recover = true} = {}) {
 }
 
 export function submitJob({adapter, action, input = {}, capabilityFingerprint = null}) {
+  const inspect = (value, key = '') => {
+    if (/key|token|password|secret/i.test(key) && value) {
+      throw new Error(`Secrets must be supplied through the environment, not job input (${key}).`);
+    }
+    if (Array.isArray(value)) {
+      value.forEach((entry, index) => {
+        if (/^--(?:api-key|token|password|secret|.*-api-key|.*-token)$/i.test(String(entry))) {
+          throw new Error(`Secrets must be supplied through the environment, not ${entry}.`);
+        }
+        inspect(entry, String(index));
+      });
+    } else if (value && typeof value === 'object') {
+      Object.entries(value).forEach(([childKey, child]) => inspect(child, childKey));
+    }
+  };
+  inspect(input);
   const id = `${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
   const paths = jobPaths(id);
   fs.mkdirSync(paths.directory, {recursive: true});
