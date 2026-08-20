@@ -13,8 +13,8 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
-  const brackets = logo.layer('brackets');
-  const mark = logo.layer('l-mark');
+  const frameLayer = logo.layer('frame');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
 
@@ -37,22 +37,22 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
   const cardOpacity = interpolate(frame, [26, 42], [0, 1]);
   const wordOpacity = interpolate(frame, [40, 60], [0, 1]);
 
-  const bracketPaths = [...(brackets?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map(
+  const framePaths = [...(frameLayer?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map(
     (m) => m[1]
   );
-  const dashLen = Math.max(...(bracketPaths.length ? bracketPaths.map(approxPathLength) : [120]));
+  const dashLen = Math.max(...(framePaths.length ? framePaths.map(approxPathLength) : [120]));
 
   return (
     <LogoSvg logo={logo}>
-      {brackets ? (
+      {frameLayer ? (
         <g
           fill="none"
-          stroke={brackets.stroke ?? logo.brand.palette.accentLight}
-          strokeWidth={brackets.strokeWidth ?? 14}
+          stroke={frameLayer.stroke ?? logo.brand.palette.accentLight}
+          strokeWidth={frameLayer.strokeWidth ?? 14}
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          {bracketPaths.map((d, i) => {
+          {framePaths.map((d, i) => {
             const draw = interpolate(frame, [i * 4, i * 4 + 26], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',
@@ -65,8 +65,8 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
       <g opacity={markOpacity} style={{transform: `translateX(${markX}px) rotate(${markR}deg)`}}>
         <RawLayer
           logo={logo}
-          id="l-mark"
-          style={{transformOrigin: originOf(logo, 'l-mark')}}
+          id="mark"
+          style={{transformOrigin: originOf(logo, 'mark')}}
         />
       </g>
 

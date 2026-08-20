@@ -23,10 +23,10 @@ the animation calls for something else.
 | Layer id | Role | Bounding box | Pivot | Paint |
 |---|---|---|---|---|
 | `background` | backdrop | x 0 y 0 w 1080 h 720 | 540, 360 | — |
-| `brackets` | scan-frame | x 420 y 157 w 248 h 276 | 544, 295 | none |
-| `l-mark` | letterform | x 452 y 200 w 196 h 210 | 550, 305 | — |
+| `frame` | scan-frame | x 420 y 157 w 248 h 276 | 544, 295 | none |
+| `mark` | letterform | x 452 y 200 w 196 h 210 | 550, 305 | — |
 | `card` | listing-card | x 522 y 196 w 118 h 162 | 581, 277 | — |
-| `wordmark` | text | x 282.6 y 479 w 514.8 h 99.8 | 540, 529 | #ffffff |
+| `wordmark` | text | x 482.8 y 479 w 114.4 h 99.8 | 540, 529 | #ffffff |
 
 ## 3. Gradients
 
@@ -47,16 +47,16 @@ the animation calls for something else.
     <rect x="0" y="0" width="1080" height="720" fill="url(#bgGlow)"/>
   </g>
 ```
-### `brackets`
+### `frame`
 - **Role:** scan-frame
 - **Bounding box:** x=420, y=157, w=248, h=276 — occupies 23.0% of canvas width, 38.3% of height
 - **Transform origin / pivot:** `544px 295px`
 - **Fill:** `none`
 - **Stroke:** `url(#bracketGradient)` at width `15`
 - **Addressable children:** `bracket-tl`, `bracket-tr`, `bracket-bl`, `bracket-br`
-- **Data:** `layer=brackets`, `role=scan-frame`
+- **Data:** `layer=frame`, `role=scan-frame`
 ```svg
-<g id="brackets" data-layer="brackets" data-role="scan-frame"
+<g id="frame" data-layer="frame" data-role="scan-frame"
      fill="none" stroke="url(#bracketGradient)" stroke-width="15"
      stroke-linecap="round" stroke-linejoin="round">
     <path id="bracket-tl" data-corner="top-left"     d="M 420 205 L 420 176 Q 420 157 439 157 L 468 157"/>
@@ -65,14 +65,14 @@ the animation calls for something else.
     <path id="bracket-br" data-corner="bottom-right" d="M 620 433 L 649 433 Q 668 433 668 414 L 668 385"/>
   </g>
 ```
-### `l-mark`
+### `mark`
 - **Role:** letterform
 - **Bounding box:** x=452, y=200, w=196, h=210 — occupies 18.1% of canvas width, 29.2% of height
 - **Transform origin / pivot:** `550px 305px`
 - **Addressable children:** `l-shape`
-- **Data:** `layer=l-mark`, `role=letterform`
+- **Data:** `layer=mark`, `role=letterform`
 ```svg
-<g id="l-mark" data-layer="l-mark" data-role="letterform">
+<g id="mark" data-layer="mark" data-role="letterform">
     <path id="l-shape"
           fill="url(#brandGradient)"
           d="M 452 224 Q 452 200 476 200 L 486 200 Q 510 200 510 224 L 510 352 L 624 352 Q 648 352 648 376 L 648 386 Q 648 410 624 410 L 476 410 Q 452 410 452 386 Z"/>
@@ -103,22 +103,21 @@ the animation calls for something else.
 ```
 ### `wordmark`
 - **Role:** text
-- **Bounding box:** x=282.6, y=479, w=514.8, h=99.8 — occupies 47.7% of canvas width, 13.9% of height
+- **Bounding box:** x=482.8, y=479, w=114.4, h=99.8 — occupies 10.6% of canvas width, 13.9% of height
 - **Transform origin / pivot:** `540px 529px`
 - **Fill:** `#ffffff`
-- **Addressable children:** `wordmark-primary`, `wordmark-accent`
-- **Data:** `layer=wordmark`, `role=text`, `text=ListingOS`, `accent-text=OS`, `accent-split=7`, `primary-fill=#ffffff`, `accent-fill=#7c5cff`, `font-family=Poppins, Montserrat, Inter, sans-serif`, `font-size=104`, `font-weight=700`, `center-x=540`, `baseline-y=556`
+- **Addressable children:** `wordmark-primary`
+- **Data:** `layer=wordmark`, `role=text`, `text=OS`, `accent-text=`, `accent-split=0`, `primary-fill=#ffffff`, `accent-fill=#7c5cff`, `font-family=Poppins, Montserrat, Inter, sans-serif`, `font-size=104`, `font-weight=700`, `center-x=540`, `baseline-y=556`
 ```svg
 <g id="wordmark" data-layer="wordmark" data-role="text"
-     data-text="ListingOS" data-accent-text="OS" data-accent-split="7"
+     data-text="OS" data-accent-text="" data-accent-split="0"
      data-primary-fill="#ffffff" data-accent-fill="#7c5cff"
      data-font-family="Poppins, Montserrat, Inter, sans-serif"
      data-font-size="104" data-font-weight="700"
      data-center-x="540" data-baseline-y="556"
      font-family="Poppins, Montserrat, Inter, 'Helvetica Neue', Arial, sans-serif"
      font-size="104" font-weight="700">
-    <text id="wordmark-primary" x="540" y="556" text-anchor="end"   fill="#ffffff">Listing</text>
-    <text id="wordmark-accent"  x="540" y="556" text-anchor="start" fill="#7c5cff">OS</text>
+    <text id="wordmark-primary" x="540" y="556" text-anchor="start"   fill="#ffffff">OS</text>
   </g>
 ```
 
@@ -129,9 +128,9 @@ the animation calls for something else.
   "name": "ListingOS",
   "slug": "listingos",
   "wordmark": {
-    "text": "ListingOS",
+    "text": "OS",
     "accentText": "OS",
-    "accentSplitIndex": 7
+    "accentSplitIndex": 0
   },
   "palette": {
     "background": "#05071c",
@@ -147,7 +146,7 @@ the animation calls for something else.
     "wordmark": "Poppins, Montserrat, Inter, sans-serif",
     "weight": 700
   },
-  "notes": "Scan-frame brackets imply capture/scanning. The card is the 'listing'. Animations should read as 'capture -> listing -> published'."
+  "notes": "The `frame` (corner brackets) implies capture/scanning. The `card` is the 'listing'. The `mark` (L-shape) is the brand icon. Animations should read as 'capture -> listing -> published'."
 }
 ```
 

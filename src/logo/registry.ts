@@ -1,4 +1,6 @@
 import listingosLayers from '../../assets/logos/listingos/layers.json';
+import opendatingLayers from '../../assets/logos/opendating/layers.json';
+import prepaiLayers from '../../assets/logos/prepai/layers.json';
 import {createLogoModel} from './load-logo';
 import type {LogoModel, LogoVariantMeta, LogoVariantProps} from './types';
 
@@ -17,6 +19,11 @@ import cornerRush, {meta as cornerRushMeta} from './variants/12-corner-rush';
 import scanlineRail, {meta as scanlineRailMeta} from './variants/13-scanline-rail';
 import waveRipple, {meta as waveRippleMeta} from './variants/14-wave-ripple';
 import haloDrift, {meta as haloDriftMeta} from './variants/15-halo-drift';
+import orbitIn, {meta as orbitInMeta} from './variants/16-orbit-in';
+import vennReveal, {meta as vennRevealMeta} from './variants/17-venn-reveal';
+import stemGrow, {meta as stemGrowMeta} from './variants/18-stem-grow';
+import pulseBeat, {meta as pulseBeatMeta} from './variants/19-pulse-beat';
+import wordRise, {meta as wordRiseMeta} from './variants/20-word-rise';
 
 /**
  * BRANDS — add one line per logo.
@@ -31,6 +38,8 @@ import haloDrift, {meta as haloDriftMeta} from './variants/15-halo-drift';
  */
 export const brands: Record<string, LogoModel> = {
   listingos: createLogoModel(listingosLayers as never),
+  opendating: createLogoModel(opendatingLayers as never),
+  prepai: createLogoModel(prepaiLayers as never),
 };
 
 /**
@@ -56,6 +65,11 @@ export const variants: {
   {meta: scanlineRailMeta, component: scanlineRail},
   {meta: waveRippleMeta, component: waveRipple},
   {meta: haloDriftMeta, component: haloDrift},
+  {meta: orbitInMeta, component: orbitIn},
+  {meta: vennRevealMeta, component: vennReveal},
+  {meta: stemGrowMeta, component: stemGrow},
+  {meta: pulseBeatMeta, component: pulseBeat},
+  {meta: wordRiseMeta, component: wordRise},
 ];
 
 /** Every brand x variant pair, used to register Remotion compositions. */

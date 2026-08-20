@@ -12,8 +12,8 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
-  const brackets = logo.layer('brackets');
-  const mark = logo.layer('l-mark');
+  const frameLayer = logo.layer('frame');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
 
@@ -37,8 +37,8 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
       </defs>
 
       <g opacity={interpolate(frame, [26, 36], [0.2, 1])} clipPath="url(#logoWipe)">
-        {brackets ? <RawLayer logo={logo} id="brackets" /> : null}
-        {mark ? <RawLayer logo={logo} id="l-mark" /> : null}
+        {frameLayer ? <RawLayer logo={logo} id="frame" /> : null}
+        {mark ? <RawLayer logo={logo} id="mark" /> : null}
         {card ? <RawLayer logo={logo} id="card" /> : null}
         {wordmark ? <RawLayer logo={logo} id="wordmark" /> : null}
       </g>

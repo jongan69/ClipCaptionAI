@@ -1,0 +1,25 @@
+{
+  "name": "PrepAI",
+  "slug": "prepai",
+  "wordmark": {
+    "text": "prepai",
+    "accentText": "prepai",
+    "accentSplitIndex": 0
+  },
+  "palette": {
+    "background": "#0a1628",
+    "backgroundGlow": "#142240",
+    "primary": "#11518F",
+    "primaryDark": "#0d4270",
+    "accent": "#08B8AE",
+    "accentLight": "#0dd4c8",
+    "surface": "#ffffff",
+    "ink": "#10263B",
+    "lightBg": "#F6F6F8"
+  },
+  "fonts": {
+    "wordmark": "Inter, -apple-system, sans-serif",
+    "weight": 300
+  },
+  "notes": "The `heart` is the brand mark — a heart shape representing wellness and health intelligence. The `bars` (two vertical rectangles on the left) suggest health monitoring/metrics. The `pulse` is an ECG-style zigzag line running through the heart, evoking vital signs and real-time health tracking. Animations should read as 'monitor → analyze → empower' — the heart is the container, the pulse is the data, and the bars are the quantified insight."
+}

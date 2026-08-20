@@ -13,8 +13,8 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
-  const brackets = logo.layer('brackets');
-  const mark = logo.layer('l-mark');
+  const frameLayer = logo.layer('frame');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
 
@@ -58,10 +58,10 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
     extrapolateRight: 'clamp',
   });
 
-  const bracketPaths = [...(brackets?.markup.matchAll(/<path[^>]*\\sd="([^"]+)"/g) ?? [])].map(
+  const framePaths = [...(frameLayer?.markup.matchAll(/<path[^>]*\\sd="([^"]+)"/g) ?? [])].map(
     (m) => m[1]
   );
-  const dashLen = Math.max(...(bracketPaths.length ? bracketPaths.map(approxPathLength) : [120]));
+  const dashLen = Math.max(...(framePaths.length ? framePaths.map(approxPathLength) : [120]));
 
   return (
     <LogoSvg logo={logo}>
@@ -79,10 +79,10 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
         opacity={markOpacity}
         style={{
           transform: `translate(${markX}px, ${markY}px) rotate(${markR}deg) scale(${markScale})`,
-          transformOrigin: originOf(logo, 'l-mark'),
+          transformOrigin: originOf(logo, 'mark'),
         }}
       >
-        <RawLayer logo={logo} id="l-mark" />
+        <RawLayer logo={logo} id="mark" />
       </g>
 
       {wordmark ? (
@@ -97,17 +97,17 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
         </g>
       ) : null}
 
-      {brackets ? (
+      {frameLayer ? (
         <g
           fill="none"
-          stroke={brackets.stroke ?? logo.brand.palette.accent}
-          strokeWidth={brackets.strokeWidth ?? 14}
+          stroke={frameLayer.stroke ?? logo.brand.palette.accent}
+          strokeWidth={frameLayer.strokeWidth ?? 14}
           strokeLinecap="round"
           strokeLinejoin="round"
           opacity={settleGlow}
-          style={{transform: `scale(${settlePulse})`, transformOrigin: originOf(logo, 'brackets')}}
+          style={{transform: `scale(${settlePulse})`, transformOrigin: originOf(logo, 'frame')}}
         >
-          {bracketPaths.map((d, i) => {
+          {framePaths.map((d, i) => {
             const draw = interpolate(frame, [48 + i * 3, 48 + i * 3 + 18], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',
@@ -124,7 +124,7 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
           transformOrigin: `${logo.width / 2}px ${logo.height / 2}px`,
         }}
       >
-        {brackets ? <RawLayer logo={logo} id="brackets" /> : null}
+        {frameLayer ? <RawLayer logo={logo} id="frame" /> : null}
       </g>
     </LogoSvg>
   );

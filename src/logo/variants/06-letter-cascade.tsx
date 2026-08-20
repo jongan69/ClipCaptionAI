@@ -13,8 +13,8 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
-  const brackets = logo.layer('brackets');
-  const lMark = logo.layer('l-mark');
+  const frameLayer = logo.layer('frame');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
 
@@ -40,22 +40,22 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
   });
   const wordmarkPieces = (wordmark?.markup.match(/<text[\s\S]*?<\/text>/g) ?? []).filter(Boolean);
 
-  const bracketPaths = [...(brackets?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map(
+  const framePaths = [...(frameLayer?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map(
     (m) => m[1]
   );
-  const dashLen = Math.max(...(bracketPaths.length ? bracketPaths.map(approxPathLength) : [120]));
+  const dashLen = Math.max(...(framePaths.length ? framePaths.map(approxPathLength) : [120]));
 
   return (
     <LogoSvg logo={logo}>
-      {brackets ? (
+      {frameLayer ? (
         <g
           fill="none"
-          stroke={brackets.stroke ?? logo.brand.palette.primary}
-          strokeWidth={brackets.strokeWidth ?? 14}
+          stroke={frameLayer.stroke ?? logo.brand.palette.primary}
+          strokeWidth={frameLayer.strokeWidth ?? 14}
           strokeLinecap="round"
           strokeLinejoin="round"
         >
-          {bracketPaths.map((d, i) => {
+          {framePaths.map((d, i) => {
             const draw = interpolate(frame, [i * 4, i * 4 + 20], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',
@@ -65,9 +65,9 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
         </g>
       ) : null}
 
-      {lMark ? (
-        <g opacity={markOpacity} style={{transform: `translateY(${markY}px) scale(${markScale})`, transformOrigin: originOf(logo, 'l-mark')}}>
-          <RawLayer logo={logo} id="l-mark" />
+      {mark ? (
+        <g opacity={markOpacity} style={{transform: `translateY(${markY}px) scale(${markScale})`, transformOrigin: originOf(logo, 'mark')}}>
+          <RawLayer logo={logo} id="mark" />
         </g>
       ) : null}
 

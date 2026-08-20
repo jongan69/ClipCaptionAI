@@ -1,0 +1,142 @@
+{
+  "slug": "opendating",
+  "viewBox": "0 0 1080 1080",
+  "width": 1080,
+  "height": 1080,
+  "brand": {
+    "name": "OpenDating",
+    "slug": "opendating",
+    "wordmark": {
+      "text": "OpenDating",
+      "accentText": "",
+      "accentSplitIndex": 0
+    },
+    "palette": {
+      "background": "#141413",
+      "backgroundLight": "#FAF9F7",
+      "primary": "#E8735A",
+      "primaryLight": "#FDF0ED",
+      "primaryMuted": "#F8D5CD",
+      "textPrimary": "#F5F4F2",
+      "textSecondary": "#9B9B98",
+      "accent": "#F8D5CD",
+      "surface": "#1C1C1B"
+    },
+    "fonts": {
+      "wordmark": "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+      "weight": 600
+    },
+    "notes": "Two overlapping circles represent people connecting. The vertical stem on the right represents growth, connection, or 'upright' dating. The overlapping area is the shared connection space. Coral (#E8735A) is the primary brand color — warm, human, approachable. Animations should feel warm, organic, and convey connection."
+  },
+  "gradients": [],
+  "defs": "",
+  "layers": [
+    {
+      "id": "background",
+      "role": "backdrop",
+      "box": {
+        "x": 0,
+        "y": 0,
+        "w": 1080,
+        "h": 1080
+      },
+      "fill": null,
+      "stroke": null,
+      "strokeWidth": null,
+      "children": [],
+      "data": {
+        "layer": "background",
+        "role": "backdrop"
+      },
+      "markup": "<g id=\"background\" data-layer=\"background\" data-role=\"backdrop\">\n    <rect x=\"0\" y=\"0\" width=\"1080\" height=\"1080\" fill=\"#141413\"/>\n  </g>"
+    },
+    {
+      "id": "mark-left",
+      "role": "symbol-part",
+      "box": {
+        "x": 250,
+        "y": 265,
+        "w": 350,
+        "h": 350
+      },
+      "fill": "none",
+      "stroke": "#E8735A",
+      "strokeWidth": 112,
+      "children": [],
+      "data": {
+        "layer": "mark-left",
+        "role": "symbol-part"
+      },
+      "markup": "<g id=\"mark-left\" data-layer=\"mark-left\" data-role=\"symbol-part\"\n     fill=\"none\" stroke=\"#E8735A\" stroke-width=\"112\"\n     stroke-linecap=\"round\" stroke-linejoin=\"round\">\n    <circle cx=\"425\" cy=\"440\" r=\"175\"/>\n  </g>"
+    },
+    {
+      "id": "mark-right",
+      "role": "symbol-part",
+      "box": {
+        "x": 480,
+        "y": 265,
+        "w": 350,
+        "h": 350
+      },
+      "fill": "none",
+      "stroke": "#E8735A",
+      "strokeWidth": 112,
+      "children": [],
+      "data": {
+        "layer": "mark-right",
+        "role": "symbol-part"
+      },
+      "markup": "<g id=\"mark-right\" data-layer=\"mark-right\" data-role=\"symbol-part\"\n     fill=\"none\" stroke=\"#E8735A\" stroke-width=\"112\"\n     stroke-linecap=\"round\" stroke-linejoin=\"round\">\n    <circle cx=\"655\" cy=\"440\" r=\"175\"/>\n  </g>"
+    },
+    {
+      "id": "connector",
+      "role": "connector",
+      "box": {
+        "x": 830,
+        "y": 180,
+        "w": 0,
+        "h": 260
+      },
+      "fill": "none",
+      "stroke": "#E8735A",
+      "strokeWidth": 112,
+      "children": [],
+      "data": {
+        "layer": "connector",
+        "role": "connector"
+      },
+      "markup": "<g id=\"connector\" data-layer=\"connector\" data-role=\"connector\"\n     fill=\"none\" stroke=\"#E8735A\" stroke-width=\"112\"\n     stroke-linecap=\"round\">\n    <path d=\"M830 180 L830 440\"/>\n  </g>"
+    },
+    {
+      "id": "wordmark",
+      "role": "text",
+      "box": {
+        "x": 298,
+        "y": 744.9,
+        "w": 484,
+        "h": 84.5
+      },
+      "fill": "#E8735A",
+      "stroke": null,
+      "strokeWidth": null,
+      "children": [
+        "wordmark-primary"
+      ],
+      "data": {
+        "layer": "wordmark",
+        "role": "text",
+        "text": "OpenDating",
+        "accent-text": "",
+        "accent-split": "0",
+        "primary-fill": "#E8735A",
+        "accent-fill": "#F8D5CD",
+        "font-family": "-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif",
+        "font-size": "88",
+        "font-weight": "600",
+        "center-x": "540",
+        "baseline-y": "810"
+      },
+      "markup": "<g id=\"wordmark\" data-layer=\"wordmark\" data-role=\"text\"\n     data-text=\"OpenDating\" data-accent-text=\"\" data-accent-split=\"0\"\n     data-primary-fill=\"#E8735A\" data-accent-fill=\"#F8D5CD\"\n     data-font-family=\"-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif\"\n     data-font-size=\"88\" data-font-weight=\"600\"\n     data-center-x=\"540\" data-baseline-y=\"810\"\n     font-family=\"-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif\"\n     font-size=\"88\" font-weight=\"600\" letter-spacing=\"-3\">\n    <text id=\"wordmark-primary\" x=\"540\" y=\"810\" text-anchor=\"middle\"\n          fill=\"#E8735A\">OpenDating</text>\n  </g>"
+    }
+  ]
+}

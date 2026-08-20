@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+  <!--
+    OpenDating logo — LAYERED source using canonical ids.
+    Two overlapping circles (people connecting) + a vertical stem (connection)
+    + the "OpenDating" wordmark. Every animatable unit is a top-level <g> with a
+    stable id and data-layer attribute.
+  -->
+  <g id="background" data-layer="background" data-role="backdrop">
+    <rect x="0" y="0" width="1080" height="1080" fill="#141413"/>
+  </g>
+
+  <!-- Left circle — first persona -->
+  <g id="mark-left" data-layer="mark-left" data-role="symbol-part"
+     fill="none" stroke="#E8735A" stroke-width="112"
+     stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="425" cy="440" r="175"/>
+  </g>
+
+  <!-- Right circle — second persona (overlaps left for Venn-diagram effect) -->
+  <g id="mark-right" data-layer="mark-right" data-role="symbol-part"
+     fill="none" stroke="#E8735A" stroke-width="112"
+     stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="655" cy="440" r="175"/>
+  </g>
+
+  <!-- Vertical stem — connection / growth line -->
+  <g id="connector" data-layer="connector" data-role="connector"
+     fill="none" stroke="#E8735A" stroke-width="112"
+     stroke-linecap="round">
+    <path d="M830 180 L830 440"/>
+  </g>
+
+  <!-- Wordmark — "OpenDating" text -->
+  <g id="wordmark" data-layer="wordmark" data-role="text"
+     data-text="OpenDating" data-accent-text="" data-accent-split="0"
+     data-primary-fill="#E8735A" data-accent-fill="#F8D5CD"
+     data-font-family="-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif"
+     data-font-size="88" data-font-weight="600"
+     data-center-x="540" data-baseline-y="810"
+     font-family="-apple-system,BlinkMacSystemFont,'SF Pro Display',system-ui,sans-serif"
+     font-size="88" font-weight="600" letter-spacing="-3">
+    <text id="wordmark-primary" x="540" y="810" text-anchor="middle"
+          fill="#E8735A">OpenDating</text>
+  </g>
+</svg>

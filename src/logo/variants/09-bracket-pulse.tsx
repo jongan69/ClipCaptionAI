@@ -8,12 +8,12 @@ export const meta = {
   id: 'bracket-pulse',
   name: 'Bracket Pulse',
   durationInFrames: 120,
-  description: 'Logo settles, then the scan brackets pulse like a shutter as a final capture beat.',
+  description: 'Logo settles, then the scan frame pulse like a shutter as a final capture beat.',
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
-  const brackets = logo.layer('brackets');
-  const mark = logo.layer('l-mark');
+  const frameLayer = logo.layer('frame');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
 
@@ -29,16 +29,16 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
   const pulseScale = interpolate(beat, [0, 0.4, 1], [1, 1.08, 1]);
   const pulseOpacity = interpolate(beat, [0, 0.4, 1], [0.2, 1, 0.85]);
 
-  const bracketPaths = [...(brackets?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map((m) => m[1]);
-  const pathLen = Math.max(...(bracketPaths.length ? bracketPaths.map(approxPathLength) : [120]));
+  const framePaths = [...(frameLayer?.markup.matchAll(/<path[^>]*\sd="([^"]+)"/g) ?? [])].map((m) => m[1]);
+  const pathLen = Math.max(...(framePaths.length ? framePaths.map(approxPathLength) : [120]));
 
   return (
     <LogoSvg logo={logo}>
-      {bracketPaths.length ? (
+      {framePaths.length ? (
         <g
           fill="none"
-          stroke={brackets?.stroke ?? logo.brand.palette.accent}
-          strokeWidth={(brackets?.strokeWidth ?? 14) * pulseScale}
+          stroke={frameLayer?.stroke ?? logo.brand.palette.accent}
+          strokeWidth={(frameLayer?.strokeWidth ?? 14) * pulseScale}
           strokeLinecap="round"
           strokeLinejoin="round"
           opacity={interpolate(frame, [0, 20], [0.2, 1], {
@@ -46,7 +46,7 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
             extrapolateRight: 'clamp',
           })}
         >
-          {bracketPaths.map((d, i) => {
+          {framePaths.map((d, i) => {
             const draw = interpolate(frame, [i * 3, i * 3 + 20], [0, 1], {
               extrapolateLeft: 'clamp',
               extrapolateRight: 'clamp',
@@ -58,7 +58,7 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
 
       {mark ? (
         <g opacity={settleOpacity} style={{transform: `scale(${settleX}) translateY(${settleY}px)`, transformOrigin: `${logo.width / 2}px ${logo.height / 2}px`}}>
-          <RawLayer logo={logo} id="l-mark" />
+          <RawLayer logo={logo} id="mark" />
         </g>
       ) : null}
 
@@ -81,7 +81,7 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame, fps}) => {
         })}
         style={{transform: `scale(${pulseScale})`, transformOrigin: `${logo.width / 2}px ${logo.height / 2}px`}}
       >
-        {mark ? <RawLayer logo={logo} id="l-mark" /> : null}
+        {mark ? <RawLayer logo={logo} id="mark" /> : null}
       </g>
     </LogoSvg>
   );

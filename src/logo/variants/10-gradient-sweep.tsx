@@ -12,10 +12,10 @@ export const meta = {
 };
 
 const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
-  const mark = logo.layer('l-mark');
+  const mark = logo.layer('mark');
   const card = logo.layer('card');
   const wordmark = logo.layer('wordmark');
-  const brackets = logo.layer('brackets');
+  const frameLayer = logo.layer('frame');
 
   const settle = spring({frame: frame - 14, fps: 30, config: {damping: 18, stiffness: 130}});
   const land = interpolate(settle, [0, 1], [0, 1]);
@@ -36,18 +36,18 @@ const Variant: React.FC<LogoVariantProps> = ({logo, frame}) => {
         </linearGradient>
       </defs>
 
-      {brackets ? (
+      {frameLayer ? (
         <g
           opacity={land}
-          style={{transform: `scale(${interpolate(land, [0, 1], [0.98, 1])})`, transformOrigin: originOf(logo, 'brackets')}}
+          style={{transform: `scale(${interpolate(land, [0, 1], [0.98, 1])})`, transformOrigin: originOf(logo, 'frame')}}
         >
-          <RawLayer logo={logo} id="brackets" />
+          <RawLayer logo={logo} id="frame" />
         </g>
       ) : null}
 
       {mark ? (
         <g opacity={land}>
-          <RawLayer logo={logo} id="l-mark" />
+          <RawLayer logo={logo} id="mark" />
         </g>
       ) : null}
 

@@ -1,0 +1,25 @@
+{
+  "name": "OpenDating",
+  "slug": "opendating",
+  "wordmark": {
+    "text": "OpenDating",
+    "accentText": "",
+    "accentSplitIndex": 0
+  },
+  "palette": {
+    "background": "#141413",
+    "backgroundLight": "#FAF9F7",
+    "primary": "#E8735A",
+    "primaryLight": "#FDF0ED",
+    "primaryMuted": "#F8D5CD",
+    "textPrimary": "#F5F4F2",
+    "textSecondary": "#9B9B98",
+    "accent": "#F8D5CD",
+    "surface": "#1C1C1B"
+  },
+  "fonts": {
+    "wordmark": "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+    "weight": 600
+  },
+  "notes": "Two overlapping circles represent people connecting. The vertical stem on the right represents growth, connection, or 'upright' dating. The overlapping area is the shared connection space. Coral (#E8735A) is the primary brand color — warm, human, approachable. Animations should feel warm, organic, and convey connection."
+}
