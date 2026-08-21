@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import path from 'node:path';
 import {ensureDir, loadEnv, parseArgs, projectRoot} from './lib.mjs';
 import {ingestYouTubeScenes} from './lib-youtube-scenes.mjs';

@@ -1,6 +1,6 @@
 {
   "name": "clipcaptionai",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "CLI-first local AI video editor and model harness for planning, rendering, captioning, and QA of production video assets.",
   "author": {
     "name": "Jonathan Gan",
@@ -35,7 +35,6 @@
     "reels"
   ],
   "engines": {
-    "node": ">=20",
     "bun": ">=1.3"
   },
   "publishConfig": {
@@ -50,11 +49,14 @@
     "CHANGELOG.md",
     "docs/AGENT_GUIDE.md",
     "docs/AI_PROVIDERS.md",
+    "docs/ASSET_RECOVERY.md",
     "docs/TOOL_ADAPTERS.md",
+    "docs/VOICE_LIBRARY.md",
     "docs/MARKETING_PLATFORM.md",
     "docs/PRODUCTION_SUPPORT.md",
     "docs/RELEASE.md",
     "docs/WORKFLOWS.md",
+    "desktop/worker/progress.mjs",
     "examples/",
     "remotion.config.ts",
     "scripts/*.mjs",
@@ -94,6 +96,7 @@
     "logo:verify": "bunx tsx scripts/logo/verify-variant.tsx",
     "logo:render": "bun scripts/logo/render-all.mjs",
     "render:clip": "bun scripts/render-clip.mjs",
+    "portrait:analyze": "bun scripts/portrait-framing.mjs",
     "render:batch": "bun scripts/render-batch.mjs",
     "rerender:clip": "bun scripts/rerender-clip.mjs",
     "smart:clips": "bun scripts/smart-clips.mjs",
@@ -150,6 +153,7 @@
     "sample:props": "bun scripts/make-sample-props.mjs",
     "video": "bun scripts/video.mjs",
     "voiceover:elevenlabs": "bun scripts/generate-elevenlabs-voiceover.mjs",
+    "voiceover:library": "bun scripts/generate-elevenlabs-library.mjs",
     "fal:image-edit": "bun scripts/fal-image-edit.mjs",
     "fal:reference-video": "bun scripts/fal-reference-video.mjs",
     "interview:qa": "bun scripts/interview-qa.mjs",

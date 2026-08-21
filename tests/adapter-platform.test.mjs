@@ -89,13 +89,15 @@ test('a fixture adapter is discovered without router changes', async (t) => {
   );
 });
 
-test('the workflow catalog includes transcribe and interview QA', async () => {
+test('the workflow catalog includes every direct reusable workflow', async () => {
   const catalog = await serializeCatalog({root: projectRoot});
   const names = catalog
     .find((adapter) => adapter.id === 'workflow')
     .workflows.map((item) => item.command);
   assert.ok(names.includes('transcribe'));
   assert.ok(names.includes('interview-qa'));
+  assert.ok(names.includes('voice-library'));
+  assert.ok(names.includes('portrait-analyze'));
 });
 
 test('detached jobs persist results and redact logs', async (t) => {

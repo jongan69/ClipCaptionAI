@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -76,7 +76,7 @@ const pushOption = (cmdArgs, key) => {
 const runStep = ({name, commandArgs, expectedFiles = []}) => {
   const entry = {
     name,
-    command: ['node', ...commandArgs].join(' '),
+    command: ['bun', ...commandArgs].join(' '),
     status: 'planned',
     expected_files: expectedFiles,
     started_at: null,
@@ -90,7 +90,7 @@ const runStep = ({name, commandArgs, expectedFiles = []}) => {
 
   entry.status = 'running';
   entry.started_at = new Date().toISOString();
-  const result = spawnSync('node', commandArgs, {
+  const result = spawnSync(process.execPath, commandArgs, {
     cwd: projectRoot,
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 30,

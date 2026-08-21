@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -170,7 +170,7 @@ const main = async () => {
       pushFlag(renderArgs, 'no-music');
       pushFlag(renderArgs, 'no-sfx');
 
-      const result = spawnSync('node', renderArgs, {
+      const result = spawnSync(process.execPath, renderArgs, {
         cwd: projectRoot,
         encoding: 'utf8',
         maxBuffer: 1024 * 1024 * 20,

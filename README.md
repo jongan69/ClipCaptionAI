@@ -23,7 +23,7 @@ On macOS with Homebrew:
 brew install oven-sh/bun/bun ffmpeg
 ```
 
-On Windows or Linux, install Node.js 20+ and FFmpeg using your normal package manager or the official installers, then continue with `bun run doctor` below.
+On Windows or Linux, install Bun 1.3+ and FFmpeg using your normal package manager or the official installers, then continue with `bun run doctor` below.
 
 Optional extras:
 
@@ -67,7 +67,7 @@ bun run clipkit -- video run \
   --run-id first-video
 ```
 
-When installed from the v0.1.0 release tarball, the equivalent clean first-run command is:
+When installed from the v0.2.0 release tarball, the equivalent clean first-run command is:
 
 ```bash
 clipcaptionai video run --example --run-id first-video
@@ -160,7 +160,7 @@ The menu is convenient for interactive editing. The direct `bun run clipkit -- .
 
 `bun run desktop` starts an Electron shell that loads the same adapter catalog and observes the same persisted jobs as the CLI. Work continues if the window closes.
 
-- Required: Node.js + `ffmpeg` + `ffprobe` + project CLI/runtime files
+- Required: Bun + `ffmpeg` + `ffprobe` + project CLI/runtime files
 - Optional: `yt-dlp`, Ollama; AI provider auto mode prefers local Ollama and falls back to configured DeepSeek/OpenAI
 - Generic marketing campaigns use the same discovered adapters and job broker; see [Marketing platform](docs/MARKETING_PLATFORM.md).
 
@@ -210,6 +210,7 @@ Detailed walkthroughs for every workflow live in [docs/WORKFLOWS.md](docs/WORKFL
 | `bun run transcribe:benchmark` | Compare local vs reference transcription providers | [Transcription Notes](docs/WORKFLOWS.md#transcription-notes) |
 | `bun run smart:clips` | AI clip selection on one local video | [AI Clip Selection](docs/WORKFLOWS.md#ai-clip-selection) |
 | `bun run render:clip` | Render one clip from captions JSON | [Single Clip Commands](docs/WORKFLOWS.md#single-clip-commands) |
+| `bun run portrait:analyze` | Plan subject-aware 9:16 framing | [Subject-aware portrait framing](docs/WORKFLOWS.md#subject-aware-portrait-framing) |
 | `bun run render:batch` | Batch render clips from a captions folder | — |
 | `bun run rerender:clip` | Rerender after caption/fix edits | [Rerender](docs/WORKFLOWS.md#rerender) |
 | `bun run moments:review` | Viral scorecard report for a moments run | [Find Important Moments Only](docs/WORKFLOWS.md#find-important-moments-only) |
@@ -226,6 +227,7 @@ Detailed walkthroughs for every workflow live in [docs/WORKFLOWS.md](docs/WORKFL
 | `bun run ebay:render-blueprint-ad` / `ebay:render-blueprint-batch` | Product-safe preview ads from blueprints | [Competitive eBay Creative Blueprints](docs/WORKFLOWS.md#competitive-ebay-creative-blueprints) |
 | `bun run ebay:competitive-*` | Post-blueprint pipeline: `competitive-loop`, `competitive-qa`, `prep-premium-renders`, `competitive-handoff`, `competitive-higgsfield-render`, `competitive-packets`, `competitive-research-queue/import/loop/process/rerun`, `collect-premium-renders`, `finalize-premium-ads`, `competitive-status`, `competitive-review` | [Competitive eBay Creative Blueprints](docs/WORKFLOWS.md#competitive-ebay-creative-blueprints) |
 | `bun run voiceover:elevenlabs` | ElevenLabs narration file | [Demo Capture And Reviewed AI Assets](docs/WORKFLOWS.md#demo-capture-and-reviewed-ai-assets) |
+| `bun run voiceover:library` | Build or resume a reusable ElevenLabs phrase library | [Voice Library](docs/VOICE_LIBRARY.md) |
 | `bun run fal:image-edit` / `fal:reference-video` | fal.ai asset generation (opt-in, human-reviewed) | [Demo Capture And Reviewed AI Assets](docs/WORKFLOWS.md#demo-capture-and-reviewed-ai-assets) |
 | `bun run sample:props` | Write Remotion Studio sample props | [Preview In Remotion Studio](docs/WORKFLOWS.md#preview-in-remotion-studio) |
 | `bun run cleanup` | Clean temp files / old outputs | [Clean Up Generated Files](docs/WORKFLOWS.md#clean-up-generated-files) |
@@ -238,6 +240,7 @@ See `package.json` scripts for the full list (including `rotato`, `interview:qa`
 
 - [docs/WORKFLOWS.md](docs/WORKFLOWS.md) — every workflow walkthrough, in depth
 - [docs/AI_PROVIDERS.md](docs/AI_PROVIDERS.md) — provider keys, review gates, live-provider evidence
+- [docs/VOICE_LIBRARY.md](docs/VOICE_LIBRARY.md) — restore or extend the released ElevenLabs phrase library
 - [docs/AGENT_GUIDE.md](docs/AGENT_GUIDE.md) — automation guide for coding agents
 - [docs/PRODUCTION_SUPPORT.md](docs/PRODUCTION_SUPPORT.md) — production support matrix
 - [docs/GITHUB.md](docs/GITHUB.md) — GitHub-specific setup
@@ -286,7 +289,7 @@ bun test tests/ai-provider.test.mjs
 bun test tests/clipkit-lib.test.mjs
 ```
 
-Tests use Node's built-in test runner. Integration tests create temp dirs, run the actual CLI, generate real MP4s, and clean up. They skip gracefully when ffmpeg/ImageMagick are absent. `bun run check` runs typechecking plus the full test suite.
+Tests use Bun's test runner. Integration tests create temp dirs, run the actual CLI, generate real MP4s, and clean up. They skip gracefully when ffmpeg/ImageMagick are absent. `bun run check` runs typechecking plus the full test suite.
 
 ## Related Projects
 

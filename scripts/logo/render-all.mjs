@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * render-all.mjs — Step 5: batch-render every brand x variant composition.
  *

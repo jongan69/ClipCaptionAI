@@ -8,6 +8,7 @@ clipcaptionai adapters describe remotion
 clipcaptionai remotion compositions --wait
 clipcaptionai ollama pull qwen3:4b
 clipcaptionai ytdlp formats URL --json
+clipcaptionai stock download --query "morning sunlight walk" --count 6 --out outputs/stock/health-week --wait
 clipcaptionai workflow list
 clipcaptionai workflow run caption --video input.mp4 --wait
 ```
@@ -34,11 +35,20 @@ export default {
     title: 'Example',
     description: 'Example tool',
     version: '1',
-    actions: [{
-      id: 'run', title: 'Run', description: 'Run it', mode: 'job', aliases: [],
-      args: [{name: 'args', type: 'array'}], requirements: ['example'],
-      secrets: [], locks: ['outputs'], setup: [],
-    }],
+    actions: [
+      {
+        id: 'run',
+        title: 'Run',
+        description: 'Run it',
+        mode: 'job',
+        aliases: [],
+        args: [{name: 'args', type: 'array'}],
+        requirements: ['example'],
+        secrets: [],
+        locks: ['outputs'],
+        setup: [],
+      },
+    ],
   },
   build(_action, input) {
     return {command: 'example', args: input.args ?? []};
@@ -47,6 +57,8 @@ export default {
 ```
 
 Catalog validation fails on duplicate IDs or malformed metadata. Adding a valid adapter requires no routing or desktop UI edit.
+
+The `stock` adapter uses the Pexels API with portrait, large-image, and minimum 1080×1920 filters. Downloads include a manifest with the creator, Pexels source URL, license URL, dimensions, and SHA-256 hash. Results link back to [Pexels](https://www.pexels.com/) and preserve photographer credit. Configure `PEXELS_API_KEY`; the key is never passed to the desktop renderer or printed in job logs.
 
 ## Job storage
 

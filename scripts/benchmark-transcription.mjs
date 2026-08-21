@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -123,7 +123,7 @@ const runTranscribe = ({provider, outputPath, inputVideoPath}) => {
   }
 
   try {
-    execFileSync('node', scriptArgs, {
+    execFileSync(process.execPath, scriptArgs, {
       cwd: projectRoot,
       stdio: 'inherit',
     });

@@ -111,7 +111,7 @@ Use this when the project folder is getting too heavy.
 bun run cleanup
 ```
 
-Cleanup can remove temporary render staging from `outputs/work/` and `public/media/`, or prune old folders in `outputs/` while keeping the newest 5. It asks for confirmation before deleting.
+Cleanup can remove temporary render staging from `outputs/work/` and `outputs/.public/media/`, or prune old folders in `outputs/` while keeping the newest 5. It asks for confirmation before deleting.
 
 Useful direct commands:
 
@@ -1748,3 +1748,23 @@ For the "letters react to the footage underneath" look, use blend modes:
   "highlightTextFilterCss": "contrast(1.12) saturate(0.96)"
 }
 ```
+
+## Subject-aware portrait framing
+
+Create a reviewable framing plan before rendering landscape footage into 9:16:
+
+```bash
+clipcaptionai workflow run portrait-analyze --wait -- \
+  --video /absolute/path/input.mp4 \
+  --out outputs/input.framing.json \
+  --center-x 0.32
+
+clipcaptionai workflow run render-clip --wait -- \
+  --video /absolute/path/input.mp4 \
+  --captions outputs/input.captions.json \
+  --out outputs/input.vertical.mp4 \
+  --vertical \
+  --framing outputs/input.framing.json
+```
+
+Omit `--center-x` for centered framing. Framing plans are non-destructive JSON inputs.

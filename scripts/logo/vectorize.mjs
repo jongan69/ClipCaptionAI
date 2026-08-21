@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * vectorize.mjs — Step 1 of the logo animation pipeline.
  *
@@ -7,7 +7,7 @@
  * exactly the granularity a text-only code model needs in order to animate parts
  * of a logo independently.
  *
- *   node scripts/logo/vectorize.mjs --in assets/logos/acme/source.png --slug acme
+ *   bun scripts/logo/vectorize.mjs --in assets/logos/acme/source.png --slug acme
  *
  * Output: assets/logos/<slug>/logo.traced.svg  (+ a colour report on stdout)
  *
@@ -35,7 +35,7 @@ const scale = Number(arg('--scale', '1'));
 
 if (!inPath || !slug) {
   console.error(`
-Usage: node scripts/logo/vectorize.mjs --in <logo.png> --slug <brand-slug> [--colors 8] [--scale 1]
+Usage: bun scripts/logo/vectorize.mjs --in <logo.png> --slug <brand-slug> [--colors 8] [--scale 1]
 
   --in      Path to the source PNG (flat-colour logos trace best).
   --slug    Brand folder name under assets/logos/.
@@ -152,4 +152,4 @@ for (const [i, l] of layers.entries()) {
   console.log(`  layer-${i}  ${l.fill}  ${l.ds.length} path(s)`);
 }
 console.log(`\nNext: rename ids, save as ${path.join(outDir, 'logo.svg')}, then run:`);
-console.log(`  node scripts/logo/build-spec.mjs --slug ${slug}\n`);
+console.log(`  bun scripts/logo/build-spec.mjs --slug ${slug}\n`);

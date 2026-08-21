@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -284,7 +284,7 @@ const runRerun = ({listing, commandArgs}) => {
     title: listing.title,
     packet_dir: listing.packet_dir,
     competitors: listing.competitor_import_template,
-    command: ['node', ...commandArgs].join(' '),
+    command: ['bun', ...commandArgs].join(' '),
     status: args['dry-run'] === true ? 'planned' : 'running',
     started_at: null,
     finished_at: null,
@@ -294,7 +294,7 @@ const runRerun = ({listing, commandArgs}) => {
   };
   if (args['dry-run'] === true) return entry;
   entry.started_at = new Date().toISOString();
-  const result = spawnSync('node', commandArgs, {
+  const result = spawnSync(process.execPath, commandArgs, {
     cwd: projectRoot,
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 50,

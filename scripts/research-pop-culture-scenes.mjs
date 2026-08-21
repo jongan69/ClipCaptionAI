@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs';
 import path from 'node:path';
 import {resolveProvider, prepareProvider, createClient, resolveModel} from './ai-provider.mjs';

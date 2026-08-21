@@ -54,6 +54,21 @@ const workflows = [
   workflow('broll', 'Find B-roll', 'Find reusable B-roll from a prompt.', ['finder']),
   workflow('video', 'Model Video Run', 'Plan, render, inspect, and QA model-directed video.'),
   workflow('voiceover', 'Voiceover', 'Generate ElevenLabs narration.', ['elevenlabs']),
+  workflow('voice-library', 'Voice Library', 'Build or resume the ElevenLabs phrase library.'),
+  workflow(
+    'portrait-analyze',
+    'Portrait Framing',
+    'Plan subject-aware 9:16 framing for a video.',
+    ['portrait'],
+    videoArg,
+  ),
+  workflow(
+    'render-clip',
+    'Render Clip',
+    'Render a captioned clip with optional framing.',
+    [],
+    videoArg,
+  ),
   workflow('fal-image-edit', 'fal Image Edit', 'Create a reviewed image edit.'),
   workflow('fal-reference-video', 'fal Reference Video', 'Create a reviewed reference video.'),
   workflow('rerender', 'Rerender Clip', 'Rerender an existing generated clip.'),
@@ -129,6 +144,23 @@ export default {
       return {
         command: 'bun',
         args: [path.join(projectRoot, 'scripts', 'interview-qa.mjs'), ...args],
+        cwd: projectRoot,
+      };
+    if (name === 'voice-library' || name === 'portrait-analyze' || name === 'render-clip')
+      return {
+        command: 'bun',
+        args: [
+          path.join(
+            projectRoot,
+            'scripts',
+            name === 'voice-library'
+              ? 'generate-elevenlabs-library.mjs'
+              : name === 'render-clip'
+                ? 'render-clip.mjs'
+                : 'portrait-framing.mjs',
+          ),
+          ...args,
+        ],
         cwd: projectRoot,
       };
     return {
