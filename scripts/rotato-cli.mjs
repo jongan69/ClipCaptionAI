@@ -14,6 +14,7 @@ const help = `ClipCaptionAI Rotato adapter
 
 Usage:
   clipcaptionai rotato doctor
+  clipcaptionai rotato templates
   clipcaptionai rotato inspect <scene.rotato> [--json]
   clipcaptionai rotato render <scene.rotato> --output <file> [Rotato flags]
   clipcaptionai rotato render --template <id> --screen-slot <slot> <file> --output <file>
@@ -24,6 +25,34 @@ const resolveFile = (value) => path.resolve(String(value).replace(/^['"]|['"]$/g
 const rotatoPath = () =>
   commandPath('rotato') ||
   (fs.existsSync('/usr/local/bin/rotato') ? '/usr/local/bin/rotato' : null);
+const templatesRoot = () =>
+  path.resolve(
+    process.env.CCA_ROTATO_TEMPLATES_ROOT || path.join(projectRoot, 'templates', 'rotato'),
+  );
+
+const listTemplates = () => {
+  const root = templatesRoot();
+  if (!fs.existsSync(root)) return {root, templates: []};
+  const templates = fs
+    .readdirSync(root, {withFileTypes: true})
+    .filter((entry) => entry.isDirectory())
+    .flatMap((entry) => {
+      const directory = path.join(root, entry.name);
+      const scene = path.join(directory, 'scene.rotato');
+      const metadata = path.join(directory, 'template.json');
+      if (!fs.existsSync(scene) || !fs.existsSync(metadata)) return [];
+      const template = JSON.parse(fs.readFileSync(metadata, 'utf8'));
+      return [
+        {
+          id: entry.name,
+          name: template.name || entry.name,
+          deviceSlots: template.deviceSlots || {},
+        },
+      ];
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
+  return {root, templates};
+};
 
 const invoke = (command, args, options = {}) => {
   const result = spawnSync(command, args, {
@@ -79,12 +108,7 @@ const compileRender = (items) => {
   let scene = positionalScene;
   let template;
   if (templateId) {
-    const directory = path.join(
-      path.resolve(
-        process.env.CCA_ROTATO_TEMPLATES_ROOT || path.join(projectRoot, 'templates', 'rotato'),
-      ),
-      templateId,
-    );
+    const directory = path.join(templatesRoot(), templateId);
     template = JSON.parse(fs.readFileSync(path.join(directory, 'template.json'), 'utf8'));
     scene = path.join(directory, 'scene.rotato');
   }
@@ -111,6 +135,7 @@ const compileRender = (items) => {
   const forward = ['render', scene];
   for (let index = positionalScene ? 1 : 0; index < items.length; index += 1) {
     const flag = items[index];
+    if (flag === '--json') continue;
     if (flag === '--template') {
       index += 1;
       continue;
@@ -162,7 +187,7 @@ const compileRender = (items) => {
     }
     forward.push(flag);
   }
-  return {capability, inspected, forward};
+  return {capability, inspected, forward, wantsJson: items.includes('--json')};
 };
 
 const main = () => {
@@ -179,6 +204,7 @@ const main = () => {
       }),
     );
   }
+  if (action === 'templates') return console.log(JSON.stringify(listTemplates()));
   const {executable} = capabilities();
   if (action === 'raw')
     return process.exit(invoke(executable, items, {stdio: 'inherit'}).status || 0);
@@ -194,7 +220,7 @@ const main = () => {
   const compiled = compileRender(items);
   const outputIndex = compiled.forward.indexOf('--output');
   const output = outputIndex >= 0 ? compiled.forward[outputIndex + 1] : null;
-  const wantsJson = compiled.forward.includes('--json');
+  const wantsJson = compiled.wantsJson;
   const result = invoke(
     compiled.capability.executable,
     compiled.forward,

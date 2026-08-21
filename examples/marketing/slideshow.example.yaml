@@ -1,0 +1,84 @@
+id: prepai-value-slides
+product: ./product.example.yaml
+objective: Test saveable wellness education with a transparent, low-pressure PrepAI mention.
+approvedClaims:
+  - PrepAI helps people review movement, meal, and recovery context and choose one useful action.
+
+x-base: &base
+  width: 1080
+  height: 1920
+  fps: 30
+  format: carousel
+  cta: Review your day with PrepAI
+  theme:
+    backgroundColor: '#10263B'
+    foregroundColor: '#F7FAFC'
+    accentColor: '#08B8AE'
+
+variants:
+  - <<: *base
+    id: realistic-health-week
+    slides:
+      - src: /replace/from/stock-manifest/01-morning-walk.jpg
+        eyebrow: SAVE THIS
+        headline: 5 realistic ways to support your health this week
+        body: Pick one that fits your needs and routine.
+        durationSeconds: 2.4
+        motion: push-in
+        sourceType: stock
+        attribution:
+          provider: pexels
+          creator: Replace from manifest
+          sourceUrl: https://www.pexels.com/photo/replace-1
+          licenseUrl: https://www.pexels.com/license/
+      - src: /replace/from/stock-manifest/02-balanced-meal.jpg
+        headline: Build one meal around foods you already enjoy
+        body: Make the change easy enough to repeat.
+        durationSeconds: 2.2
+        motion: pan-left
+        sourceType: stock
+        attribution:
+          provider: pexels
+          creator: Replace from manifest
+          sourceUrl: https://www.pexels.com/photo/replace-2
+          licenseUrl: https://www.pexels.com/license/
+      - src: /replace/from/stock-manifest/03-walk.jpg
+        headline: Add a short outdoor walk
+        body: Start with a duration that feels sustainable.
+        durationSeconds: 2.2
+        motion: pan-right
+        sourceType: stock
+        attribution:
+          provider: pexels
+          creator: Replace from manifest
+          sourceUrl: https://www.pexels.com/photo/replace-3
+          licenseUrl: https://www.pexels.com/license/
+      - src: /replace/with/owned-prepai-screen.png
+        eyebrow: DAILY CHECK-IN
+        headline: Use PrepAI to connect today's context
+        body: Review movement, meals, and recovery before choosing one next step.
+        durationSeconds: 2.4
+        motion: push-in
+        sourceType: owned
+      - src: /replace/from/stock-manifest/05-sleep.jpg
+        headline: Protect a consistent wind-down window
+        body: Adjust gradually instead of chasing a perfect routine.
+        durationSeconds: 2.2
+        motion: pan-left
+        sourceType: stock
+        attribution:
+          provider: pexels
+          creator: Replace from manifest
+          sourceUrl: https://www.pexels.com/photo/replace-5
+          licenseUrl: https://www.pexels.com/license/
+      - src: /replace/from/stock-manifest/06-journal.jpg
+        headline: Notice what helped—not only what went wrong
+        body: Keep the habit useful, not punitive.
+        durationSeconds: 2.2
+        motion: pan-right
+        sourceType: stock
+        attribution:
+          provider: pexels
+          creator: Replace from manifest
+          sourceUrl: https://www.pexels.com/photo/replace-6
+          licenseUrl: https://www.pexels.com/license/

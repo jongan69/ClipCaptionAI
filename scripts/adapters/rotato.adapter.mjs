@@ -27,6 +27,7 @@ export default {
     version: '1',
     actions: [
       action('doctor', 'Doctor', 'sync'),
+      action('templates', 'Templates', 'sync'),
       action('inspect', 'Inspect'),
       action('render', 'Render', 'job', ['rotato', 'outputs']),
       action('raw', 'Raw passthrough', 'job', ['rotato']),

@@ -140,7 +140,7 @@ export const videoToSrc = (videoPath) => {
     }
   }
 
-  return `media/${stagedName}`;
+  return `public/media/${stagedName}`;
 };
 
 export const probeVideo = (videoPath) => {

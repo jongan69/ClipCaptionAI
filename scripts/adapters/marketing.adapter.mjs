@@ -21,7 +21,7 @@ export default {
     id: 'marketing',
     title: 'Marketing campaigns',
     description: 'Plan, budget, execute, inspect, QA, and export campaign runs.',
-    version: '1',
+    version: '4',
     actions: [
       entry('doctor', 'Doctor', 'sync'),
       entry('plan', 'Plan', 'job', ['campaigns']),

@@ -29,16 +29,56 @@ const intent = z.object({
   argv: z.array(z.string()).default([]),
   estimateArgv: z.array(z.string()).default([]),
   output: z.string().optional(),
+  provenance: z.record(z.string(), z.unknown()).optional(),
 });
+
+const attribution = z.object({
+  provider: z.string().min(1),
+  creator: z.string().min(1),
+  creatorUrl: z.string().url().optional(),
+  sourceUrl: z.string().url(),
+  licenseUrl: z.string().url(),
+});
+
+const slide = z
+  .object({
+    src: z.string().min(1),
+    eyebrow: z.string().max(40).optional(),
+    headline: z.string().min(1).max(100),
+    body: z.string().max(180).optional(),
+    durationSeconds: z.number().min(1).max(8).default(2.2),
+    motion: z.enum(['push-in', 'pan-left', 'pan-right']).default('push-in'),
+    fit: z.enum(['cover', 'contain']).default('cover'),
+    textPosition: z.enum(['top', 'center', 'bottom']).default('bottom'),
+    sourceType: z.enum(['owned', 'stock', 'generated']).default('owned'),
+    attribution: attribution.optional(),
+  })
+  .superRefine((entry, context) => {
+    if (entry.sourceType === 'stock' && !entry.attribution)
+      context.addIssue({
+        code: 'custom',
+        path: ['attribution'],
+        message: 'Stock slides require creator, source, and license attribution metadata.',
+      });
+  });
 
 const timelineEntry = z
   .object({
-    type: z.enum(['video', 'image', 'text', 'end-card']),
+    type: z.enum(['video', 'image', 'text', 'slide-text', 'end-card']),
     startSeconds: z.number().nonnegative(),
     durationSeconds: z.number().positive(),
     src: z.string().optional(),
     text: z.string().optional(),
+    eyebrow: z.string().optional(),
+    headline: z.string().optional(),
+    body: z.string().optional(),
     transition: z.enum(['cut', 'fade']).default('cut'),
+    sourceStartSeconds: z.number().nonnegative().default(0),
+    muted: z.boolean().default(false),
+    volume: z.number().min(0).max(4).default(1),
+    fit: z.enum(['cover', 'contain']).default('cover'),
+    motion: z.enum(['none', 'push-in', 'pan-left', 'pan-right']).default('none'),
+    textPosition: z.enum(['top', 'center', 'bottom']).default('bottom'),
   })
   .superRefine((entry, context) => {
     if (['video', 'image'].includes(entry.type) && !entry.src)
@@ -53,28 +93,61 @@ const timelineEntry = z
         path: ['text'],
         message: `${entry.type} entries require text.`,
       });
+    if (entry.type === 'slide-text' && !entry.headline)
+      context.addIssue({
+        code: 'custom',
+        path: ['headline'],
+        message: 'slide-text entries require a headline.',
+      });
   });
 
-const variant = z.object({
-  id: z.string().min(1),
-  width: z.number().int().positive().default(1080),
-  height: z.number().int().positive().default(1920),
-  fps: z.number().positive().default(30),
-  durationSeconds: z.number().positive().default(15),
-  cta: z.string().min(1),
-  intents: z.array(intent).default([]),
-  timeline: z.array(timelineEntry).default([]),
-  captions: z
-    .array(
-      z.object({
-        text: z.string(),
-        startSeconds: z.number(),
-        endSeconds: z.number(),
-        yPercent: z.number().min(0).max(100).default(82),
+const variant = z
+  .object({
+    id: z.string().min(1),
+    width: z.number().int().positive().default(1080),
+    height: z.number().int().positive().default(1920),
+    fps: z.number().positive().default(30),
+    format: z.enum(['video', 'carousel']).default('video'),
+    durationSeconds: z.number().positive().default(15),
+    cta: z.string().min(1),
+    intents: z.array(intent).default([]),
+    timeline: z.array(timelineEntry).default([]),
+    slides: z.array(slide).default([]),
+    endCardDurationSeconds: z.number().min(1).max(5).default(1.8),
+    captions: z
+      .array(
+        z.object({
+          text: z.string(),
+          startSeconds: z.number(),
+          endSeconds: z.number(),
+          yPercent: z.number().min(0).max(100).default(82),
+        }),
+      )
+      .default([]),
+    music: z.string().optional(),
+    voice: z.string().optional(),
+    musicVolume: z.number().min(0).max(1).default(0.08),
+    audioTargetLufs: z.number().min(-24).max(-10).optional(),
+    theme: z
+      .object({
+        backgroundColor: z.string(),
+        foregroundColor: z.string(),
+        accentColor: z.string(),
+      })
+      .default({
+        backgroundColor: '#080b12',
+        foregroundColor: '#ffffff',
+        accentColor: '#3b82f6',
       }),
-    )
-    .default([]),
-});
+  })
+  .superRefine((entry, context) => {
+    if (entry.slides.length > 0 && entry.timeline.length > 0)
+      context.addIssue({
+        code: 'custom',
+        path: ['slides'],
+        message: 'Use slides or timeline, not both.',
+      });
+  });
 
 export const CampaignBrief = z.object({
   id: z.string().min(1),

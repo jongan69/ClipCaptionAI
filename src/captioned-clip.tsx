@@ -21,7 +21,7 @@ import type {
 export const captionedClipDefaultProps: CaptionedClipProps = {
   videoSrc: '',
   foregroundSrc: null,
-  captions: [],
+  captions: [{text: 'Sample caption', startMs: 0, endMs: 1000, timestampMs: 0, confidence: null}],
   width: 1080,
   height: 1920,
   fps: 30,
@@ -46,8 +46,7 @@ export const captionedClipDefaultProps: CaptionedClipProps = {
     effectTextOpacityMultiplier: 0.55,
     effectHighlightTextOpacityMultiplier: 0.62,
     shadowColor: 'rgba(0, 0, 0, 0.55)',
-    normalFontFamily:
-      '"Arial Rounded MT Bold", "Avenir Next", "Arial Black", sans-serif',
+    normalFontFamily: '"Arial Rounded MT Bold", "Avenir Next", "Arial Black", sans-serif',
     highlightFontFamily:
       '"Snell Roundhand", "Apple Chancery", "Savoye LET", "Brush Script MT", "Bodoni 72", "Didot", cursive',
     normalFontWeight: 950,
@@ -271,9 +270,7 @@ const sortedMotionKeyframes = (style: CaptionStyle) => {
     Number.isFinite(Number(keyframe.at)),
   );
   const keyframes =
-    configured && configured.length > 0
-      ? configured
-      : motionPresetKeyframes(style.motionPreset);
+    configured && configured.length > 0 ? configured : motionPresetKeyframes(style.motionPreset);
 
   return keyframes
     .map((keyframe) => ({...keyframe, at: clampProgress(Number(keyframe.at))}))
@@ -286,9 +283,7 @@ const interpolateMotionValue = (
   field: keyof CaptionMotionKeyframe,
   fallback: number,
 ) => {
-  const firstWithField = keyframes.find(
-    (keyframe) => keyframe[field] !== undefined,
-  );
+  const firstWithField = keyframes.find((keyframe) => keyframe[field] !== undefined);
 
   if (!firstWithField) {
     return fallback;
@@ -346,10 +341,7 @@ const TOKEN_OVERLAP_MS = 90;
 
 // Page segmentation is time-independent: build it once per captions input
 // and only pick the active page per frame.
-const buildCaptionPages = (
-  captions: Caption[],
-  combineTokensWithinMilliseconds: number,
-) =>
+const buildCaptionPages = (captions: Caption[], combineTokensWithinMilliseconds: number) =>
   createTikTokStyleCaptions({
     captions,
     combineTokensWithinMilliseconds,
@@ -421,10 +413,7 @@ const parseDimensionToPx = (
   return Number.isFinite(numeric) ? numeric : fallback;
 };
 
-const parseLetterSpacingToPx = (
-  value: string | number | undefined,
-  fontSize: number,
-) => {
+const parseLetterSpacingToPx = (value: string | number | undefined, fontSize: number) => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
   }
@@ -606,8 +595,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
   const {fps, width, height} = useVideoConfig();
   const currentMs = (frame / fps) * 1000;
   const normalFontFamily =
-    style.normalFontFamily ??
-    '"Arial Rounded MT Bold", "Avenir Next", "Arial Black", sans-serif';
+    style.normalFontFamily ?? '"Arial Rounded MT Bold", "Avenir Next", "Arial Black", sans-serif';
   const highlightFontFamily =
     style.highlightFontFamily ??
     '"Snell Roundhand", "Apple Chancery", "Savoye LET", "Brush Script MT", "Bodoni 72", "Didot", cursive';
@@ -615,9 +603,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
   const highlightFontWeight = style.highlightFontWeight ?? 400;
   const normalFontStyle = style.normalFontStyle ?? 'normal';
   const highlightFontStyle = style.highlightFontStyle ?? 'italic';
-  const videoSource = /^https?:\/\//.test(videoSrc)
-    ? videoSrc
-    : staticFile(videoSrc);
+  const videoSource = /^https?:\/\//.test(videoSrc) ? videoSrc : staticFile(videoSrc);
   const foregroundSource =
     foregroundSrc && /^https?:\/\//.test(foregroundSrc)
       ? foregroundSrc
@@ -668,22 +654,15 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
   const visibleTokensBefore = clampTokenCount(style.visibleTokensBefore, 1);
   const visibleTokensAfter = clampTokenCount(style.visibleTokensAfter, 0);
   const visibleStartIndex =
-    page && activeTokenIndex >= 0
-      ? Math.max(activeTokenIndex - visibleTokensBefore, 0)
-      : 0;
+    page && activeTokenIndex >= 0 ? Math.max(activeTokenIndex - visibleTokensBefore, 0) : 0;
   const visibleTokens =
     page && activeTokenIndex >= 0
-      ? page.tokens.slice(
-          visibleStartIndex,
-          activeTokenIndex + visibleTokensAfter + 1,
-        )
+      ? page.tokens.slice(visibleStartIndex, activeTokenIndex + visibleTokensAfter + 1)
       : [];
   const visibleHasExplicitKeyword = visibleTokens.some((token) =>
     highlightSet.has(tokenKey(token.text)),
   );
-  const automaticKeywordKey = visibleHasExplicitKeyword
-    ? ''
-    : getStrongestTokenKey(visibleTokens);
+  const automaticKeywordKey = visibleHasExplicitKeyword ? '' : getStrongestTokenKey(visibleTokens);
 
   const baseFontSize = Math.max(
     style.minFontSize ?? 42,
@@ -695,9 +674,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
   });
   const captionLayout = style.captionLayout ?? 'stacked';
   const pageProgress =
-    page && page.durationMs > 0
-      ? clampProgress((currentMs - page.startMs) / page.durationMs)
-      : 0;
+    page && page.durationMs > 0 ? clampProgress((currentMs - page.startMs) / page.durationMs) : 0;
   // Stable identity: this object feeds the layout memo, so it must not be
   // recreated per frame (that would defeat memoization every frame).
   const containerPositionStyle = useMemo(
@@ -710,10 +687,8 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
   const motionValues = useMemo(() => {
     const keyframes = sortedMotionKeyframes(style);
     return {
-      xPx:
-        (interpolateMotionValue(keyframes, pageProgress, 'xPercent', 0) / 100) * width,
-      yPx:
-        (interpolateMotionValue(keyframes, pageProgress, 'yPercent', 0) / 100) * height,
+      xPx: (interpolateMotionValue(keyframes, pageProgress, 'xPercent', 0) / 100) * width,
+      yPx: (interpolateMotionValue(keyframes, pageProgress, 'yPercent', 0) / 100) * height,
       scale: interpolateMotionValue(keyframes, pageProgress, 'scale', 1),
       opacity: interpolateMotionValue(keyframes, pageProgress, 'opacity', 1),
       rotateDeg: interpolateMotionValue(keyframes, pageProgress, 'rotateDeg', 0),
@@ -759,12 +734,9 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
       const isExplicitHighlight = highlightSet.has(key);
       const isAutomaticHighlight = key === automaticKeywordKey;
       const isHighlighted = isExplicitHighlight || isAutomaticHighlight;
-      const tokenFrame = Math.max(
-        0,
-        frame - Math.round((token.fromMs / 1000) * fps),
-      );
+      const tokenFrame = Math.max(0, frame - Math.round((token.fromMs / 1000) * fps));
       const tokenPop = Math.min(tokenFrame / 5, 1);
-      const highlightScale = isHighlighted ? style.highlightScale ?? 1.62 : 1;
+      const highlightScale = isHighlighted ? (style.highlightScale ?? 1.62) : 1;
       const scale =
         (isActive ? style.activeScale : style.inactiveScale) *
         highlightScale *
@@ -774,8 +746,8 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
         }) *
         entrance;
       const strokeRatio = isHighlighted
-        ? style.highlightStrokeRatio ?? 0.012
-        : style.normalStrokeRatio ?? 0.045;
+        ? (style.highlightStrokeRatio ?? 0.012)
+        : (style.normalStrokeRatio ?? 0.045);
       const defaultTextShadow = isHighlighted
         ? `0 ${baseFontSize * 0.07}px ${baseFontSize * 0.08}px ${style.shadowColor}, 0 0 ${
             baseFontSize * 0.18
@@ -790,17 +762,17 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
         `drop-shadow(0 ${baseFontSize * 0.04}px ${baseFontSize * 0.02}px rgba(0,0,0,0.35))`;
       const textColor = colorWithOpacity(
         isHighlighted
-          ? style.highlightTextColor ?? style.textColor
-          : style.normalTextColor ?? style.textColor,
+          ? (style.highlightTextColor ?? style.textColor)
+          : (style.normalTextColor ?? style.textColor),
         style.textOpacity *
           (isHighlighted
-            ? style.highlightTextOpacityMultiplier ?? 1
-            : style.normalTextOpacityMultiplier ?? 1),
+            ? (style.highlightTextOpacityMultiplier ?? 1)
+            : (style.normalTextOpacityMultiplier ?? 1)),
       );
       const blendMode = mixBlendModeOrUndefined(
         isHighlighted
-          ? style.highlightTextBlendMode ?? style.textBlendMode
-          : style.normalTextBlendMode ?? style.textBlendMode,
+          ? (style.highlightTextBlendMode ?? style.textBlendMode)
+          : (style.normalTextBlendMode ?? style.textBlendMode),
       );
       const filterCss = stringOrUndefined(
         isHighlighted ? style.highlightTextFilterCss : style.normalTextFilterCss,
@@ -837,8 +809,8 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
         fontWeight,
         strokePx: Math.max(style.minStrokePx ?? 1, baseFontSize * strokeRatio),
         strokeColor: isHighlighted
-          ? style.highlightStrokeColor ?? style.normalStrokeColor ?? style.shadowColor
-          : style.normalStrokeColor ?? style.shadowColor,
+          ? (style.highlightStrokeColor ?? style.normalStrokeColor ?? style.shadowColor)
+          : (style.normalStrokeColor ?? style.shadowColor),
         textShadow: configuredTextShadow ?? defaultTextShadow,
         dropShadow,
         blendMode,
@@ -874,9 +846,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
 
       for (const token of tokenModels) {
         const nextWidth =
-          currentRow.tokens.length === 0
-            ? token.width
-            : currentRow.width + gapPx + token.width;
+          currentRow.tokens.length === 0 ? token.width : currentRow.width + gapPx + token.width;
         const shouldWrap =
           captionLayout === 'inline-wrap' &&
           currentRow.tokens.length > 0 &&
@@ -906,18 +876,13 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
 
     const rowGap = captionLayout === 'stacked' ? gapPx : baseFontSize * 0.14;
     const totalHeight =
-      rows.reduce((sum, row) => sum + row.height, 0) +
-      Math.max(0, rows.length - 1) * rowGap;
+      rows.reduce((sum, row) => sum + row.height, 0) + Math.max(0, rows.length - 1) * rowGap;
     const topPxValue = containerPositionStyle.top as string | number | undefined;
     const bottomPxValue = containerPositionStyle.bottom as string | number | undefined;
     const topPx =
-      topPxValue === undefined
-        ? null
-        : parseDimensionToPx(topPxValue, height, height * 0.5);
+      topPxValue === undefined ? null : parseDimensionToPx(topPxValue, height, height * 0.5);
     const bottomPx =
-      bottomPxValue === undefined
-        ? null
-        : parseDimensionToPx(bottomPxValue, height, height * 0.12);
+      bottomPxValue === undefined ? null : parseDimensionToPx(bottomPxValue, height, height * 0.12);
     const hasCenterTranslateY =
       typeof containerPositionStyle.transform === 'string' &&
       containerPositionStyle.transform.includes('translateY(-50%)');
@@ -959,8 +924,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
     const maxX = Math.max(...laidOutTokens.map((token) => token.x + token.width));
     const minY = Math.min(...laidOutTokens.map((token) => token.y));
     const maxY = Math.max(...laidOutTokens.map((token) => token.y + token.height));
-    const originX =
-      align === 'center' ? (minX + maxX) / 2 : align === 'right' ? maxX : minX;
+    const originX = align === 'center' ? (minX + maxX) / 2 : align === 'right' ? maxX : minX;
     const originY = (minY + maxY) / 2;
     const motionMatrix = buildMotionMatrix({
       originX,
@@ -1022,9 +986,7 @@ export const CaptionedClip: React.FC<CaptionedClipProps> = ({
     Boolean(style.effectLayerEnabled) && Boolean(style.effectMaskedVideoEnabled ?? true);
   const effectNormalOpacity =
     style.textOpacity *
-    (style.effectMaskedVideoOpacityMultiplier ??
-      style.effectTextOpacityMultiplier ??
-      0.72);
+    (style.effectMaskedVideoOpacityMultiplier ?? style.effectTextOpacityMultiplier ?? 0.72);
   const effectHighlightOpacity =
     style.textOpacity *
     (style.effectMaskedHighlightVideoOpacityMultiplier ??

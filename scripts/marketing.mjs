@@ -6,7 +6,15 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 
 import {commandPath} from './command-utils.mjs';
-import {ensureDir, loadEnv, parseArgs, projectRoot, requireArg} from './lib.mjs';
+import {
+  ensureDir,
+  loadEnv,
+  parseArgs,
+  projectRoot,
+  publicMediaRoot,
+  requireArg,
+  videoToSrc,
+} from './lib.mjs';
 import {hashValue, serializeCatalog} from './platform/catalog.mjs';
 import {writeJsonAtomic} from './platform/jobs.mjs';
 import {
@@ -132,9 +140,68 @@ const resolveProduct = (campaignPath, value) => {
   return ProductManifest.parse(yaml.load(fs.readFileSync(file, 'utf8')));
 };
 
+const expandSlides = (variant) => {
+  if (variant.slides.length === 0) return variant;
+  let startSeconds = 0;
+  const timeline = [];
+  const intents = [...variant.intents];
+  for (const slide of variant.slides) {
+    timeline.push(
+      {
+        type: 'image',
+        startSeconds,
+        durationSeconds: slide.durationSeconds,
+        src: slide.src,
+        motion: slide.motion,
+        fit: slide.fit,
+        transition: 'fade',
+      },
+      {
+        type: 'slide-text',
+        startSeconds,
+        durationSeconds: slide.durationSeconds,
+        eyebrow: slide.eyebrow,
+        headline: slide.headline,
+        body: slide.body,
+        textPosition: slide.textPosition,
+        transition: 'fade',
+      },
+    );
+    intents.push({
+      type: 'source',
+      source: slide.src,
+      provenance: {
+        sourceType: slide.sourceType,
+        ...(slide.attribution || {}),
+      },
+    });
+    startSeconds += slide.durationSeconds;
+  }
+  if (variant.format === 'carousel')
+    return {...variant, durationSeconds: startSeconds, timeline: [], intents};
+  timeline.push({
+    type: 'end-card',
+    startSeconds,
+    durationSeconds: variant.endCardDurationSeconds,
+    text: variant.cta,
+    transition: 'fade',
+  });
+  return {
+    ...variant,
+    durationSeconds: startSeconds + variant.endCardDurationSeconds,
+    slides: [],
+    timeline,
+    intents,
+  };
+};
+
 const planCampaign = async () => {
   const campaignPath = path.resolve(requireArg(args, 'campaign'));
   const campaign = CampaignBrief.parse(yaml.load(fs.readFileSync(campaignPath, 'utf8')));
+  const variants = CampaignBrief.parse({
+    ...campaign,
+    variants: campaign.variants.map(expandSlides),
+  }).variants;
   const product = resolveProduct(campaignPath, campaign.product);
   const runId = String(args['run-id'] || `${campaign.id}-${Date.now().toString(36)}`);
   if (!/^[a-zA-Z0-9._-]+$/.test(runId))
@@ -163,14 +230,30 @@ const planCampaign = async () => {
     capabilityFingerprint,
     product,
     approvedClaims: [...new Set([...product.approvedClaims, ...campaign.approvedClaims])],
-    variants: campaign.variants.map((variant) => ({
-      ...variant,
-      intents: variant.intents.map((intent) => ({
-        ...intent,
-        source: intent.source ? path.resolve(path.dirname(campaignPath), intent.source) : undefined,
-        output: intent.output ? path.resolve(path.dirname(campaignPath), intent.output) : undefined,
-      })),
-    })),
+    variants: variants.map((variant) => {
+      return {
+        ...variant,
+        music: variant.music ? path.resolve(path.dirname(campaignPath), variant.music) : undefined,
+        voice: variant.voice ? path.resolve(path.dirname(campaignPath), variant.voice) : undefined,
+        slides: variant.slides.map((slide) => ({
+          ...slide,
+          src: path.resolve(path.dirname(campaignPath), slide.src),
+        })),
+        timeline: variant.timeline.map((entry) => ({
+          ...entry,
+          src: entry.src ? path.resolve(path.dirname(campaignPath), entry.src) : undefined,
+        })),
+        intents: variant.intents.map((intent) => ({
+          ...intent,
+          source: intent.source
+            ? path.resolve(path.dirname(campaignPath), intent.source)
+            : undefined,
+          output: intent.output
+            ? path.resolve(path.dirname(campaignPath), intent.output)
+            : undefined,
+        })),
+      };
+    }),
   };
   const creativePlan = CreativePlan.parse({...draft, planHash: hashValue(draft)});
   const run = CampaignRun.parse({
@@ -333,6 +416,172 @@ const copyAsset = (state, variant, intent, source, type, extra = {}) => {
   });
 };
 
+const renderVariant = (state, variant) => {
+  const propsPath = path.join(state.directory, 'artifacts', 'previews', `${variant.id}-props.json`);
+  const renderPath = path.join(state.directory, 'artifacts', 'previews', `${variant.id}.mp4`);
+  const normalizedPath = path.join(
+    state.directory,
+    'artifacts',
+    'previews',
+    `${variant.id}-normalized.mp4`,
+  );
+  const props = {
+    width: variant.width,
+    height: variant.height,
+    fps: variant.fps,
+    durationSeconds: variant.durationSeconds,
+    timeline: variant.timeline.map((entry) => ({
+      ...entry,
+      src: entry.src ? videoToSrc(entry.src) : undefined,
+    })),
+    captions: variant.captions,
+    voice: variant.voice ? videoToSrc(variant.voice) : undefined,
+    music: variant.music ? videoToSrc(variant.music) : undefined,
+    musicVolume: variant.musicVolume,
+    theme: variant.theme,
+  };
+  writeJsonAtomic(propsPath, props);
+  const result = spawnSync(
+    'bunx',
+    [
+      'remotion',
+      'render',
+      path.join(projectRoot, 'src', 'index.tsx'),
+      'MarketingTimeline',
+      renderPath,
+      `--props=${propsPath}`,
+      '--codec=h264',
+      '--concurrency=1',
+      `--public-dir=${path.dirname(publicMediaRoot)}`,
+      '--overwrite',
+    ],
+    {cwd: projectRoot, encoding: 'utf8', shell: false},
+  );
+  if (result.error || result.status !== 0)
+    throw new Error(`Marketing render failed: ${result.stderr || result.error?.message}`);
+  const audioTargetLufs = variant.audioTargetLufs ?? -16;
+  const normalized = spawnSync(
+    'ffmpeg',
+    [
+      '-hide_banner',
+      '-loglevel',
+      'error',
+      '-y',
+      '-i',
+      renderPath,
+      '-map',
+      '0:v:0',
+      '-map',
+      '0:a:0?',
+      '-c:v',
+      'copy',
+      '-af',
+      `loudnorm=I=${audioTargetLufs}:TP=-1.5:LRA=11`,
+      '-c:a',
+      'aac',
+      '-b:a',
+      '192k',
+      normalizedPath,
+    ],
+    {cwd: projectRoot, encoding: 'utf8', shell: false},
+  );
+  if (normalized.error || normalized.status !== 0)
+    throw new Error(
+      `Marketing audio normalization failed: ${normalized.stderr || normalized.error?.message}`,
+    );
+  const asset = copyAsset(
+    state,
+    variant,
+    {type: 'source', source: normalizedPath},
+    normalizedPath,
+    'final',
+    {
+      adapter: 'remotion',
+      adapterVersion: '3',
+      composition: 'MarketingTimeline',
+      propsPath,
+      audioNormalization: 'ffmpeg-loudnorm',
+      audioTargetLufs,
+    },
+  );
+  fs.rmSync(renderPath, {force: true});
+  fs.rmSync(normalizedPath, {force: true});
+  return asset;
+};
+
+const renderCarousel = (state, variant) =>
+  variant.slides.map((slide, index) => {
+    const number = index + 1;
+    const basename = `${variant.id}-slide-${String(number).padStart(2, '0')}`;
+    const propsPath = path.join(state.directory, 'artifacts', 'previews', `${basename}-props.json`);
+    const renderPath = path.join(state.directory, 'artifacts', 'previews', `${basename}.png`);
+    writeJsonAtomic(propsPath, {
+      width: variant.width,
+      height: variant.height,
+      fps: variant.fps,
+      durationSeconds: 1,
+      timeline: [
+        {
+          type: 'image',
+          startSeconds: 0,
+          durationSeconds: 1,
+          src: videoToSrc(slide.src),
+          fit: slide.fit,
+          transition: 'cut',
+        },
+        {
+          type: 'slide-text',
+          startSeconds: 0,
+          durationSeconds: 1,
+          eyebrow: slide.eyebrow,
+          headline: slide.headline,
+          body: slide.body,
+          textPosition: slide.textPosition,
+          transition: 'cut',
+        },
+      ],
+      captions: [],
+      theme: variant.theme,
+    });
+    const result = spawnSync(
+      'bunx',
+      [
+        'remotion',
+        'still',
+        path.join(projectRoot, 'src', 'index.tsx'),
+        'MarketingTimeline',
+        renderPath,
+        `--props=${propsPath}`,
+        '--frame=0',
+        '--image-format=png',
+        `--public-dir=${path.dirname(publicMediaRoot)}`,
+        '--overwrite',
+      ],
+      {cwd: projectRoot, encoding: 'utf8', shell: false},
+    );
+    if (result.error || result.status !== 0)
+      throw new Error(
+        `Marketing carousel render failed: ${result.stderr || result.error?.message}`,
+      );
+    const asset = copyAsset(
+      state,
+      variant,
+      {type: 'source', source: renderPath, slideIndex: number},
+      renderPath,
+      'final',
+      {
+        adapter: 'remotion',
+        adapterVersion: '3',
+        composition: 'MarketingTimeline',
+        outputFormat: 'carousel',
+        slideIndex: number,
+        propsPath,
+      },
+    );
+    fs.rmSync(renderPath, {force: true});
+    return asset;
+  });
+
 const executeCampaign = async () => {
   const state = loadRun(requireArg(args, 'run'));
   await requireCurrentApproval(state);
@@ -468,9 +717,16 @@ const executeCampaign = async () => {
         continue;
       }
       if (intent.source) {
-        assets.push(copyAsset(state, variant, intent, intent.source, 'source'));
+        assets.push(
+          copyAsset(state, variant, intent, intent.source, 'source', intent.provenance || {}),
+        );
       }
     }
+    assets.push(
+      ...(variant.format === 'carousel'
+        ? renderCarousel(state, variant)
+        : [renderVariant(state, variant)]),
+    );
   }
   writeJsonAtomic(path.join(state.directory, 'assets', 'index.json'), [
     ...new Map(assets.map((asset) => [asset.id, asset])).values(),
@@ -495,7 +751,13 @@ const executeCampaign = async () => {
     live,
     assetCount: assets.length,
   });
-  print({runId: run.id, status: run.status, live, assets: assets.length});
+  print({
+    runId: run.id,
+    status: run.status,
+    live,
+    assets: assets.length,
+    finals: assets.filter((asset) => asset.type === 'final').map((asset) => asset.path),
+  });
 };
 
 const inspectCampaign = () => {
@@ -516,7 +778,7 @@ const probe = (file) =>
 const mediaChecks = (variant, asset) => {
   const checks = [];
   if (!asset)
-    return [{name: 'asset', passed: false, detail: 'No source or final asset is registered.'}];
+    return [{name: 'asset', passed: false, detail: 'No final rendered asset is registered.'}];
   try {
     const metadata = probe(asset.path);
     const video = metadata.streams?.find((stream) => stream.codec_type === 'video');
@@ -552,6 +814,37 @@ const mediaChecks = (variant, asset) => {
   } catch (error) {
     checks.push({name: 'decoding', passed: false, detail: String(error.message)});
   }
+  return checks;
+};
+
+const carouselChecks = (variant, assets) => {
+  const checks = [
+    {
+      name: 'carousel-slide-count',
+      passed: assets.length === variant.slides.length,
+      detail: `${assets.length} rendered images, expected ${variant.slides.length}.`,
+    },
+  ];
+  const media = assets.map((asset) => {
+    try {
+      const metadata = probe(asset.path);
+      return metadata.streams?.find((stream) => stream.codec_type === 'video');
+    } catch {
+      return null;
+    }
+  });
+  checks.push({
+    name: 'decoding',
+    passed: media.length > 0 && media.every(Boolean),
+    detail: 'Every carousel image must decode.',
+  });
+  checks.push({
+    name: 'dimensions',
+    passed: media.every(
+      (entry) => Number(entry?.width) === variant.width && Number(entry?.height) === variant.height,
+    ),
+    detail: `Every carousel image must be ${variant.width}x${variant.height}.`,
+  });
   return checks;
 };
 
@@ -596,18 +889,24 @@ const qaCampaign = () => {
   const state = loadRun(requireArg(args, 'run'));
   const reports = [];
   for (const variant of state.plan.variants) {
-    const asset = [...state.assets]
-      .reverse()
-      .find((entry) => entry.provenance.variantId === variant.id);
-    const checks = mediaChecks(variant, asset);
-    checks.push({
-      name: 'black-lead-tail',
-      ...detectBlackBoundary(asset, variant.durationSeconds),
-    });
-    checks.push({
-      name: 'silence',
-      ...detectSignal(asset, ['-af', 'silencedetect=n=-50dB:d=1'], /silence_start/),
-    });
+    const finalAssets = state.assets.filter(
+      (entry) => entry.type === 'final' && entry.provenance.variantId === variant.id,
+    );
+    const asset = finalAssets.at(-1);
+    const checks =
+      variant.format === 'carousel'
+        ? carouselChecks(variant, finalAssets)
+        : mediaChecks(variant, asset);
+    if (variant.format === 'video') {
+      checks.push({
+        name: 'black-lead-tail',
+        ...detectBlackBoundary(asset, variant.durationSeconds),
+      });
+      checks.push({
+        name: 'silence',
+        ...detectSignal(asset, ['-af', 'silencedetect=n=-50dB:d=1'], /silence_start/),
+      });
+    }
     checks.push({
       name: 'caption-safe-zone',
       passed: variant.captions.every(
@@ -621,8 +920,15 @@ const qaCampaign = () => {
     });
     checks.push({
       name: 'cta-end-card',
-      passed: Boolean(variant.cta && variant.timeline.some((entry) => entry.type === 'end-card')),
-      detail: 'CTA and end-card metadata are required.',
+      passed: Boolean(
+        variant.cta &&
+        (variant.format === 'carousel' ||
+          variant.timeline.some((entry) => entry.type === 'end-card')),
+      ),
+      detail:
+        variant.format === 'carousel'
+          ? 'Carousel CTA metadata is present.'
+          : 'CTA and end-card metadata are required.',
     });
     const captureAssets = state.assets.filter(
       (entry) =>
@@ -634,6 +940,25 @@ const qaCampaign = () => {
         (entry) => Date.now() - Date.parse(entry.provenance.capturedAt) < 30 * 86_400_000,
       ),
       detail: 'Capture artifacts must be newer than 30 days.',
+    });
+    const stockIntents = variant.intents.filter(
+      (intent) => intent.provenance?.sourceType === 'stock',
+    );
+    checks.push({
+      name: 'stock-provenance',
+      passed: stockIntents.every(
+        (intent) =>
+          intent.provenance.provider &&
+          intent.provenance.creator &&
+          intent.provenance.sourceUrl &&
+          intent.provenance.licenseUrl &&
+          state.assets.some(
+            (entry) =>
+              entry.provenance.variantId === variant.id &&
+              entry.provenance.sourceUrl === intent.provenance.sourceUrl,
+          ),
+      ),
+      detail: 'Stock images require registered creator, source, provider, and license metadata.',
     });
     const mockups = state.assets.filter(
       (entry) => entry.provenance.variantId === variant.id && entry.provenance.adapter === 'rotato',

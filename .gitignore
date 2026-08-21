@@ -11,6 +11,8 @@ outputs/*
 !outputs/.gitkeep
 projects/*
 !projects/.gitkeep
+campaigns/*
+!campaigns/.gitkeep
 *.log
 links.txt
 broll-prompts*.txt
