@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -81,14 +81,14 @@ const fileHref = (file, outDir) => {
 
 const runStep = ({name, commandArgs}) => {
   const startedAt = new Date().toISOString();
-  const result = spawnSync('node', commandArgs, {
+  const result = spawnSync(process.execPath, commandArgs, {
     cwd: projectRoot,
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 50,
   });
   return {
     name,
-    command: ['node', ...commandArgs].join(' '),
+    command: ['bun', ...commandArgs].join(' '),
     status: result.status === 0 ? 'ok' : 'failed',
     exit_code: result.status,
     started_at: startedAt,

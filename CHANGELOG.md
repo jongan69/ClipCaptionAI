@@ -2,6 +2,25 @@
 
 All notable changes to ClipCaptionAI are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — 2026-08-21
+
+### Added
+- Automatic repo-owned adapter discovery shared by the CLI and Electron desktop app
+- Filesystem-backed detached jobs with logs, cancellation, recovery, and resource locks
+- Remotion, Ollama, yt-dlp, workflow, Rotato, Higgsfield, capture, marketing, and Pexels stock adapters
+- Generic campaign planning, cost estimation, approval, execution, inspection, technical QA, and export
+- Native value-first carousels that render one provenance-tracked PNG per declared slide
+- Reusable ElevenLabs phrase-library workflow and subject-aware portrait framing plans
+
+### Changed
+- Standardized development, commands, CI, and packaging on Bun/Bunx
+- Desktop now observes the same adapter catalog and job store used by agents
+- Marketing QA keeps technical, claims, visual-review, and publication states separate
+
+### Security
+- Paid generation requires matching plan approval, capability fingerprints, explicit live execution, and budget compliance
+- Stock assets retain provider, creator, source, license, and content-hash provenance
+
 ## [0.1.1] — 2026-08-20 — production-readiness pass
 
 ### Added

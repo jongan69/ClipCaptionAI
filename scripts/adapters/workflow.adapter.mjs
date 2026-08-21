@@ -62,6 +62,13 @@ const workflows = [
     ['portrait'],
     videoArg,
   ),
+  workflow(
+    'render-clip',
+    'Render Clip',
+    'Render a captioned clip with optional framing.',
+    [],
+    videoArg,
+  ),
   workflow('fal-image-edit', 'fal Image Edit', 'Create a reviewed image edit.'),
   workflow('fal-reference-video', 'fal Reference Video', 'Create a reviewed reference video.'),
   workflow('rerender', 'Rerender Clip', 'Rerender an existing generated clip.'),
@@ -139,14 +146,18 @@ export default {
         args: [path.join(projectRoot, 'scripts', 'interview-qa.mjs'), ...args],
         cwd: projectRoot,
       };
-    if (name === 'voice-library' || name === 'portrait-analyze')
+    if (name === 'voice-library' || name === 'portrait-analyze' || name === 'render-clip')
       return {
         command: 'bun',
         args: [
           path.join(
             projectRoot,
             'scripts',
-            name === 'voice-library' ? 'generate-elevenlabs-library.mjs' : 'portrait-framing.mjs',
+            name === 'voice-library'
+              ? 'generate-elevenlabs-library.mjs'
+              : name === 'render-clip'
+                ? 'render-clip.mjs'
+                : 'portrait-framing.mjs',
           ),
           ...args,
         ],

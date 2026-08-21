@@ -6,9 +6,10 @@ import os from 'node:os';
 import path from 'node:path';
 
 const projectRoot = path.resolve(new URL('..', import.meta.url).pathname);
+const libUrl = new URL('../scripts/lib.mjs', import.meta.url).href;
 
 test('clipkit top-level help renders the polished command hub', () => {
-  const result = spawnSync('node', ['scripts/clipkit.mjs', '--help'], {
+  const result = spawnSync(process.execPath, ['scripts/clipkit.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -33,7 +34,7 @@ test('video plan creates a versioned machine-readable run manifest', () => {
   const brief = path.join(tempDir, 'brief.txt');
   fs.writeFileSync(brief, 'Open with the product.\nShow the workflow.\nClose with the result.\n');
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/video.mjs',
       'plan',
@@ -75,7 +76,7 @@ test('video dry-run is resumable and does not require provider secrets', () => {
   const brief = path.join(tempDir, 'brief.txt');
   fs.writeFileSync(brief, 'A deterministic local render plan.');
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/video.mjs', 'run', '--brief-file', brief, '--run-id', runId, '--dry-run', '--json'],
     {
       cwd: projectRoot,
@@ -97,18 +98,31 @@ test('video dry-run is resumable and does not require provider secrets', () => {
   }
 });
 
-test('bin entry works and exposes help output', () => {
-  const result = spawnSync('node', ['bin/clipcaptionai.js', '--help'], {
+test('Bun bin entry works and exposes help output', () => {
+  const result = spawnSync(process.execPath, ['bin/clipcaptionai.js', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
+  const isolatedPath = fs.mkdtempSync(path.join(os.tmpdir(), 'cca-bun-only-'));
+  fs.symlinkSync(process.execPath, path.join(isolatedPath, 'bun'));
+  const bunOnly = spawnSync(path.join(projectRoot, 'bin', 'clipcaptionai.js'), ['--help'], {
+    cwd: projectRoot,
+    encoding: 'utf8',
+    env: {...process.env, PATH: isolatedPath},
+  });
 
-  assert.equal(result.status, 0);
-  assert.match(result.stdout, /Usage: clipcaptionai/);
-  assert.match(result.stdout, /download\|dl/);
-  assert.match(result.stdout, /ebay-intel/);
-  assert.match(result.stdout, /review-moments\|review/);
-  assert.match(result.stdout, /rotato\|mockup/);
+  try {
+    assert.equal(result.status, 0);
+    assert.equal(bunOnly.status, 0, bunOnly.stderr);
+    assert.match(result.stdout, /Usage: clipcaptionai/);
+    assert.match(bunOnly.stdout, /Usage: clipcaptionai/);
+    assert.match(result.stdout, /download\|dl/);
+    assert.match(result.stdout, /ebay-intel/);
+    assert.match(result.stdout, /review-moments\|review/);
+    assert.match(result.stdout, /rotato\|mockup/);
+  } finally {
+    fs.rmSync(isolatedPath, {recursive: true, force: true});
+  }
 });
 
 test('portrait framing planner writes a manual track plan', () => {
@@ -133,6 +147,9 @@ test('portrait framing planner writes a manual track plan', () => {
     const plan = JSON.parse(fs.readFileSync(output, 'utf8'));
     assert.equal(plan.source, 'manual');
     assert.equal(plan.strategy, 'track');
+    assert.equal(plan.generatorVersion, '1');
+    assert.equal(plan.inputSha256.length, 64);
+    assert.ok(Date.parse(plan.createdAt));
     assert.equal(plan.keyframes[0].centerX, 0.32);
     assert.equal(plan.keyframes[1].centerX, 0.32);
   } finally {
@@ -140,8 +157,88 @@ test('portrait framing planner writes a manual track plan', () => {
   }
 });
 
+test('Remotion media paths are relative to the configured public directory', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cca-public-media-'));
+  const source = path.join(directory, 'input.mp4');
+  const outputs = path.join(directory, 'outputs');
+  fs.writeFileSync(source, 'video');
+  const result = spawnSync(
+    process.execPath,
+    [
+      '--input-type=module',
+      '-e',
+      `import {videoToSrc} from ${JSON.stringify(libUrl)}; console.log(videoToSrc(${JSON.stringify(source)}));`,
+    ],
+    {encoding: 'utf8', env: {...process.env, CCA_OUTPUTS_ROOT: outputs}},
+  );
+  try {
+    assert.equal(result.status, 0, result.stderr);
+    const relative = result.stdout.trim();
+    assert.match(relative, /^media\//);
+    assert.ok(fs.existsSync(path.join(outputs, '.public', relative)));
+  } finally {
+    fs.rmSync(directory, {recursive: true, force: true});
+  }
+});
+
+test('stock and voice-library scripts expose help', () => {
+  for (const [script, pattern] of [
+    ['scripts/stock-cli.mjs', /clipcaptionai stock search/],
+    ['scripts/generate-elevenlabs-library.mjs', /voiceover:library/],
+  ]) {
+    const result = spawnSync(process.execPath, [script, '--help'], {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.match(result.stdout, pattern);
+  }
+});
+
+test('voice-library resume budgets audio that is missing its manifest', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cca-voice-budget-'));
+  const audioDir = path.join(directory, 'jon');
+  fs.mkdirSync(audioDir, {recursive: true});
+  fs.writeFileSync(path.join(audioDir, '01-hook-jon.mp3'), 'audio-without-manifest');
+  const result = spawnSync(
+    process.execPath,
+    [
+      'scripts/generate-elevenlabs-library.mjs',
+      '--resume',
+      '--dry-run',
+      '--max-clips',
+      '1',
+      '--out-dir',
+      directory,
+    ],
+    {cwd: projectRoot, encoding: 'utf8', env: {...process.env, ELEVENLABS_VOICE_ID: 'test-voice'}},
+  );
+  const overBudget = spawnSync(
+    process.execPath,
+    [
+      'scripts/generate-elevenlabs-library.mjs',
+      '--dry-run',
+      '--max-clips',
+      '1',
+      '--budget',
+      '50',
+      '--out-dir',
+      directory,
+    ],
+    {cwd: projectRoot, encoding: 'utf8', env: {...process.env, ELEVENLABS_VOICE_ID: 'test-voice'}},
+  );
+  try {
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).pending_clips, 1);
+    assert.notEqual(overBudget.status, 0);
+    assert.match(overBudget.stderr, /above --budget 50/);
+  } finally {
+    fs.rmSync(directory, {recursive: true, force: true});
+  }
+});
+
 test('moments review helper exposes the standalone report command', () => {
-  const result = spawnSync('node', ['scripts/review-moments.mjs', '--help'], {
+  const result = spawnSync(process.execPath, ['scripts/review-moments.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -152,7 +249,7 @@ test('moments review helper exposes the standalone report command', () => {
 });
 
 test('eBay cinematic ads exposes the batch competitive-plan command', () => {
-  const result = spawnSync('node', ['scripts/ebay/ebay-cinematic-ads.mjs', '--help'], {
+  const result = spawnSync(process.execPath, ['scripts/ebay/ebay-cinematic-ads.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -166,7 +263,7 @@ test('eBay cinematic ads exposes the batch competitive-plan command', () => {
 });
 
 test('eBay traffic optimizer exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/optimize-ebay-traffic-report.mjs', '--help'], {
+  const result = spawnSync(process.execPath, ['scripts/ebay/optimize-ebay-traffic-report.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -177,7 +274,7 @@ test('eBay traffic optimizer exposes help', () => {
 });
 
 test('competitive blueprint preview renderer exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/render-competitive-blueprint-ad.mjs', '--help'], {
+  const result = spawnSync(process.execPath, ['scripts/ebay/render-competitive-blueprint-ad.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -189,7 +286,7 @@ test('competitive blueprint preview renderer exposes help', () => {
 
 test('competitive blueprint batch preview renderer exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/render-competitive-blueprint-batch.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -205,7 +302,7 @@ test('competitive blueprint batch preview renderer exposes help', () => {
 
 test('competitive premium render prep exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/prepare-competitive-premium-renders.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -221,7 +318,7 @@ test('competitive premium render prep exposes help', () => {
 
 test('competitive premium finalizer exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/finalize-competitive-premium-ads.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -237,7 +334,7 @@ test('competitive premium finalizer exposes help', () => {
 
 test('competitive premium render collector exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/collect-competitive-premium-renders.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -253,7 +350,7 @@ test('competitive premium render collector exposes help', () => {
 
 test('competitive video pipeline auditor exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/audit-competitive-video-pipeline.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -268,7 +365,7 @@ test('competitive video pipeline auditor exposes help', () => {
 });
 
 test('competitive review board generator exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/build-competitive-review-board.mjs', '--help'], {
+  const result = spawnSync(process.execPath, ['scripts/ebay/build-competitive-review-board.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -280,7 +377,7 @@ test('competitive review board generator exposes help', () => {
 });
 
 test('competitive video QA gate exposes help', () => {
-  const result = spawnSync('node', ['scripts/ebay/qa-competitive-videos.mjs', '--help'], {
+  const result = spawnSync(process.execPath, ['scripts/ebay/qa-competitive-videos.mjs', '--help'], {
     cwd: projectRoot,
     encoding: 'utf8',
   });
@@ -293,7 +390,7 @@ test('competitive video QA gate exposes help', () => {
 
 test('competitive video control loop exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/run-competitive-video-control-loop.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -309,7 +406,7 @@ test('competitive video control loop exposes help', () => {
 
 test('competitive render handoff exporter exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/export-competitive-render-handoff.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -325,7 +422,7 @@ test('competitive render handoff exporter exposes help', () => {
 
 test('competitive Higgsfield render runner exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/run-competitive-higgsfield-renders.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -341,7 +438,7 @@ test('competitive Higgsfield render runner exposes help', () => {
 
 test('competitive creative packet exporter exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/export-competitive-creative-packets.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -356,7 +453,7 @@ test('competitive creative packet exporter exposes help', () => {
 
 test('competitive voiceover plan exporter exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/export-competitive-voiceover-plan.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -375,7 +472,7 @@ test('local AI provider commands expose guarded help without requiring secrets',
     ['scripts/fal-image-edit.mjs', /approved-for-generated-marketing/],
     ['scripts/fal-reference-video.mjs', /disables native/i],
   ]) {
-    const result = spawnSync('node', [script, '--help'], {cwd: projectRoot, encoding: 'utf8'});
+    const result = spawnSync(process.execPath, [script, '--help'], {cwd: projectRoot, encoding: 'utf8'});
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, expected);
   }
@@ -383,7 +480,7 @@ test('local AI provider commands expose guarded help without requiring secrets',
 
 test('eBay main photo candidate generator exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/generate-ebay-main-photo-candidates.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -398,7 +495,7 @@ test('eBay main photo candidate generator exposes help', () => {
 
 test('eBay main photo apply bundle exporter exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/export-ebay-main-photo-apply-bundle.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -413,7 +510,7 @@ test('eBay main photo apply bundle exporter exposes help', () => {
 
 test('competitive research rerun helper exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/rerun-competitive-research-packet.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -429,7 +526,7 @@ test('competitive research rerun helper exposes help', () => {
 
 test('competitive research queue exporter exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/export-competitive-research-queue.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -445,7 +542,7 @@ test('competitive research queue exporter exposes help', () => {
 
 test('competitive research queue processor exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/process-competitive-research-queue.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -461,7 +558,7 @@ test('competitive research queue processor exposes help', () => {
 
 test('competitive research results importer exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/import-competitive-research-results.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -477,7 +574,7 @@ test('competitive research results importer exposes help', () => {
 
 test('competitive research import loop exposes help', () => {
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/run-competitive-research-import-loop.mjs', '--help'],
     {
       cwd: projectRoot,
@@ -542,7 +639,7 @@ test('competitive blueprint batch preview renderer writes a dry-run manifest', (
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/render-competitive-blueprint-batch.mjs',
       '--blueprints-dir',
@@ -719,7 +816,7 @@ test('competitive premium render prep writes credit-aware Higgsfield packets', (
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/prepare-competitive-premium-renders.mjs',
       '--preview-manifest',
@@ -921,7 +1018,7 @@ test('competitive premium render prep converts blueprint beats into product-safe
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/prepare-competitive-premium-renders.mjs',
       '--preview-manifest',
@@ -1081,7 +1178,7 @@ test('competitive premium render prep holds weak fallback references for researc
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/prepare-competitive-premium-renders.mjs',
       '--preview-manifest',
@@ -1113,7 +1210,7 @@ test('competitive premium render prep holds weak fallback references for researc
   );
 
   const audit = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/audit-competitive-video-pipeline.mjs', '--premium-plan', planPath],
     {
       cwd: projectRoot,
@@ -1149,7 +1246,7 @@ test('competitive premium finalizer reports missing generated clips without asse
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/finalize-competitive-premium-ads.mjs',
       '--premium-plan',
@@ -1202,7 +1299,7 @@ test('competitive premium render collector reports missing sources without faili
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/collect-competitive-premium-renders.mjs', '--premium-plan', premiumPlan],
     {
       cwd: projectRoot,
@@ -1378,7 +1475,7 @@ test('competitive video pipeline auditor reports generated clip blockers', () =>
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/audit-competitive-video-pipeline.mjs', '--premium-plan', premiumPlan],
     {
       cwd: projectRoot,
@@ -1560,7 +1657,7 @@ test('competitive review board generator writes an HTML operator board', () => {
   fs.writeFileSync(path.join(tempRoot, 'render-url-map.template.json'), '{}\n');
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/build-competitive-review-board.mjs', '--status', statusPath],
     {
       cwd: projectRoot,
@@ -1624,7 +1721,7 @@ test('competitive video QA gate writes a report for a vertical MP4', (t) => {
   }
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/qa-competitive-videos.mjs', '--video', video, '--item-id', 'qa-item'],
     {
       cwd: projectRoot,
@@ -1669,7 +1766,7 @@ test('competitive video control loop writes a dry-run manifest', () => {
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/run-competitive-video-control-loop.mjs',
       '--preview-manifest',
@@ -1785,7 +1882,7 @@ test('eBay competitive-plan can run from saved dashboard and workbench snapshots
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/ebay-cinematic-ads.mjs',
       'competitive-plan',
@@ -1860,7 +1957,7 @@ test('eBay traffic optimizer writes immediate CTR and conversion worklists', () 
 
   const outDir = path.join(tempRoot, 'out');
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/optimize-ebay-traffic-report.mjs',
       '--traffic-report',
@@ -1914,7 +2011,7 @@ test('eBay traffic optimizer can focus on dropship quantity listings', () => {
 
   const outDir = path.join(tempRoot, 'out');
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/optimize-ebay-traffic-report.mjs',
       '--traffic-report',
@@ -1999,7 +2096,7 @@ test('competitive render handoff exporter writes queue and runbook', () => {
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/export-competitive-render-handoff.mjs', '--premium-plan', premiumPlan],
     {
       cwd: projectRoot,
@@ -2125,7 +2222,7 @@ test('competitive Higgsfield render runner plans Mini-compatible jobs and resume
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/run-competitive-higgsfield-renders.mjs',
       '--premium-plan',
@@ -2203,7 +2300,7 @@ test('competitive Higgsfield render runner does not exceed the first-job credit 
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/run-competitive-higgsfield-renders.mjs',
       '--premium-plan',
@@ -2358,7 +2455,7 @@ test('competitive creative packet exporter writes per-listing packet folders', (
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/export-competitive-creative-packets.mjs', '--status', statusPath],
     {
       cwd: projectRoot,
@@ -2500,7 +2597,7 @@ test('competitive research rerun helper infers project from packet breadcrumbs',
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/rerun-competitive-research-packet.mjs',
       '--packet-dir',
@@ -2602,7 +2699,7 @@ test('competitive research queue exporter writes Automatio search queue', () => 
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/export-competitive-research-queue.mjs',
       '--packets-manifest',
@@ -2684,7 +2781,7 @@ test('competitive research results importer fans consolidated Automatio rows int
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/import-competitive-research-results.mjs',
       '--queue',
@@ -2785,7 +2882,7 @@ test('competitive research results importer routes rows by queued search query',
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/import-competitive-research-results.mjs',
       '--queue',
@@ -2867,7 +2964,7 @@ test('competitive research results importer flags low product-match rows', () =>
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/import-competitive-research-results.mjs',
       '--queue',
@@ -2941,7 +3038,7 @@ test('competitive research import loop imports rows and plans ready reruns', () 
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/run-competitive-research-import-loop.mjs',
       '--queue',
@@ -3058,7 +3155,7 @@ test('competitive research queue processor selects filled templates', () => {
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/process-competitive-research-queue.mjs', '--queue', queuePath, '--dry-run'],
     {
       cwd: projectRoot,
@@ -3118,7 +3215,7 @@ test('competitive research queue processor requires trend metrics by default', (
   );
 
   const blocked = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/process-competitive-research-queue.mjs', '--queue', queuePath, '--dry-run'],
     {
       cwd: projectRoot,
@@ -3141,7 +3238,7 @@ test('competitive research queue processor requires trend metrics by default', (
   assert.match(manifest.skipped[0].skip_reason, /no rows include trend metrics/);
 
   const override = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/process-competitive-research-queue.mjs',
       '--queue',
@@ -3201,7 +3298,7 @@ test('competitive research queue processor requires product match by default', (
   );
 
   const blocked = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/process-competitive-research-queue.mjs', '--queue', queuePath, '--dry-run'],
     {
       cwd: projectRoot,
@@ -3225,7 +3322,7 @@ test('competitive research queue processor requires product match by default', (
   assert.equal(manifest.evaluated[0].validation.max_product_match_score, 0);
 
   const override = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/process-competitive-research-queue.mjs',
       '--queue',
@@ -3287,7 +3384,7 @@ test('competitive research queue processor requires structure evidence by defaul
   );
 
   const blocked = spawnSync(
-    'node',
+    process.execPath,
     ['scripts/ebay/process-competitive-research-queue.mjs', '--queue', queuePath, '--dry-run'],
     {
       cwd: projectRoot,
@@ -3311,7 +3408,7 @@ test('competitive research queue processor requires structure evidence by defaul
   assert.equal(manifest.evaluated[0].validation.structure_row_count, 0);
 
   const override = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/process-competitive-research-queue.mjs',
       '--queue',
@@ -3403,7 +3500,7 @@ test('competitive premium render collector imports a mapped local mp4', (t) => {
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/collect-competitive-premium-renders.mjs',
       '--premium-plan',
@@ -3457,7 +3554,7 @@ test('competitive listing video architect writes product-safe blueprints from co
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/competitive-listing-video-architect.mjs',
       'plan',
@@ -3534,7 +3631,7 @@ test('competitive listing video architect preserves Kalodata trend metrics', () 
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/competitive-listing-video-architect.mjs',
       'plan',
@@ -3612,7 +3709,7 @@ test('research-brief Kalodata export columns clear premium research gate', () =>
   );
 
   const intel = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/competitive-listing-video-architect.mjs',
       'plan',
@@ -3678,7 +3775,7 @@ test('research-brief Kalodata export columns clear premium research gate', () =>
   );
 
   const prep = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/prepare-competitive-premium-renders.mjs',
       '--preview-manifest',
@@ -3741,7 +3838,7 @@ test('competitive listing video architect favors product-matched references over
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/competitive-listing-video-architect.mjs',
       'plan',
@@ -3792,7 +3889,7 @@ test('competitive listing video architect keeps per-listing folders in projects-
   fs.writeFileSync(path.join(projectDir, '01.jpg'), 'fake image placeholder');
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/competitive-listing-video-architect.mjs',
       'plan',
@@ -3862,7 +3959,7 @@ test('competitive voiceover plan exporter writes seller-voice scripts and render
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/export-competitive-voiceover-plan.mjs',
       '--blueprints-dir',
@@ -3935,7 +4032,7 @@ test('competitive voiceover plan exporter replaces generic marketplace narration
   );
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/export-competitive-voiceover-plan.mjs',
       '--blueprints-dir',
@@ -4013,7 +4110,7 @@ test(
     );
 
     const result = spawnSync(
-      'node',
+      process.execPath,
       [
         'scripts/ebay/generate-ebay-main-photo-candidates.mjs',
         '--worklist',
@@ -4073,7 +4170,7 @@ test('eBay main photo apply bundle exporter writes no-price-change upload folder
   const outDir = path.join(tempRoot, 'apply-bundle');
 
   const result = spawnSync(
-    'node',
+    process.execPath,
     [
       'scripts/ebay/export-ebay-main-photo-apply-bundle.mjs',
       '--queue',

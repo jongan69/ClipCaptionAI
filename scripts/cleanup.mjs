@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
@@ -20,7 +20,7 @@ Usage:
   bun run cleanup -- --all --yes
 
 Options:
-  --temp             Clean temporary render staging: outputs/work/ and public/media/.
+  --temp             Clean temporary render staging: outputs/work/ and outputs/.public/media/.
   --outputs          Clean old output folders, keeping the newest folders.
   --keep-latest N    Number of output folders to keep with --outputs. Default: 5.
   --all              Clean temp files and all output folders.

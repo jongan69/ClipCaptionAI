@@ -11,7 +11,7 @@ import {hashValue, serializeCatalog} from '../scripts/platform/catalog.mjs';
 const root = path.resolve(import.meta.dirname, '..');
 const cli = path.join(root, 'bin', 'clipcaptionai.js');
 const executable = (file, source) => {
-  fs.writeFileSync(file, `#!/usr/bin/env node\n${source}`);
+  fs.writeFileSync(file, `#!/usr/bin/env bun\n${source}`);
   fs.chmodSync(file, 0o755);
 };
 const run = (command, args, env) => spawnSync(command, args, {cwd: root, env, encoding: 'utf8'});
@@ -86,7 +86,7 @@ const fs=require('fs'); const args=process.argv.slice(2);
 if(args[0]==='remotion'&&(args[1]==='render'||args[1]==='still')){
   const propsArg=args.find((arg)=>arg.startsWith('--props='));
   const props=propsArg?JSON.parse(fs.readFileSync(propsArg.slice(8),'utf8')):{};
-  fs.writeFileSync(args[4],args[1]==='still'?'final-image':props.voice?'voice-track':'final-video');
+  fs.writeFileSync(args[4],args[1]==='still'?'final-image:'+props.timeline?.[1]?.headline:props.voice?'voice-track':'final-video');
   console.log('Rendered '+args[4]);
 } else process.exit(2);
 `,
@@ -279,11 +279,11 @@ test(
 test('marketing carousel renders one finished image per slide', {timeout: 60_000}, (t) => {
   const fx = fixture(t);
   const product = path.join(fx.directory, 'product.yaml');
-  const first = path.join(fx.directory, 'morning.jpg');
-  const second = path.join(fx.directory, 'meal.jpg');
+  const images = Array.from({length: 6}, (_, index) =>
+    path.join(fx.directory, `slide-${index + 1}.jpg`),
+  );
   fs.writeFileSync(product, yaml.dump({id: 'demo', name: 'Demo'}));
-  fs.writeFileSync(first, 'first-image');
-  fs.writeFileSync(second, 'second-image');
+  images.forEach((image, index) => fs.writeFileSync(image, `image-${index + 1}`));
   const campaign = path.join(fx.directory, 'campaign.yaml');
   fs.writeFileSync(
     campaign,
@@ -296,10 +296,10 @@ test('marketing carousel renders one finished image per slide', {timeout: 60_000
           id: 'weekly-health',
           format: 'carousel',
           cta: 'Review your day with PrepAI',
-          slides: [
-            {src: './morning.jpg', headline: 'Start with one useful change'},
-            {src: './meal.jpg', headline: 'Make it easy to repeat'},
-          ],
+          slides: images.map((_, index) => ({
+            src: `./slide-${index + 1}.jpg`,
+            headline: `Useful change ${index + 1}`,
+          })),
         },
       ],
     }),
@@ -315,7 +315,7 @@ test('marketing carousel renders one finished image per slide', {timeout: 60_000
     fs.readFileSync(path.join(fx.campaigns, 'carousel-run', 'plan.json'), 'utf8'),
   );
   assert.equal(plan.variants[0].format, 'carousel');
-  assert.equal(plan.variants[0].slides.length, 2);
+  assert.equal(plan.variants[0].slides.length, 6);
   assert.equal(plan.variants[0].timeline.length, 0);
 
   parseChildJson(
@@ -334,12 +334,17 @@ test('marketing carousel renders one finished image per slide', {timeout: 60_000
     fs.readFileSync(path.join(fx.campaigns, 'carousel-run', 'assets', 'index.json'), 'utf8'),
   );
   const finals = assets.filter((asset) => asset.type === 'final');
-  assert.equal(finals.length, 2);
+  assert.equal(finals.length, 6);
   assert.deepEqual(
     finals.map((asset) => asset.provenance.slideIndex),
-    [1, 2],
+    [1, 2, 3, 4, 5, 6],
   );
   assert.ok(finals.every((asset) => asset.path.endsWith('.png')));
+  assert.equal(new Set(finals.map((asset) => asset.path)).size, 6);
+  assert.deepEqual(
+    finals.map((asset) => fs.readFileSync(asset.path, 'utf8')),
+    Array.from({length: 6}, (_, index) => `final-image:Useful change ${index + 1}`),
+  );
 
   const qa = parseChildJson(
     runCli(['marketing', 'qa', '--run', 'carousel-run', '--wait', '--json'], fx.env),
@@ -544,6 +549,84 @@ test(
     assert.equal(assets.filter((asset) => asset.type === 'generated').length, 3);
     assert.equal(assets.filter((asset) => asset.type === 'final').length, 2);
     assert.equal(assets[0].provenance.adapter, 'higgsfield');
+  },
+);
+
+test(
+  'live generation remains awaiting assets when the provider returns no file',
+  {timeout: 60_000},
+  (t) => {
+    const fx = fixture(t);
+    const product = path.join(fx.directory, 'product.yaml');
+    fs.writeFileSync(product, yaml.dump({id: 'demo', name: 'Demo'}));
+    const campaign = path.join(fx.directory, 'campaign.yaml');
+    fs.writeFileSync(
+      campaign,
+      yaml.dump({
+        id: 'pending-paid',
+        product: './product.yaml',
+        objective: 'Keep provider completion honest.',
+        variants: [
+          {
+            id: 'pending',
+            durationSeconds: 5,
+            cta: 'Go',
+            intents: [
+              {
+                type: 'generation',
+                provider: 'higgsfield',
+                model: 'fake',
+                estimateArgv: ['generate', 'cost', 'fake'],
+                argv: ['generate', 'create'],
+              },
+            ],
+            timeline: [{type: 'end-card', startSeconds: 4, durationSeconds: 1, text: 'Go'}],
+          },
+        ],
+      }),
+    );
+    parseChildJson(
+      runCli(
+        [
+          'marketing',
+          'plan',
+          '--campaign',
+          campaign,
+          '--run-id',
+          'pending-run',
+          '--wait',
+          '--json',
+        ],
+        fx.env,
+      ),
+    );
+    parseChildJson(
+      runCli(['marketing', 'estimate', '--run', 'pending-run', '--wait', '--json'], fx.env),
+    );
+    parseChildJson(
+      runCli(
+        ['marketing', 'approve', '--run', 'pending-run', '--budget-credits', '3', '--json'],
+        fx.env,
+      ),
+    );
+    const result = parseChildJson(
+      runCli(
+        ['marketing', 'execute', '--run', 'pending-run', '--live-execution', '--wait', '--json'],
+        fx.env,
+      ),
+    );
+    assert.equal(result.status, 'awaiting-assets');
+    const assets = JSON.parse(
+      fs.readFileSync(path.join(fx.campaigns, 'pending-run', 'assets', 'index.json'), 'utf8'),
+    );
+    assert.equal(
+      assets.some((asset) => asset.type === 'final'),
+      true,
+    );
+    assert.equal(
+      assets.some((asset) => asset.type === 'generated'),
+      false,
+    );
   },
 );
 

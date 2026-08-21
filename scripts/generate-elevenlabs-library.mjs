@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -124,14 +124,11 @@ const maxClips = args['max-clips'] === undefined ? planned.length : Math.floor(n
 const selected = planned.slice(0, maxClips);
 const pending = resume
   ? selected.filter((item) => {
-    const manifestPath = item.audio.replace(/\\.mp3$/i, '.generation.json');
+    const manifestPath = item.audio.replace(/\.mp3$/i, '.generation.json');
     return !(fs.existsSync(item.audio) && fs.existsSync(manifestPath));
   })
   : selected;
-// eleven_multilingual_v2 currently reports a character cost near 0.5x raw text
-// for this account. Keep a conservative ceil per clip, while recording the
-// authoritative provider cost in each generation manifest.
-const estimated = pending.reduce((sum, item) => sum + Math.ceil(item.text_characters * 0.5), 0);
+const estimated = pending.reduce((sum, item) => sum + item.text_characters, 0);
 if (estimated > budget) throw new Error(`Planned text costs ${estimated} characters, above --budget ${budget}. Reduce --max-clips or increase the budget.`);
 
 if (args['dry-run'] === true) {
@@ -156,12 +153,7 @@ for (const [position, item] of selected.entries()) {
   const manifestPath = item.audio.replace(/\.mp3$/i, '.generation.json');
   if (resume && fs.existsSync(item.audio) && fs.existsSync(manifestPath)) continue;
   const endpoint = `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(item.voice_id)}?output_format=${encodeURIComponent(outputFormat)}`;
-  let response;
-  for (let attempt = 1; attempt <= 3; attempt += 1) {
-    response = await fetch(endpoint, {method: 'POST', headers: {'content-type': 'application/json', 'xi-api-key': apiKey}, body: JSON.stringify({text: item.text, model_id: modelId})});
-    if (response.ok || ![408, 409, 429, 500, 502, 503, 504].includes(response.status) || attempt === 3) break;
-    await sleep(1500 * attempt);
-  }
+  const response = await fetch(endpoint, {method: 'POST', headers: {'content-type': 'application/json', 'xi-api-key': apiKey}, body: JSON.stringify({text: item.text, model_id: modelId})});
   if (!response.ok) {
     const detail = (await response.text()).slice(0, 500);
     failures.push({id: item.id, status: response.status, detail});

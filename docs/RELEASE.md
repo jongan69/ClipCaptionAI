@@ -1,13 +1,13 @@
-# ClipCaptionAI v0.1.0 Beta
+# ClipCaptionAI v0.2.0
 
-ClipCaptionAI v0.1.0 is a CLI-first public beta. The supported first-run path is local and deterministic: it does not require a paid AI provider or an API key.
+ClipCaptionAI v0.2.0 is a CLI-first video-production toolkit with an optional Electron desktop observer. Its supported first-run path is local and deterministic; provider-backed workflows are opt-in.
 
 ## Install from the release tarball
 
-Prerequisites are Node.js 20 or newer plus `ffmpeg` and `ffprobe` on `PATH`.
+Prerequisites are Bun 1.3 or newer plus `ffmpeg` and `ffprobe` on `PATH`.
 
 ```bash
-bun install --global ./clipcaptionai-0.1.0.tgz
+bun install --global ./clipcaptionai-0.2.0.tgz
 clipcaptionai doctor
 clipcaptionai video run --example --run-id first-video
 clipcaptionai video qa --run outputs/video-runs/first-video
@@ -19,10 +19,10 @@ The finished MP4 and its versioned QA manifest are written below the current dir
 
 | Platform | CLI beta | Desktop beta |
 | --- | --- | --- |
-| macOS 13+ on Apple silicon | Supported and release-smoked | Best effort; attached only when signed installation passes |
-| macOS 13+ on Intel | Expected with Node.js and FFmpeg; not release-smoked | Not included in v0.1.0 |
-| Windows 10/11 x64 | Expected with Node.js and FFmpeg; not release-smoked | Not included in v0.1.0 |
-| Current x64 Linux | Expected with Node.js and FFmpeg; not release-smoked | Not included in v0.1.0 |
+| macOS 13+ on Apple silicon | Supported and release-smoked | Attached when signing and packaging pass |
+| macOS 13+ on Intel | Expected with Bun and FFmpeg; not release-smoked | Not included in v0.2.0 |
+| Windows 10/11 x64 | Expected with Bun and FFmpeg; not release-smoked | Not included in v0.2.0 |
+| Current x64 Linux | CI verified with Bun and FFmpeg | Build verified; installer not included in v0.2.0 |
 
 ## Optional providers
 

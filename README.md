@@ -23,7 +23,7 @@ On macOS with Homebrew:
 brew install oven-sh/bun/bun ffmpeg
 ```
 
-On Windows or Linux, install Node.js 20+ and FFmpeg using your normal package manager or the official installers, then continue with `bun run doctor` below.
+On Windows or Linux, install Bun 1.3+ and FFmpeg using your normal package manager or the official installers, then continue with `bun run doctor` below.
 
 Optional extras:
 
@@ -67,7 +67,7 @@ bun run clipkit -- video run \
   --run-id first-video
 ```
 
-When installed from the v0.1.0 release tarball, the equivalent clean first-run command is:
+When installed from the v0.2.0 release tarball, the equivalent clean first-run command is:
 
 ```bash
 clipcaptionai video run --example --run-id first-video
@@ -160,7 +160,7 @@ The menu is convenient for interactive editing. The direct `bun run clipkit -- .
 
 `bun run desktop` starts an Electron shell that loads the same adapter catalog and observes the same persisted jobs as the CLI. Work continues if the window closes.
 
-- Required: Node.js + `ffmpeg` + `ffprobe` + project CLI/runtime files
+- Required: Bun + `ffmpeg` + `ffprobe` + project CLI/runtime files
 - Optional: `yt-dlp`, Ollama; AI provider auto mode prefers local Ollama and falls back to configured DeepSeek/OpenAI
 - Generic marketing campaigns use the same discovered adapters and job broker; see [Marketing platform](docs/MARKETING_PLATFORM.md).
 
@@ -289,7 +289,7 @@ bun test tests/ai-provider.test.mjs
 bun test tests/clipkit-lib.test.mjs
 ```
 
-Tests use Node's built-in test runner. Integration tests create temp dirs, run the actual CLI, generate real MP4s, and clean up. They skip gracefully when ffmpeg/ImageMagick are absent. `bun run check` runs typechecking plus the full test suite.
+Tests use Bun's test runner. Integration tests create temp dirs, run the actual CLI, generate real MP4s, and clean up. They skip gracefully when ffmpeg/ImageMagick are absent. `bun run check` runs typechecking plus the full test suite.
 
 ## Related Projects
 

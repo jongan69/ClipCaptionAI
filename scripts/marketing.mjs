@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import {execFileSync, spawnSync} from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -373,7 +373,7 @@ const copyAsset = (state, variant, intent, source, type, extra = {}) => {
     state.directory,
     'artifacts',
     type,
-    `${variant.id}-${hash.slice(0, 12)}${extension}`,
+    `${variant.id}${extra.slideIndex ? `-slide-${String(extra.slideIndex).padStart(2, '0')}` : ''}-${hash.slice(0, 12)}${extension}`,
   );
   if (!fs.existsSync(target)) fs.copyFileSync(source, target);
   const adapter =
@@ -593,6 +593,7 @@ const executeCampaign = async () => {
     throw new Error('No paid generation intents exist in this plan.');
   const assets = [...state.assets];
   const providerJobs = {...state.run.providerJobs};
+  const completedProviderKeys = new Set();
   const spentKeys = new Set(Object.keys(providerJobs));
   const spentCredits = () =>
     [...spentKeys].reduce((sum, key) => sum + (state.run.estimates[key] ?? 0), 0);
@@ -653,12 +654,14 @@ const executeCampaign = async () => {
         spentKeys.add(key);
         const generatedPath =
           intent.output || providerJobs[key].output || providerJobs[key].result_path;
-        if (generatedPath && fs.existsSync(generatedPath))
+        if (generatedPath && fs.existsSync(generatedPath)) {
           assets.push(
             copyAsset(state, variant, intent, generatedPath, 'generated', {
               providerJob: providerJobs[key],
             }),
           );
+          completedProviderKeys.add(key);
+        }
         continue;
       }
       if (intent.type === 'capture') {
@@ -733,7 +736,7 @@ const executeCampaign = async () => {
   ]);
   const run = saveRun(state.directory, state.run, {
     status:
-      live && Object.keys(providerJobs).length > 0 && assets.length === 0
+      live && Object.keys(providerJobs).some((key) => !completedProviderKeys.has(key))
         ? 'awaiting-assets'
         : live
           ? 'executed'

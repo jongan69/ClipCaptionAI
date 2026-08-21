@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * build-spec.mjs — Step 2 of the logo animation pipeline. This is the piece that
  * solves the "the model can't accept images" problem.
@@ -10,8 +10,8 @@
  * Paste that file into Codex Spark (or any text-only model) and it can animate a
  * logo it has never seen, because the spec tells it everything a picture would.
  *
- *   node scripts/logo/build-spec.mjs --slug listingos
- *   node scripts/logo/build-spec.mjs --slug listingos --variants 12
+ *   bun scripts/logo/build-spec.mjs --slug listingos
+ *   bun scripts/logo/build-spec.mjs --slug listingos --variants 12
  *
  * Zero dependencies.
  */
@@ -29,7 +29,7 @@ const arg = (flag, fallback = null) => {
 const slug = arg('--slug');
 const variantCount = Number(arg('--variants', '10'));
 if (!slug) {
-  console.error('Usage: node scripts/logo/build-spec.mjs --slug <brand-slug> [--variants 10]');
+  console.error('Usage: bun scripts/logo/build-spec.mjs --slug <brand-slug> [--variants 10]');
   process.exit(1);
 }
 

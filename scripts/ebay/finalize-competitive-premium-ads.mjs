@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync, execFileSync} from 'node:child_process';
@@ -153,7 +153,7 @@ const main = async () => {
     }
 
     const assembleArgs = buildAssembleArgs(packet);
-    const result = spawnSync('node', assembleArgs, {
+    const result = spawnSync(process.execPath, assembleArgs, {
       cwd: projectRoot,
       encoding: 'utf8',
       maxBuffer: 1024 * 1024 * 20,

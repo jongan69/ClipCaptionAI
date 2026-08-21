@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 /**
  * compress-video.mjs — Compress a video with minimal quality loss using CRF encoding.
  *

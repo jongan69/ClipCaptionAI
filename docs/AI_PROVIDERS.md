@@ -70,7 +70,7 @@ Build or resume the reusable phrase library within an explicit character budget:
 bun run voiceover:library -- --budget 36000 --resume
 ```
 
-The command writes one MP3 and non-secret manifest per phrase, retries only safe provider failures, checks the live subscription balance, and preserves a safety reserve. Use `--dry-run` before spending credits. Generated audio still requires human review for pronunciation, tone, and licensing suitability; see [the voice library guide](VOICE_LIBRARY.md).
+The command writes one MP3 and non-secret manifest per phrase, does not retry ambiguous paid generation requests, checks the live subscription balance, and preserves a safety reserve. Use `--dry-run` before spending credits. Generated audio still requires human review for pronunciation, tone, and licensing suitability; see [the voice library guide](VOICE_LIBRARY.md).
 
 ### fal reviewed marketing assets
 

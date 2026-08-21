@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -24,7 +24,7 @@ Options:
                               not an eBay source-of-truth or main listing image.
   --dry-run                  Validate local inputs and print the provider request without calling fal.
 
-Requires FAL_KEY in .env or the environment. This local CLI only runs in Node;
+Requires FAL_KEY in .env or the environment. This local CLI only runs in Bun;
 the key is not sent to Electron's renderer or saved in its generation manifest.
 `;
 

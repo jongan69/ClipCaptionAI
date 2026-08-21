@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,6 +10,14 @@ import {writeJsonAtomic} from './platform/jobs.mjs';
 loadEnv();
 const action = process.argv[2];
 const args = parseArgs(process.argv.slice(3));
+const usage = `Usage:
+  clipcaptionai stock doctor
+  clipcaptionai stock search --query <text> [--count N]
+  clipcaptionai stock download --query <text> --out <directory> [--count N]`;
+if (action === '--help' || action === '-h' || args.help || args.h) {
+  console.log(usage);
+  process.exit(0);
+}
 const licenseUrl = 'https://www.pexels.com/license/';
 const docsUrl = 'https://www.pexels.com/api/documentation/';
 const providerUrl = 'https://www.pexels.com/';
