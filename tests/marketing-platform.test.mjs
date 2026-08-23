@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 import {hashValue, serializeCatalog} from '../scripts/platform/catalog.mjs';
 
@@ -134,6 +134,28 @@ test('marketing tools are catalog-driven for CLI and desktop consumers', async (
     catalog.find((adapter) => adapter.id === 'stock').actions.map((action) => action.id),
     ['doctor', 'search', 'download'],
   );
+});
+
+test('marketing plans preserve YAML merge keys', (t) => {
+  const fx = fixture(t);
+  const product = path.join(fx.directory, 'product.yaml');
+  const campaign = path.join(fx.directory, 'campaign.yaml');
+  fs.writeFileSync(product, yaml.dump({id: 'demo', name: 'Demo'}));
+  fs.writeFileSync(
+    campaign,
+    `id: anchored\nproduct: ./product.yaml\nobjective: Verify reusable campaign defaults.\ndefaults: &defaults\n  width: 1080\n  height: 1920\n  durationSeconds: 5\n  cta: Go\nvariants:\n  - <<: *defaults\n    id: merged\n    timeline:\n      - type: end-card\n        startSeconds: 4\n        durationSeconds: 1\n        text: Go\n`,
+  );
+  parseChildJson(
+    runCli(
+      ['marketing', 'plan', '--campaign', campaign, '--run-id', 'anchored-run', '--wait', '--json'],
+      fx.env,
+    ),
+  );
+  const plan = JSON.parse(
+    fs.readFileSync(path.join(fx.campaigns, 'anchored-run', 'plan.json'), 'utf8'),
+  );
+  assert.equal(plan.variants[0].width, 1080);
+  assert.equal(plan.variants[0].cta, 'Go');
 });
 
 test('stock adapter downloads portrait originals with reusable license provenance', async (t) => {

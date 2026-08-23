@@ -3,7 +3,7 @@ import {execFileSync, spawnSync} from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 import {commandPath} from './command-utils.mjs';
 import {
@@ -137,7 +137,9 @@ const requireCurrentApproval = async ({plan, run}) => {
 const resolveProduct = (campaignPath, value) => {
   if (typeof value !== 'string') return ProductManifest.parse(value);
   const file = path.resolve(path.dirname(campaignPath), value);
-  return ProductManifest.parse(yaml.load(fs.readFileSync(file, 'utf8')));
+  return ProductManifest.parse(
+    yaml.load(fs.readFileSync(file, 'utf8'), {schema: yaml.YAML11_SCHEMA}),
+  );
 };
 
 const expandSlides = (variant) => {
@@ -197,7 +199,9 @@ const expandSlides = (variant) => {
 
 const planCampaign = async () => {
   const campaignPath = path.resolve(requireArg(args, 'campaign'));
-  const campaign = CampaignBrief.parse(yaml.load(fs.readFileSync(campaignPath, 'utf8')));
+  const campaign = CampaignBrief.parse(
+    yaml.load(fs.readFileSync(campaignPath, 'utf8'), {schema: yaml.YAML11_SCHEMA}),
+  );
   const variants = CampaignBrief.parse({
     ...campaign,
     variants: campaign.variants.map(expandSlides),
