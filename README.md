@@ -67,10 +67,10 @@ bun run clipkit -- video run \
   --run-id first-video
 ```
 
-When installed from the v0.2.1 candidate tarball, the equivalent clean first-run command is:
+After extracting and installing the v0.2.1 candidate as described in [the release guide](docs/RELEASE.md), run from its package directory:
 
 ```bash
-clipcaptionai video run --example --run-id first-video
+bun bin/clipcaptionai.js video run --example --run-id first-video --wait
 ```
 
 Verify the result:

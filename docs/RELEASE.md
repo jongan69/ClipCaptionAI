@@ -7,11 +7,17 @@ ClipCaptionAI v0.2.1 is a CLI-first video-production toolkit with an optional El
 Prerequisites are Bun 1.4.4 or newer plus `ffmpeg` and `ffprobe` on `PATH`.
 
 ```bash
-bun install --global ./clipcaptionai-0.2.1.tgz
-clipcaptionai doctor
-clipcaptionai video run --example --run-id first-video
-clipcaptionai video qa --run outputs/video-runs/first-video
+mkdir clipcaptionai-0.2.1
+tar -xzf clipcaptionai-0.2.1.tgz -C clipcaptionai-0.2.1 --strip-components=1
+cp bun.lock clipcaptionai-0.2.1/bun.lock
+cd clipcaptionai-0.2.1
+bun install --production --frozen-lockfile --ignore-scripts
+bun bin/clipcaptionai.js doctor
+bun bin/clipcaptionai.js video run --example --run-id first-video --wait
+bun bin/clipcaptionai.js video qa --run outputs/video-runs/first-video --wait
 ```
+
+Download the companion `bun.lock` and checksum file alongside the tarball. Bun omits lockfiles from npm-compatible tarballs. Install in the extracted package directory so its root-level security overrides apply. Installing it as a dependency of another project or globally does not apply those overrides; that installation mode is not validated for this candidate.
 
 The finished MP4 and its versioned QA manifest are written below the current directory in `outputs/video-runs/first-video/`.
 
