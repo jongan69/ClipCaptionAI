@@ -14,7 +14,7 @@ This first run is local and does not require an OpenAI, ElevenLabs, or fal API k
 
 You need:
 
-- Bun 1.3 or newer
+- Bun 1.4.4 or newer
 - `ffmpeg` and `ffprobe`
 
 On macOS with Homebrew:
@@ -23,7 +23,7 @@ On macOS with Homebrew:
 brew install oven-sh/bun/bun ffmpeg
 ```
 
-On Windows or Linux, install Bun 1.3+ and FFmpeg using your normal package manager or the official installers, then continue with `bun run doctor` below.
+On Windows or Linux, install Bun 1.4.4+ and FFmpeg using your normal package manager or the official installers, then continue with `bun run doctor` below.
 
 Optional extras:
 
@@ -67,10 +67,10 @@ bun run clipkit -- video run \
   --run-id first-video
 ```
 
-When installed from the v0.2.0 release tarball, the equivalent clean first-run command is:
+After extracting and installing the v0.2.1 candidate as described in [the release guide](docs/RELEASE.md), run from its package directory:
 
 ```bash
-clipcaptionai video run --example --run-id first-video
+bun bin/clipcaptionai.js video run --example --run-id first-video --wait
 ```
 
 Verify the result:

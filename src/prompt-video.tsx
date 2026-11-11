@@ -75,7 +75,7 @@ const ShotFrame = ({shot, index, totalShots, width, height, durationInFrames}: {
         )
       ) : null}
       <AbsoluteFill style={{background: 'linear-gradient(180deg, rgba(4,8,18,.08), rgba(4,8,18,.5))'}} />
-      <div style={{position: 'absolute', top: Math.round(height * 0.08), left: Math.round(width * 0.07), right: Math.round(width * 0.07), display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,.88)', fontSize: Math.max(22, Math.round(width * 0.025)), fontWeight: 800, letterSpacing: 3}}>
+      <div style={{position: 'absolute', top: Math.round(height * 0.08), left: Math.round(width * 0.07), right: Math.round(width * 0.07), display: 'flex', justifyContent: 'space-between', color: 'rgba(255,255,255,.88)', fontSize: Math.max(8, Math.round(width * 0.025)), fontWeight: 800, letterSpacing: width * 0.0015}}>
         <span>CLIPCAPTIONAI</span><span>VIDEO HARNESS</span>
       </div>
       <div style={{position: 'relative', padding: Math.round(width * 0.07), maxWidth: '90%', textAlign: 'center', fontSize: Math.max(48, Math.round(width * 0.07)), fontWeight: 850, lineHeight: 1.06, color: '#fff', textShadow: '0 4px 18px rgba(0,0,0,.5)'}}>

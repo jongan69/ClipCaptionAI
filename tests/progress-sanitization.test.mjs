@@ -8,9 +8,7 @@ test('progress logs redact structured and unstructured credentials', () => {
     token: 'provider-secret-value',
     apiKey: 'another-provider-secret',
   });
-  const sanitized = sanitizeLogText(
-    `${raw} password=plain-secret Bearer abcdefghijklmnopqrstuv`,
-  );
+  const sanitized = sanitizeLogText(`${raw} password=plain-secret Bearer abcdefghijklmnopqrstuv`);
 
   assert.equal(sanitized.includes('provider-secret-value'), false);
   assert.equal(sanitized.includes('another-provider-secret'), false);

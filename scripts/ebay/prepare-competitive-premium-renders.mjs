@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {buildHiggsfieldProductionPrompt} from '../higgsfield-production.mjs';
 import {ensureDir, parseArgs, projectRoot} from '../lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
@@ -255,14 +256,26 @@ const jobPacketForRender = ({render, roi, maxJobsPerListing, modelDefaults, cred
 
   const jobs = pickedJobs.map((job, index) => {
     const referenceImages = referenceImagesForJob({job, imagePaths});
-    const prompt = [
-      job.prompt,
-      '',
-      'Make this a premium, high-converting eBay product ad shot.',
-      'Use the reference images as product truth. Preserve actual color, shape, condition, labels, and included items.',
-      'Do not add text inside the generated video. Do not invent accessories, packaging, logos, damage, features, or scale.',
-      'Copy only the competitor-inspired camera role and pacing, not competitor assets.',
-    ].join(' ');
+    const durationSeconds = numberValue(job.duration_seconds ?? job.duration, 5);
+    const prompt = buildHiggsfieldProductionPrompt({
+      prompt: [
+        job.prompt,
+        'Make this a premium, high-converting eBay product ad shot.',
+        'Copy only the competitor-inspired camera role and pacing, not competitor assets.',
+      ].join(' '),
+      purpose: job.purpose,
+      durationSeconds,
+      aspectRatio: modelDefaults.aspect_ratio,
+      subjectLock:
+        'The reference images are product truth. Preserve the exact color, shape, scale, condition, geometry, labels, and included items.',
+      cameraLock: job.beat?.competitor_pattern
+        ? `Adapt only this camera role and pacing: ${job.beat.competitor_pattern}`
+        : undefined,
+      audioRequirements:
+        'Generate no dialogue, music, or copied audio. Captions, SFX, and music are added during assembly.',
+      avoid:
+        'Invented accessories, packaging, rooms, logos, damage, features, scale, text, competitor assets, product mutation, flicker, broken reflections, and unmotivated camera movement.',
+    });
     return {
       id: job.id ?? `competitive-${String(index + 1).padStart(2, '0')}`,
       purpose: job.purpose ?? null,
@@ -273,7 +286,7 @@ const jobPacketForRender = ({render, roi, maxJobsPerListing, modelDefaults, cred
       resolution: modelDefaults.resolution,
       mode: modelDefaults.mode,
       aspect_ratio: modelDefaults.aspect_ratio,
-      duration_seconds: numberValue(job.duration_seconds ?? job.duration, 5),
+      duration_seconds: durationSeconds,
       prompt,
       reference_images: referenceImages,
       reference_args: referenceArgsForImages(referenceImages),

@@ -2,6 +2,33 @@
 
 All notable changes to ClipCaptionAI are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] — Unreleased
+
+### Fixed
+- Prevent shared job workers from stealing initializing/live resource locks; safely retire abandoned ownership.
+- Patch dependency advisories, including Electron, Zod, YAML, URI parsing, and glob handling; pin scoped transitive fixes.
+- Defer the production desktop renderer until its HTML is ready, keeping CSP ahead of scripts.
+- Exclude local media and downloaded model libraries from desktop packages.
+- Keep first-run video headers inside small portrait frames.
+- Include the complete Remotion source graph in the install package, including font and showcase entry modules.
+- Make marketing dry runs side-effect free and restrict cost estimation to cost queries.
+- Serialize campaign mutations and preserve uncertain paid submissions to prevent duplicate charges on resume.
+- Render registered media snapshots and reject missing or changed artifacts.
+- Invalidate stale QA/review evidence and require current evidence for publication readiness.
+- Connect desktop workflow cancellation and surface bridge failures.
+- Preserve YAML merge keys and resolve campaign media paths relative to the campaign file.
+
+### Added
+- Explicit `marketing review` command for content, visual, and publication decisions bound to current QA.
+- Shared Higgsfield shot-production contract across marketing and eBay workflows.
+- Regression coverage for package imports, concurrent campaign ownership, media integrity, delayed collection, and review transitions.
+
+### Compatibility
+- Bun 1.4.4+ is required for version-scoped security overrides and the v3 lockfile.
+- Re-plan and re-approve existing marketing campaigns because adapter capabilities changed.
+- `execute --dry-run` no longer renders local media; use `execute` for that purpose.
+- Executable generation intents must declare `output` and reference it in their timeline or slides.
+
 ## [0.2.0] — 2026-08-21
 
 ### Added

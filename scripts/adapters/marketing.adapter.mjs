@@ -21,7 +21,7 @@ export default {
     id: 'marketing',
     title: 'Marketing campaigns',
     description: 'Plan, budget, execute, inspect, QA, and export campaign runs.',
-    version: '4',
+    version: '5',
     actions: [
       entry('doctor', 'Doctor', 'sync'),
       entry('plan', 'Plan', 'job', ['campaigns']),
@@ -30,6 +30,7 @@ export default {
       entry('execute', 'Execute', 'job', ['campaigns', 'outputs', 'gpu']),
       entry('inspect', 'Inspect', 'sync'),
       entry('qa', 'QA', 'job', ['campaigns']),
+      entry('review', 'Review', 'sync', ['campaigns']),
       entry('export', 'Export', 'job', ['campaigns', 'outputs']),
     ],
   },

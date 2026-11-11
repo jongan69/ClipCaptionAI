@@ -1,9 +1,26 @@
 import {z} from 'zod';
 
+const variantId = z
+  .string()
+  .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/, 'Variant ids must be safe file names.');
+
 const command = z.object({
   argv: z.array(z.string()).min(1),
   cwd: z.string().optional(),
   outputs: z.array(z.string()).default([]),
+});
+
+const generationProduction = z.object({
+  purpose: z.string().optional(),
+  subjectLock: z.string().optional(),
+  environmentLock: z.string().optional(),
+  cameraLock: z.string().optional(),
+  styleLock: z.string().optional(),
+  beginningState: z.string().optional(),
+  endingState: z.string().optional(),
+  physicalRequirements: z.string().optional(),
+  audioRequirements: z.string().optional(),
+  avoid: z.string().optional(),
 });
 
 export const ProductManifest = z.object({
@@ -25,6 +42,7 @@ const intent = z.object({
   model: z.string().optional(),
   estimateCredits: z.number().nonnegative().default(0),
   prompt: z.string().optional(),
+  production: generationProduction.optional(),
   template: z.string().optional(),
   argv: z.array(z.string()).default([]),
   estimateArgv: z.array(z.string()).default([]),
@@ -103,7 +121,7 @@ const timelineEntry = z
 
 const variant = z
   .object({
-    id: z.string().min(1),
+    id: variantId,
     width: z.number().int().positive().default(1080),
     height: z.number().int().positive().default(1920),
     fps: z.number().positive().default(30),
@@ -149,13 +167,22 @@ const variant = z
       });
   });
 
-export const CampaignBrief = z.object({
-  id: z.string().min(1),
-  product: z.union([z.string(), ProductManifest]),
-  objective: z.string().min(1),
-  approvedClaims: z.array(z.string()).default([]),
-  variants: z.array(variant).min(1),
-});
+export const CampaignBrief = z
+  .object({
+    id: z.string().min(1),
+    product: z.union([z.string(), ProductManifest]),
+    objective: z.string().min(1),
+    approvedClaims: z.array(z.string()).default([]),
+    variants: z.array(variant).min(1),
+  })
+  .superRefine((campaign, context) => {
+    if (new Set(campaign.variants.map((entry) => entry.id)).size !== campaign.variants.length)
+      context.addIssue({
+        code: 'custom',
+        path: ['variants'],
+        message: 'Variant ids must be unique.',
+      });
+  });
 
 export const CreativePlan = z.object({
   schemaVersion: z.literal(1),
@@ -200,6 +227,9 @@ export const CampaignRun = z.object({
     .optional(),
   providerJobs: z.record(z.string(), z.record(z.string(), z.unknown())).default({}),
   reviews: z.object({
+    evidenceHash: z.string().optional(),
+    reviewedBy: z.string().optional(),
+    reviewedAt: z.string().optional(),
     technical: z.enum(['pending', 'passed', 'failed']),
     contentClaims: z.enum(['pending', 'approved', 'rejected']),
     visualHuman: z.enum(['pending', 'approved', 'rejected']),
@@ -218,8 +248,9 @@ export const AssetRecord = z.object({
 });
 
 export const QAReport = z.object({
-  variantId: z.string(),
+  variantId,
   createdAt: z.string(),
+  evidenceHash: z.string().optional(),
   technical: z.object({
     status: z.enum(['passed', 'failed']),
     checks: z.array(z.object({name: z.string(), passed: z.boolean(), detail: z.string()})),

@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {ensureDir, loadEnv, parseArgs, projectRoot} from '../lib.mjs';
 import {ebayCinematicAdsOutputRoot} from '../lib.mjs';
 import {slugify, timestampSlug} from '../clipkit-lib.mjs';
+import {buildHiggsfieldProductionPrompt} from '../higgsfield-production.mjs';
 
 const defaultMcpUrl = 'https://shopping-deals-mcp.jonathang132298.workers.dev/mcp';
 const scriptName = path.basename(fileURLToPath(import.meta.url));
@@ -493,6 +494,26 @@ const plannedShotsForListing = (listing, listingPlan = null) => {
   }));
 };
 
+const productionPromptForShot = ({shot, conversion, aspectRatio = '9:16'}) =>
+  buildHiggsfieldProductionPrompt({
+    prompt: [
+      shot.prompt,
+      `Buyer emotion: ${conversion.emotional_hook}.`,
+      `Visual tone: ${conversion.visual_tone}.`,
+      `Objection to answer: ${conversion.objection_to_answer}.`,
+      'Make it feel like a premium marketplace ad, not a slideshow.',
+    ].join(' '),
+    purpose: shot.purpose,
+    durationSeconds: shot.duration_seconds,
+    aspectRatio,
+    subjectLock:
+      'The listing references are product truth. Preserve the exact item, condition, geometry, labels, included accessories, visible flaws, color, and scale.',
+    audioRequirements:
+      'Generate no dialogue, narration, music, or text. Captions, voice, music, and SFX are added during assembly.',
+    avoid:
+      'Added accessories, fake screens or labels, invented packaging, hidden condition changes, product mutation, slideshow motion, generated text, logos, watermarks, flicker, and broken physics.',
+  });
+
 const imagePathsForListing = (listing, listingDir) =>
   (listing.images ?? [])
     .map((image) => {
@@ -546,15 +567,7 @@ const writeHiggsProductionKit = ({listing, listingDir, listingPlan = null}) => {
   const mode = String(args['higgs-mode'] ?? 'std');
 
   const renderJobs = shots.map((shot) => {
-    const prompt = [
-      shot.prompt,
-      '',
-      `Buyer emotion: ${conversion.emotional_hook}.`,
-      `Visual tone: ${conversion.visual_tone}.`,
-      `Objection to answer: ${conversion.objection_to_answer}.`,
-      'Make it feel like a premium marketplace ad, not a slideshow.',
-      'Preserve the exact item from references. No added accessories. No fake labels. No changed condition.',
-    ].join(' ');
+    const prompt = productionPromptForShot({shot, conversion, aspectRatio});
     const refs = referenceArgsForShot({shot, imagePaths});
     return {
       id: shot.id,
@@ -891,7 +904,11 @@ const writeStoryBrollPlan = ({listing, listingDir}) => {
 };
 
 const writeBriefs = ({listing, listingDir, listingPlan = null}) => {
-  const prompts = plannedShotsForListing(listing, listingPlan);
+  const conversion = conversionBriefForListing(listing, listingPlan);
+  const prompts = plannedShotsForListing(listing, listingPlan).map((shot) => ({
+    ...shot,
+    prompt: productionPromptForShot({shot, conversion}),
+  }));
   const brief = {
     item_id: listing.item_id,
     title: listing.title,

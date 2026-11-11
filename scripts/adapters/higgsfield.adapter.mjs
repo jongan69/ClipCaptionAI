@@ -20,7 +20,7 @@ export default {
     id: 'higgsfield',
     title: 'Higgsfield',
     description: 'Estimate and resume budget-gated Higgsfield generation.',
-    version: '1',
+    version: '2',
     actions: [
       action('doctor', 'Doctor', 'sync'),
       action('estimate', 'Estimate'),

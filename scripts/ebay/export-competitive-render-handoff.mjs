@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {buildHiggsfieldProductionPrompt} from '../higgsfield-production.mjs';
 import {ensureDir, parseArgs} from '../lib.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
@@ -64,7 +65,16 @@ const flattenJobs = (plan) => {
         caption_intent: job.beat?.caption_intent ?? null,
         sfx: job.beat?.sfx ?? [],
         imported_audio_note: job.beat?.imported_audio_note ?? null,
-        prompt: job.prompt,
+        prompt: buildHiggsfieldProductionPrompt({
+          prompt: job.prompt,
+          purpose: job.purpose,
+          durationSeconds: job.duration_seconds,
+          aspectRatio: job.aspect_ratio ?? defaults.aspect_ratio ?? '9:16',
+          subjectLock:
+            'Use the reference images as exact product truth. Preserve color, shape, condition, labels, scale, and included items.',
+          audioRequirements:
+            'Generate no dialogue, narration, music, or copied audio. Captions and sound are added during assembly.',
+        }),
         model: job.model ?? defaults.model ?? 'seedance_2_0',
         resolution: job.resolution ?? defaults.resolution ?? '720p',
         mode: job.mode ?? defaults.mode ?? 'std',

@@ -6,6 +6,7 @@ import {
   OffthreadVideo,
   Sequence,
   interpolate,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
 } from 'remotion';
@@ -62,6 +63,8 @@ export const scheduledFrames = (
   return {start, end, duration: end - start};
 };
 
+const mediaSource = (src: string) => (/^https?:\/\//.test(src) ? src : staticFile(src));
+
 const TimelineEntry: React.FC<{
   entry: MarketingTimelineProps['timeline'][number];
   theme: NonNullable<MarketingTimelineProps['theme']>;
@@ -93,7 +96,7 @@ const TimelineEntry: React.FC<{
   if (entry.type === 'video' && entry.src)
     return (
       <OffthreadVideo
-        src={entry.src}
+        src={mediaSource(entry.src)}
         trimBefore={Math.round((entry.sourceStartSeconds ?? 0) * fps)}
         muted={entry.muted}
         volume={entry.volume ?? 1}
@@ -109,7 +112,7 @@ const TimelineEntry: React.FC<{
   if (entry.type === 'image' && entry.src)
     return (
       <Img
-        src={entry.src}
+        src={mediaSource(entry.src)}
         style={{
           width: '100%',
           height: '100%',
@@ -244,11 +247,14 @@ export const MarketingTimeline: React.FC<MarketingTimelineProps> = ({
           from={scheduledFrames(entry, fps).start}
           durationInFrames={scheduledFrames(entry, fps).duration}
         >
-          <Img src={entry.src} style={{width: '100%', height: '100%', objectFit: 'contain'}} />
+          <Img
+            src={mediaSource(entry.src)}
+            style={{width: '100%', height: '100%', objectFit: 'contain'}}
+          />
         </Sequence>
       ))}
-      {voice ? <Audio src={voice} /> : null}
-      {music ? <Audio src={music} volume={musicVolume} /> : null}
+      {voice ? <Audio src={mediaSource(voice)} /> : null}
+      {music ? <Audio src={mediaSource(music)} volume={musicVolume} /> : null}
       {currentCaption ? (
         <div
           style={{

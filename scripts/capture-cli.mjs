@@ -3,7 +3,7 @@ import {spawnSync} from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 import {parseArgs, requireArg} from './lib.mjs';
 import {ProductManifest} from './marketing/schemas.mjs';
@@ -19,7 +19,9 @@ const readManifest = () => {
       JSON.parse(fs.readFileSync(path.resolve(String(args.plan)), 'utf8')).product,
     );
   const file = path.resolve(requireArg(args, 'manifest'));
-  return ProductManifest.parse(yaml.load(fs.readFileSync(file, 'utf8')));
+  return ProductManifest.parse(
+    yaml.load(fs.readFileSync(file, 'utf8'), {schema: yaml.YAML11_SCHEMA}),
+  );
 };
 
 if (!action || action === '--help' || action === '-h')
