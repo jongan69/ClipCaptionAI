@@ -4,7 +4,7 @@ ClipCaptionAI v0.2.1 is a CLI-first video-production toolkit with an optional El
 
 ## Install from the release tarball
 
-Prerequisites are Bun 1.3 or newer plus `ffmpeg` and `ffprobe` on `PATH`.
+Prerequisites are Bun 1.4.4 or newer plus `ffmpeg` and `ffprobe` on `PATH`.
 
 ```bash
 bun install --global ./clipcaptionai-0.2.1.tgz

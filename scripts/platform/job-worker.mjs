@@ -1,49 +1,13 @@
 import {spawn} from 'node:child_process';
 import fs from 'node:fs';
-import path from 'node:path';
 
 import {sanitizeLogText} from '../../desktop/worker/progress.mjs';
-import {getAdapter, hashValue} from './catalog.mjs';
+import {acquireResourceLocks} from './resource-locks.mjs';
+import {getAdapter} from './catalog.mjs';
 import {jobPaths, listJobs, readJob, updateJob, writeJsonAtomic, stateRoot} from './jobs.mjs';
 
 const id = process.argv[2];
 if (!id) process.exit(2);
-
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const lockPath = (name) => path.join(stateRoot(), 'locks', hashValue(name));
-
-async function acquireLocks(names) {
-  const acquired = [];
-  for (const name of [...new Set(names)].sort()) {
-    const target = lockPath(name);
-    fs.mkdirSync(path.dirname(target), {recursive: true});
-    while (true) {
-      if (readJob(id).cancelRequested) throw new Error('JOB_CANCELLED');
-      try {
-        fs.mkdirSync(target);
-        fs.writeFileSync(path.join(target, 'owner'), id);
-        acquired.push(target);
-        break;
-      } catch (error) {
-        if (error.code !== 'EEXIST') throw error;
-        try {
-          const owner = fs.readFileSync(path.join(target, 'owner'), 'utf8').trim();
-          const ownerJob = readJob(owner);
-          if (['completed', 'failed', 'cancelled', 'interrupted'].includes(ownerJob.status)) {
-            fs.rmSync(target, {recursive: true, force: true});
-            continue;
-          }
-        } catch {
-          fs.rmSync(target, {recursive: true, force: true});
-          continue;
-        }
-        await sleep(100);
-      }
-    }
-  }
-  return () =>
-    acquired.reverse().forEach((target) => fs.rmSync(target, {recursive: true, force: true}));
-}
 
 let release = () => {};
 try {
@@ -52,7 +16,7 @@ try {
   const adapter = await getAdapter(job.adapter);
   const action = adapter.metadata.actions.find((candidate) => candidate.id === job.action);
   if (!action) throw new Error(`Unknown action ${job.adapter}/${job.action}`);
-  release = await acquireLocks(action.locks);
+  release = await acquireResourceLocks({root: stateRoot(), id, names: action.locks, readJob});
   const spec = await adapter.build(job.action, job.input, {job, action});
   if (!spec || typeof spec.command !== 'string' || !Array.isArray(spec.args)) {
     throw new Error('Adapter build() must return {command, args: []}.');

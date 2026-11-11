@@ -6,6 +6,7 @@ Version 0.2.1 is a locally validated CLI and desktop release candidate. It has n
 
 - Dry runs do not capture, render, copy assets, submit paid jobs, or alter campaign records.
 - Cost estimation accepts cost queries only. Campaign mutations take an exclusive lock before loading state.
+- Shared broker locks retain initializing/live ownership, release partial acquisitions, and atomically retire abandoned locks after verifying both worker and child have exited.
 - Paid attempts are persisted before submission; uncertain responses are never automatically resubmitted.
 - Generation output paths must be new and bound to a timeline or slide. Missing outputs remain awaiting-assets.
 - Rendering uses hash-verified snapshots, including generated carousels. Replaced originals cannot replace those snapshots, and corrupted snapshots fail closed.
@@ -17,7 +18,8 @@ Version 0.2.1 is a locally validated CLI and desktop release candidate. It has n
 
 ## Verification
 
-- Full `bun run check`: both TypeScript checks, repository ESLint, and 163 tests pass.
+- Full `bun run check`: both TypeScript checks, repository ESLint, and 166 tests pass.
+- Dependency audit: zero reported vulnerabilities across 574 packages after compatible updates and scoped security overrides. Bun 1.4.4+ is required; older Bun versions ignore scoped overrides.
 - Full formatting check and `git diff --check` pass.
 - Focused marketing complexity limit of 21 passes; extracted marketing modules are below 500 lines.
 - An independently extracted tarball installed its production dependencies and rendered a real 16-second MP4 at 320×568, 12 fps, with one render worker. Artifact QA passed. Frame inspection found a header overflow, fixed with responsive typography and checked again in the final candidate.
@@ -39,3 +41,7 @@ Remaining release lanes:
 - The separate ClipCaptionAI-Cloud repository/deployment is not part of this checkout's release candidate.
 
 Existing research documents and the prior ListingOS HTML deletion were preserved. No provider credits were spent and no public release was published.
+
+Security overrides keep vulnerable transitive packages patched without replacing legacy major-version APIs. The scoped minimatch update affects modern consumers only; brace-expansion has separate patched pins for legacy and modern consumers. Revisit these pins when upstream packages adopt the fixes. The dependency audit is a point-in-time advisory check, not proof of absence of vulnerabilities.
+
+If a shared broker resource lock has unreadable ownership, the worker reports `RESOURCE_LOCK_RECOVERY_REQUIRED`; inspect the lock and verify owner/child exit before removing it. Readable abandoned locks are retired atomically. See [Bun override documentation](https://bun.sh/docs/pm/overrides) for the scoped resolution and lockfile-version requirement.

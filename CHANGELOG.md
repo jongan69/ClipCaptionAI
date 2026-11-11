@@ -5,6 +5,8 @@ All notable changes to ClipCaptionAI are documented here. Format follows [Keep a
 ## [0.2.1] — Unreleased
 
 ### Fixed
+- Prevent shared job workers from stealing initializing/live resource locks; safely retire abandoned ownership.
+- Patch dependency advisories, including Electron, Zod, YAML, URI parsing, and glob handling; pin scoped transitive fixes.
 - Defer the production desktop renderer until its HTML is ready, keeping CSP ahead of scripts.
 - Exclude local media and downloaded model libraries from desktop packages.
 - Keep first-run video headers inside small portrait frames.
@@ -22,6 +24,7 @@ All notable changes to ClipCaptionAI are documented here. Format follows [Keep a
 - Regression coverage for package imports, concurrent campaign ownership, media integrity, delayed collection, and review transitions.
 
 ### Compatibility
+- Bun 1.4.4+ is required for version-scoped security overrides and the v3 lockfile.
 - Re-plan and re-approve existing marketing campaigns because adapter capabilities changed.
 - `execute --dry-run` no longer renders local media; use `execute` for that purpose.
 - Executable generation intents must declare `output` and reference it in their timeline or slides.

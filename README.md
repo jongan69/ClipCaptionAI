@@ -14,7 +14,7 @@ This first run is local and does not require an OpenAI, ElevenLabs, or fal API k
 
 You need:
 
-- Bun 1.3 or newer
+- Bun 1.4.4 or newer
 - `ffmpeg` and `ffprobe`
 
 On macOS with Homebrew:
@@ -23,7 +23,7 @@ On macOS with Homebrew:
 brew install oven-sh/bun/bun ffmpeg
 ```
 
-On Windows or Linux, install Bun 1.3+ and FFmpeg using your normal package manager or the official installers, then continue with `bun run doctor` below.
+On Windows or Linux, install Bun 1.4.4+ and FFmpeg using your normal package manager or the official installers, then continue with `bun run doctor` below.
 
 Optional extras:
 
