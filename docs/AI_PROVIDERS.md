@@ -53,6 +53,20 @@ Pass `--chapter-model`, `--selection-model`, or `--model` to override per-script
 | fal.ai (image/video gen) | `FAL_KEY` | `fal-image-edit.mjs`, `fal-reference-video.mjs` |
 | Higgsfield (product video gen) | External CLI via MCP | eBay competitive pipeline |
 
+### Higgsfield production contract
+
+Every Higgsfield generation routed through ClipCaptionAI is compiled into the same per-shot
+contract before cost estimation or submission: purpose, delivery, subject/environment/camera/style
+locks, one shot instruction, continuity in/out, physical and audio requirements, and negative
+constraints. Exact text, captions, and logos belong in post-production unless synchronized native
+audio is explicitly required.
+
+For agent-driven production, plan short editable shots, keep a continuity bible for recurring
+subjects/products/environments, use approved references, inspect each returned take, and regenerate
+failed anatomy, identity, physics, continuity, or camera motion. A provider completion is only a
+candidate asset; final delivery still requires edit, audio, color, technical QA, and human visual and
+claims review. Dry runs and tests must never submit a paid generation.
+
 ### ElevenLabs narration
 
 ```bash

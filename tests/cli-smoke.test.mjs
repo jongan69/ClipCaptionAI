@@ -263,10 +263,14 @@ test('eBay cinematic ads exposes the batch competitive-plan command', () => {
 });
 
 test('eBay traffic optimizer exposes help', () => {
-  const result = spawnSync(process.execPath, ['scripts/ebay/optimize-ebay-traffic-report.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/ebay/optimize-ebay-traffic-report.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /optimize-ebay-traffic-report/);
@@ -274,10 +278,14 @@ test('eBay traffic optimizer exposes help', () => {
 });
 
 test('competitive blueprint preview renderer exposes help', () => {
-  const result = spawnSync(process.execPath, ['scripts/ebay/render-competitive-blueprint-ad.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/ebay/render-competitive-blueprint-ad.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /render-competitive-blueprint-ad/);
@@ -365,10 +373,14 @@ test('competitive video pipeline auditor exposes help', () => {
 });
 
 test('competitive review board generator exposes help', () => {
-  const result = spawnSync(process.execPath, ['scripts/ebay/build-competitive-review-board.mjs', '--help'], {
-    cwd: projectRoot,
-    encoding: 'utf8',
-  });
+  const result = spawnSync(
+    process.execPath,
+    ['scripts/ebay/build-competitive-review-board.mjs', '--help'],
+    {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    },
+  );
 
   assert.equal(result.status, 0);
   assert.match(result.stdout, /build-competitive-review-board/);
@@ -472,7 +484,10 @@ test('local AI provider commands expose guarded help without requiring secrets',
     ['scripts/fal-image-edit.mjs', /approved-for-generated-marketing/],
     ['scripts/fal-reference-video.mjs', /disables native/i],
   ]) {
-    const result = spawnSync(process.execPath, [script, '--help'], {cwd: projectRoot, encoding: 'utf8'});
+    const result = spawnSync(process.execPath, [script, '--help'], {
+      cwd: projectRoot,
+      encoding: 'utf8',
+    });
     assert.equal(result.status, 0, result.stderr);
     assert.match(result.stdout, expected);
   }

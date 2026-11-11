@@ -1,7 +1,11 @@
+import {useState} from 'react';
 import {useJobStore} from '../stores/jobStore';
+import {requestWorkflowStop} from '../lib/stopWorkflow';
 
 export default function StatusBar() {
   const currentJob = useJobStore((s) => s.currentJob);
+  const [stopping, setStopping] = useState(false);
+  const [stopError, setStopError] = useState('');
 
   if (!currentJob) return null;
 
@@ -55,13 +59,29 @@ export default function StatusBar() {
       {/* Cancel button */}
       {currentJob.status === 'running' && (
         <button
-          onClick={() => {
-            /* TODO: wire to cca.stopWorkflow */
+          disabled={stopping}
+          onClick={async () => {
+            setStopping(true);
+            setStopError('');
+            try {
+              await requestWorkflowStop(currentJob.sessionId, window.cca?.stopWorkflow);
+            } catch (error) {
+              setStopError(
+                error instanceof Error ? error.message : 'Unable to cancel the workflow.',
+              );
+            } finally {
+              setStopping(false);
+            }
           }}
           className="text-xs text-accent-rose hover:text-red-300 transition-colors"
         >
-          Cancel
+          {stopping ? 'Cancelling…' : 'Cancel'}
         </button>
+      )}
+      {stopError && (
+        <span role="alert" className="text-xs text-accent-rose">
+          {stopError}
+        </span>
       )}
     </div>
   );

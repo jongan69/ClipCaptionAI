@@ -10,12 +10,7 @@ variants:
     fps: 30
     durationSeconds: 15
     cta: Try ClipCaptionAI
-    intents:
-      - type: generation
-        provider: higgsfield
-        model: configured-model
-        estimateCredits: 8
-        prompt: Product UI moving through a clean studio scene.
+    intents: []
     timeline:
       - type: text
         startSeconds: 0

@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import {commandPath} from './command-utils.mjs';
+import {withHiggsfieldProductionPrompt} from './higgsfield-production.mjs';
 import {loadEnv, parseArgs, projectRoot, requireArg} from './lib.mjs';
 import {hashValue} from './platform/catalog.mjs';
 
@@ -70,7 +71,9 @@ if (!action || action === '--help') {
     const commandArgs = stripWrapperFlags(argv.slice(1));
     if (commandArgs.length === 0)
       throw new Error('Estimate requires --credits or installed-CLI cost argv.');
-    process.stdout.write(invoke(commandArgs).stdout);
+    if (commandArgs[0] !== 'generate' || commandArgs[1] !== 'cost')
+      throw new Error('COST_COMMAND_REQUIRED: estimate accepts only generate cost commands.');
+    process.stdout.write(invoke(withHiggsfieldProductionPrompt(commandArgs)).stdout);
   }
 } else if (action === 'submit') {
   capabilities();
@@ -104,7 +107,7 @@ if (!action || action === '--help') {
     console.log(JSON.stringify({submitted: false, dryRun: true, estimatedCredits: estimated}));
   else {
     if (!argv.includes('--live-execution')) throw new Error('LIVE_EXECUTION_REQUIRED');
-    const result = invoke(stripWrapperFlags(argv.slice(1)));
+    const result = invoke(withHiggsfieldProductionPrompt(stripWrapperFlags(argv.slice(1))));
     process.stdout.write(result.stdout);
   }
 } else if (['poll', 'collect'].includes(action)) {

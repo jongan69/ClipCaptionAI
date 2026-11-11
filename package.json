@@ -1,6 +1,6 @@
 {
   "name": "clipcaptionai",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "CLI-first local AI video editor and model harness for planning, rendering, captioning, and QA of production video assets.",
   "author": {
     "name": "Jonathan Gan",
@@ -53,6 +53,7 @@
     "docs/TOOL_ADAPTERS.md",
     "docs/VOICE_LIBRARY.md",
     "docs/MARKETING_PLATFORM.md",
+    "docs/PREPAI_PERFORMANCE_CREATIVE_CONCEPTS.md",
     "docs/PRODUCTION_SUPPORT.md",
     "docs/RELEASE.md",
     "docs/WORKFLOWS.md",
@@ -67,15 +68,8 @@
     "scripts/ebay/",
     "scripts/logo/",
     "assets/logos/",
-    "src/captioned-clip.tsx",
-    "src/index.tsx",
-    "src/prompt-video.tsx",
-    "src/marketing-timeline.tsx",
-    "src/root.tsx",
-    "src/types.ts",
-    "src/logo/",
+    "src/",
     "templates/rotato/",
-    "src/listingos-deck-scenes.tsx",
     "styles/",
     "tsconfig.json"
   ],
@@ -213,7 +207,7 @@
   "build": {
     "appId": "com.clipcaptionai.desktop",
     "productName": "ClipCaptionAI",
-    "copyright": "Copyright © 2026",
+    "copyright": "Copyright \u00a9 2026",
     "artifactName": "ClipCaptionAI-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist-desktop"
@@ -223,16 +217,14 @@
       "scripts/**/*",
       "bin/**/*",
       "src/**/*",
-      "public/**/*",
       "styles/**/*",
       "templates/rotato/**/*",
-      "scene-library/**/*",
-      "custom-scenes-library/**/*",
-      "sfx-library/**/*",
-      "models/**/*",
-      "music-library/**/*",
       "caption-style.json",
-      "package.json"
+      "package.json",
+      "examples/**/*",
+      "assets/logos/**/*",
+      "remotion.config.ts",
+      "tsconfig.json"
     ],
     "extraFiles": [
       {
@@ -261,7 +253,9 @@
       "caption-style.json",
       "remotion.config.ts",
       "tsconfig.json",
-      "package.json"
+      "package.json",
+      "examples/**/*",
+      "assets/logos/**/*"
     ],
     "afterSign": "desktop/scripts/notarize.cjs",
     "mac": {

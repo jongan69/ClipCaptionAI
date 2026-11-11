@@ -1,3 +1,4 @@
+import {version} from '../../../package.json';
 import {useNavigate} from 'react-router-dom';
 
 interface SidebarProps {
@@ -103,7 +104,7 @@ export default function Sidebar({collapsed, onToggle, currentPath}: SidebarProps
       {/* Footer */}
       {!collapsed && (
         <div className="px-3 py-3 border-t border-glass-border text-[11px] text-text-muted">
-          ClipCaptionAI Desktop v0.2.0
+          ClipCaptionAI Desktop v{version}
         </div>
       )}
     </aside>

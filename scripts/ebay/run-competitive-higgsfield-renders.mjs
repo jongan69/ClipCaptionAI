@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {ensureDir, loadEnv, parseArgs, projectRoot} from '../lib.mjs';
 import {commandPath} from '../command-utils.mjs';
+import {withHiggsfieldProductionPrompt} from '../higgsfield-production.mjs';
 
 const scriptName = path.basename(fileURLToPath(import.meta.url));
 loadEnv();
@@ -194,7 +195,18 @@ const higgsArgsForJob = ({job, model, command}) => {
     );
   }
   commandArgs.push('--json');
-  return commandArgs;
+  return withHiggsfieldProductionPrompt(commandArgs, {
+    purpose: job.purpose,
+    beginningState: job.continuity?.in,
+    endingState: job.continuity?.out,
+    subjectLock: job.production?.subjectLock,
+    environmentLock: job.production?.environmentLock,
+    cameraLock: job.production?.cameraLock,
+    styleLock: job.production?.styleLock,
+    physicalRequirements: job.production?.physicalRequirements,
+    audioRequirements: job.production?.audioRequirements,
+    avoid: job.production?.avoid,
+  });
 };
 
 const resultUrlFromParsed = (parsed) => {
